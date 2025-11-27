@@ -1,0 +1,24 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary-green: #4c7a67;
+  --light-green: #a1c8b8;
+  --bg-green: #e6f0ea;
+  --hover-green: #5c8a77;
+  --sidebar-width: 220px;
+  --header-height: 60px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+}

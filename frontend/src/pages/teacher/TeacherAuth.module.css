@@ -1,0 +1,175 @@
+.loginMainPage {
+  display: flex;
+  min-height: 100vh;
+}
+
+.rectangle1 {
+  flex: 1;
+  background: linear-gradient(120deg, var(--primary-green) 60%, var(--light-green) 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: white;
+}
+
+.schoolLogo {
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  margin-bottom: 2rem;
+  object-fit: cover;
+}
+
+.coverTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  max-width: 400px;
+}
+
+.rightContent {
+  flex: 1;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: white;
+}
+
+.miniLogo {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  display: none;
+}
+
+.welcomeText {
+  font-size: 2rem;
+  color: var(--primary-green);
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.clickDestination {
+  color: #718096;
+  margin-bottom: 2rem;
+  font-size: 1rem;
+}
+
+form {
+  width: 100%;
+  max-width: 400px;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.forgotLink {
+  display: block;
+  text-align: right;
+  color: var(--primary-green);
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.btn {
+  width: 100%;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 1rem;
+  text-align: center;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.btnLogin,
+.btnTeacher {
+  background: var(--primary-green);
+  color: white;
+}
+
+.btnLogin:hover,
+.btnTeacher:hover {
+  background: var(--hover-green);
+}
+
+.btnAdmin {
+  background: var(--bg-green);
+  color: var(--primary-green);
+}
+
+.btnAdmin:hover {
+  background: var(--light-green);
+}
+
+.termsConditions {
+  color: #718096;
+  margin-top: auto;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.footerIcons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.footerIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-green);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.footerIcon:hover {
+  background: var(--light-green);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .loginMainPage {
+    flex-direction: column;
+  }
+
+  .rectangle1 {
+    display: none;
+  }
+
+  .rightContent {
+    padding: 2rem 1rem;
+  }
+
+  .miniLogo {
+    display: block;
+  }
+
+  form {
+    width: 100%;
+  }
+}
+

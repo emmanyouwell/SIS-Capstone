@@ -1,0 +1,378 @@
+/* Main content styles */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  padding-top: calc(var(--header-height, 60px) + 2rem);
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+}
+
+.mainContent h1 {
+  color: var(--primary-green);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* Profile box styles */
+.profileBox {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--primary-green);
+}
+
+.greeting {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  margin-right: 1.25rem;
+}
+
+.profileBox button {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.profileBox button:hover {
+  background: var(--hover-green);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(76, 122, 103, 0.2);
+}
+
+/* Info Cards */
+.infoCards {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+/* Announcements */
+.announcementsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.announcementCard {
+  font-family: 'Inter', sans-serif;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.announcementHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.announcementSubject {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 0.25rem;
+}
+
+.announcementDate {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.announcementSender {
+  font-size: 0.9rem;
+  color: #444;
+  font-weight: 500;
+}
+
+.announcementMessage {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+
+.announcementImage {
+  margin: 0.75rem 0;
+}
+
+.announcementImage img {
+  max-width: 100%;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dotsBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.25rem;
+  padding: 0.25rem 0.5rem;
+  color: #666;
+  z-index: 1;
+  margin-top: -0.25rem;
+}
+
+.dotsBtn:hover {
+  color: #333;
+}
+
+.dropdownMenu {
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.13);
+  min-width: 120px;
+  z-index: 10;
+  padding: 0.25rem 0;
+  border: 1px solid #eee;
+  position: absolute;
+  right: 0;
+  top: 2rem;
+}
+
+.dropdownMenu button,
+.viewBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  padding: 0.35rem 1rem;
+  text-align: left;
+  width: 100%;
+  color: #184d27;
+  font-size: 0.9rem;
+  line-height: 1.1;
+  box-sizing: border-box;
+  font-family: 'Inter', sans-serif;
+  margin: 0;
+  border-radius: 0;
+  height: auto;
+  transition: background 0.2s;
+}
+
+.dropdownMenu button:hover,
+.viewBtn:hover {
+  background: #e6f0ea;
+}
+
+.dropdownContainer {
+  position: relative;
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal.show {
+  display: flex;
+}
+
+.modalContent {
+  background: #ffffff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 100%;
+  max-width: 700px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  color: #2d3748;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modalContent h3 {
+  color: #184d27;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  text-align: center;
+  font-family: 'Inter', sans-serif;
+}
+
+.modalClose {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+  width: 32px;
+  height: 32px;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  font-size: 1.3rem;
+  color: #4c7a67;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  z-index: 10;
+}
+
+.modalClose:hover {
+  background: #e6f0ea;
+  color: #276749;
+}
+
+.viewAnnouncementDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #2d3748;
+  font-family: 'Inter', sans-serif;
+}
+
+.viewRow {
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+  color: #2d3748;
+  font-family: 'Inter', sans-serif;
+}
+
+.viewLabel {
+  font-weight: 600;
+  color: #184d27;
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.viewMessage {
+  display: block;
+  margin-top: 0.25rem;
+  color: #222;
+  font-size: 0.97rem;
+  white-space: pre-line;
+  font-family: 'Inter', sans-serif;
+}
+
+.viewImageRow {
+  margin-top: 1rem;
+}
+
+.viewImageRow img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 0.5rem;
+}
+
+/* Location, Mission, Vision Cards */
+.locationCard,
+.missionCard,
+.visionCard {
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+  border-radius: 12px;
+  background: #fff;
+  padding: 1.2rem;
+  font-size: 0.97rem;
+  transition: box-shadow 0.2s, transform 0.2s;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.locationCard h3,
+.missionCard h3,
+.visionCard h3 {
+  text-align: center;
+  color: #fff;
+  background: #184d27;
+  border-radius: 6px 6px 0 0;
+  margin: -1.2rem -1.2rem 1rem -1.2rem;
+  padding: 0.5rem 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.mapContainer {
+  width: 100%;
+  height: 260px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  background: #f8f8f8;
+}
+
+.mapContainer iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: 8px;
+  min-height: 240px;
+}
+
+.missionContent {
+  color: #184d27;
+  line-height: 1.6;
+  font-size: 0.89rem;
+}
+
+.missionContent p {
+  margin-bottom: 0.7rem;
+  color: #4a5568;
+}
+
+.missionContent div {
+  margin-bottom: 0.5rem;
+}
+
+.visionContent {
+  color: #184d27;
+  line-height: 1.6;
+  font-size: 0.89rem;
+  white-space: pre-line;
+}
+
+/* Responsive design */
+@media (max-width: 900px) {
+  .mainContent {
+    flex-direction: column;
+    padding: 1rem;
+    padding-top: calc(var(--header-height, 60px) + 1rem);
+  }
+
+  .infoCards {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding-top: calc(var(--header-height, 60px) + 1rem);
+  }
+}

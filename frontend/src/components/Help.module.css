@@ -1,0 +1,260 @@
+/* Help Container */
+.helpContainer {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Help Header */
+.helpHeader {
+  background: linear-gradient(to right, var(--primary-green), var(--hover-green));
+  padding: 1.75rem;
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 2rem;
+}
+
+.helpHeader h1 {
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.searchBox {
+  max-width: 600px;
+  margin: 0 auto;
+  position: relative;
+}
+
+.searchBox input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  outline: none;
+}
+
+.searchBox input:focus {
+  box-shadow: 0 4px 12px rgba(76, 122, 103, 0.3);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--primary-green);
+  pointer-events: none;
+}
+
+/* Help Grid */
+.helpGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.helpCard {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.helpCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 12px rgba(76, 122, 103, 0.15);
+}
+
+.helpCard h3 {
+  color: var(--primary-green);
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.cardIcon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.helpCard ul {
+  font-size: 0.875rem;
+  padding-left: 1.25rem;
+  margin: 0;
+  list-style-type: disc;
+}
+
+.helpCard li {
+  margin-bottom: 0.375rem;
+  color: #333;
+}
+
+/* FAQ Section */
+.faqSection {
+  max-width: 800px;
+  margin: 0 auto 2rem;
+}
+
+.faqSection h2 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.faqItem {
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.faqQuestion {
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: var(--primary-green);
+  font-size: 0.875rem;
+  transition: background-color 0.2s ease;
+}
+
+.faqQuestion:hover {
+  background-color: var(--bg-green);
+}
+
+.chevronIcon {
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+  margin-left: 1rem;
+}
+
+.faqItem.active .chevronIcon {
+  transform: rotate(180deg);
+}
+
+.faqAnswer {
+  padding: 0 1.25rem;
+  max-height: 0;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+.faqItem.active .faqAnswer {
+  padding: 0.875rem 1.25rem;
+  max-height: 500px;
+}
+
+.noResults {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-size: 0.875rem;
+}
+
+/* Support Channels */
+.supportChannels {
+  background: white;
+  padding: 1.75rem;
+  border-radius: 12px;
+  margin-top: 2rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.supportChannels h2 {
+  font-size: 1.25rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 600;
+}
+
+.supportChannels > p {
+  font-size: 0.875rem;
+  color: #666;
+  margin-bottom: 1.25rem;
+}
+
+.channelGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+  margin-top: 1.25rem;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.channelItem {
+  padding: 1.25rem;
+  border-radius: 8px;
+  background: var(--bg-green);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.channelItem:hover {
+  transform: translateY(-3px);
+  background: var(--hover-green);
+  color: white;
+}
+
+.channelItem svg {
+  font-size: 20px;
+  margin-bottom: 0.5rem;
+  color: var(--primary-green);
+  display: block;
+  margin: 0 auto 0.5rem;
+}
+
+.channelItem:hover svg {
+  color: white;
+}
+
+.channelItem h4 {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+}
+
+.channelItem p {
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .helpContainer {
+    padding: 1rem;
+  }
+
+  .helpHeader {
+    padding: 1.25rem;
+    text-align: center;
+  }
+
+  .helpGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .channelGrid {
+    grid-template-columns: 1fr;
+  }
+}
+

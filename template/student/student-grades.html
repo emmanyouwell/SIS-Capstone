@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Grades</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
+  <link rel="stylesheet" href="./css/student-dashboard.css">
+  <link rel="stylesheet" href="./css/student-grades.css">
+  <style>
+    /* Logout button styles */
+    .logout-btn {
+      background: none;
+      border: none;
+      color: var(--primary-green, #4c7a67);
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      padding: 0.5rem 1rem;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .logout-btn:hover {
+      color: var(--hover-green, #5c8a77);
+      text-decoration: underline;
+    }
+
+    /* Loading Animation */
+    .btn-loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .btn-loading::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      margin: auto;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: button-loading-spinner 0.6s linear infinite;
+    }
+
+    .btn-loading span {
+      opacity: 0;
+    }
+
+    @keyframes button-loading-spinner {
+      from {
+        transform: rotate(0turn);
+      }
+      to {
+        transform: rotate(1turn);
+      }
+    }
+
+    /* Success Animation */
+    .btn-success {
+      background-color: #10B981 !important;
+      color: white !important;
+    }
+
+    .btn-success::after {
+      content: '✓';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .btn-success.animate::after {
+      opacity: 1;
+    }
+
+    /* Progress Bar */
+    .logout-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 3px;
+      background: linear-gradient(to right, #4c7a67, #10B981);
+      transition: width 1.5s ease;
+      z-index: 1000;
+    }
+
+    .logout-progress.start {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+<!-- Add progress bar -->
+<div class="logout-progress"></div>
+
+<div class="sidebar">
+    <div class="logo-container">
+        <img src="../images/logo.jpg" alt="School Logo">
+    </div>
+    <ul>
+        <li>
+            <a href="student-dashboard.html">
+                <span class="icon">
+                  <!-- Info icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </span>
+                Announcements
+            </a>
+        </li>
+        <li>
+            <a href="student-subjects.html">
+                <span class="icon">
+                  <!-- Book icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </span>
+                Subjects
+            </a>
+        </li>
+        <li class="active">
+            <a href="student-grades.html">
+                <span class="icon">
+                  <!-- Bar chart icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                </span>
+                Grades
+            </a>
+        </li>
+        <li>
+            <a href="student-schedule.html">
+                <span class="icon">
+                  <!-- Calendar icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                </span>
+                Schedule
+            </a>
+        </li>
+        <li>
+            <a href="student-enrollment.html">
+                <span class="icon">
+                  <!-- Book icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 19.5A2.5 2.5 0 0 1 4.5 17H20"/><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H20v16H4.5A2.5 2.5 0 0 1 2 17.5z"/></svg>
+                </span>
+                Enrollment
+            </a>
+        </li>
+        <li>
+            <a href="student-notifications.html">
+                <span class="icon">
+                  <!-- Bell icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                </span>
+                Notifications
+            </a>
+        </li>
+        <li>
+            <a href="student-messages.html">
+                <span class="icon">
+                  <!-- Message icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+                </span>
+                Messages
+            </a>
+        </li>
+        <li>
+            <a href="student-profile.html">
+                <span class="icon">
+                  <!-- User icon -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+                </span>
+                Profile
+            </a>
+        </li>
+        <li>
+            <a href="student-help.html">
+                <span class="icon">
+                  <!-- Info icon (help) -->
+                  <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                </span>
+                Help
+            </a>
+        </li>
+    </ul>
+</div>
+
+<div class="top-header">
+    <div class="school-name">Sto. Niño National High School</div>
+    <div class="header-controls">
+        <div class="notifications">
+            <svg width="24" height="24" fill="none" stroke="#184d27" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span class="badge">3</span>
+        </div>
+        <div class="user-controls">
+            <div class="user-info">
+                <div class="user-name">Kiana Mae Alvarez</div>
+                <div class="user-role">Grade 8 - Section Lilac</div>
+            </div>
+            <div class="user-avatar">
+                <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+            </div>
+            <button class="logout-btn">
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="grades-page">
+  <div class="main-content">
+    <div class="grades-card">
+      <div class="transcript-header">
+        <div class="school-info">
+          <img src="../images/logo.jpg" alt="School Logo" class="header-logo">
+          <div class="school-name">Sto. Niño National High School</div>
+          <div class="school-address">S5064 Col De Leon, Paranaque City, 1704 Metro Manila, Philippines</div>
+          <div class="school-year">S.Y. 2025-2026</div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="report-title">REPORT OF GRADES</div>
+      <div class="student-info-row">
+        <div><strong>Name:</strong> Kiana Mae L. Alvarez</div>
+        <div><strong>Grade & Section:</strong> 8-Lilac</div>
+        <div><strong>LRN:</strong> 823194756201</div>
+      </div>
+      <hr class="divider">
+      <div class="grades-header">
+        <div class="left">
+          <!-- Removed student info from here -->
+        </div>
+        <div class="right">
+          Class Adviser: <b>Angelica Nanas</b>
+        </div>
+      </div>
+      <div class="grades-flex-row">
+        <div class="grades-table-container">
+          <table>
+            <tr>
+              <th>Subjects</th>
+              <th>1st</th>
+              <th>2nd</th>
+              <th>3rd</th>
+              <th>4th</th>
+              <th>Remarks</th>
+            </tr>
+            <tr><td>Mathematics</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>Science</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>English</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>MAPEH</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>Filipino</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>Araling Panlipunan</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td>Values Education</td><td></td><td></td><td></td><td></td><td class="remarks"></td></tr>
+            <tr><td style="font-weight: bold;">Average Grade</td><td></td><td></td><td></td><td></td><td></td></tr>
+          </table>
+        </div>
+        <div class="simple-grading-system">
+          <div class="grading-system-title">Grading System</div>
+          <table class="grading-system-table-simple">
+            <tr><td>90-100</td><td>Outstanding</td></tr>
+            <tr><td>85-89</td><td>Very Satisfactory</td></tr>
+            <tr><td>80-84</td><td>Satisfactory</td></tr>
+            <tr><td>75-79</td><td>Fairly Satisfactory</td></tr>
+            <tr><td>Below 75</td><td>Did Not Meet Expectations</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Logout functionality with animation
+document.querySelector('.logout-btn').addEventListener('click', function(e) {
+    const btn = e.currentTarget;
+    const btnText = btn.querySelector('span');
+    const progressBar = document.querySelector('.logout-progress');
+    
+    // Add loading animation
+    btn.classList.add('btn-loading');
+    btnText.textContent = 'Logging out...';
+    progressBar.classList.add('start');
+    
+    // Simulate logout process
+    setTimeout(() => {
+        btn.classList.remove('btn-loading');
+        btn.classList.add('btn-success', 'animate');
+        btnText.textContent = 'Goodbye!';
+        
+        // Redirect after success animation
+        setTimeout(() => {
+            window.location.href = '../index.html';
+        }, 1000);
+    }, 1500);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Enrollment</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter">
+    <link rel="stylesheet" href="./css/student-dashboard.css">
+    <link rel="stylesheet" href="./css/student-enrollment.css">
+    <style>
+        /* Logout button styles */
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--primary-green, #4c7a67);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .logout-btn:hover {
+            color: var(--hover-green, #5c8a77);
+            text-decoration: underline;
+        }
+
+        /* Loading Animation */
+        .btn-loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            margin: auto;
+            border: 2px solid transparent;
+            border-top-color: currentColor;
+            border-radius: 50%;
+            animation: button-loading-spinner 0.6s linear infinite;
+        }
+
+        .btn-loading span {
+            opacity: 0;
+        }
+
+        @keyframes button-loading-spinner {
+            from {
+                transform: rotate(0turn);
+            }
+            to {
+                transform: rotate(1turn);
+            }
+        }
+
+        /* Success Animation */
+        .btn-success {
+            background-color: #10B981 !important;
+            color: white !important;
+        }
+
+        .btn-success::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn-success.animate::after {
+            opacity: 1;
+        }
+
+        /* Progress Bar */
+        .logout-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 3px;
+            background: linear-gradient(to right, #4c7a67, #10B981);
+            transition: width 1.5s ease;
+            z-index: 1000;
+        }
+
+        .logout-progress.start {
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-container">
+            <img src="../images/logo.jpg" alt="School Logo">
+        </div>
+        <ul>
+            <li>
+                <a href="student-dashboard.html">
+                    <span class="icon">
+                      <!-- Info icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    </span>
+                    Announcements
+                </a>
+            </li>
+            <li>
+                <a href="student-subjects.html">
+                    <span class="icon">
+                      <!-- Book icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    </span>
+                    Subjects
+                </a>
+            </li>
+            <li>
+                <a href="student-grades.html">
+                    <span class="icon">
+                      <!-- Bar chart icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+                    </span>
+                    Grades
+                </a>
+            </li>
+            <li>
+                <a href="student-schedule.html">
+                    <span class="icon">
+                      <!-- Calendar icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </span>
+                    Schedule
+                </a>
+            </li>
+            <li class="active">
+                <a href="student-enrollment.html">
+                    <span class="icon">
+                      <!-- Book icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 19.5A2.5 2.5 0 0 1 4.5 17H20"/><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H20v16H4.5A2.5 2.5 0 0 1 2 17.5z"/></svg>
+                    </span>
+                    Enrollment
+                </a>
+            </li>
+            <li>
+                <a href="student-notifications.html">
+                    <span class="icon">
+                      <!-- Bell icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                    </span>
+                    Notifications
+                </a>
+            </li>
+            <li>
+                <a href="student-messages.html">
+                    <span class="icon">
+                      <!-- Message icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+                    </span>
+                    Messages
+                </a>
+            </li>
+            <li>
+                <a href="student-profile.html">
+                    <span class="icon">
+                      <!-- User icon -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+                    </span>
+                    Profile
+                </a>
+            </li>
+            <li>
+                <a href="student-help.html">
+                    <span class="icon">
+                      <!-- Info icon (help) -->
+                      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                    </span>
+                    Help
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Header -->
+    <div class="top-header">
+        <div class="school-name">Sto. Niño National High School</div>
+        <div class="header-controls">
+            <div class="notifications">
+                <img src="https://cdn-icons-png.flaticon.com/128/3602/3602145.png" alt="Notifications" class="icon">
+                <span class="badge">3</span>
+            </div>
+            <div class="user-controls">
+                <div class="user-info">
+                    <div class="user-name">Kiana Mae L. Alvarez</div>
+                    <div class="user-role">Student</div>
+                </div>
+                <div class="user-avatar">
+                    <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+                </div>
+                <button class="logout-btn btn-smart-animate">
+                    <span>Logout</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1>Enrollment</h1>
+        
+        <div class="enrollment-info fade-in">
+            <div><strong>Name:</strong> Kiana Mae L. Alvarez</div>
+            <div><strong>Grade & Section:</strong> 8-Lilac</div>
+            <div><strong>LRN:</strong> 823194756201</div>
+        </div>
+
+        <div class="enrollment-status-box slide-in">
+            <div class="enrollment-status-title">Pending Enrollment</div>
+            <a href="#" class="enrollment-form-btn" id="open-enrollment-modal">Online Enrollment Form</a>
+            <div class="enrollment-sy-next">S.Y. 2025 - 2026</div>
+        </div>
+    </div>
+
+    <!-- Enrollment Modal -->
+    <div id="enrollment-modal" class="enrollment-modal-overlay" style="display:none;">
+      <div class="enrollment-modal-content">
+        <button class="enrollment-modal-close" id="close-enrollment-modal">&times;</button>
+        <img src="../images/logo.jpg" alt="School Logo" class="enrollment-modal-logo">
+        <div class="enrollment-modal-header">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;">
+            <div>
+              <div><b>Name:</b> Kiana Mae A. Alvarez</div>
+              <div><b>LRN:</b> 0000000</div>
+            </div>
+            <div style="text-align:right;">
+              <div><b>Grade:</b> 7</div>
+              <div><b>Grade to Enroll:</b> 8</div>
+            </div>
+          </div>
+        </div>
+        <form class="enrollment-modal-form">
+          <div class="enrollment-modal-section">
+            <div class="enrollment-modal-row">
+              <label>School Year</label>
+              <input type="text" style="width:120px;">
+              <span style="margin-left:24px;">Check the appropriate box only</span>
+              <label style="margin-left:12px;">With LRN?</label>
+              <input type="checkbox">
+              <label style="margin-left:12px;">Returning Balik-Aral?</label>
+              <input type="checkbox">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Grade level to Enroll</label>
+              <input type="text" style="width:60px;">
+            </div>
+          </div>
+          <div class="enrollment-modal-section" style="background:#eafbee;padding:8px 0;margin:16px 0 8px 0;text-align:center;font-weight:600;">LEARNER INFORMATION</div>
+          <div class="enrollment-modal-section">
+            <div class="enrollment-modal-row">
+              <label>PSA Certificate No.</label>
+              <input type="text" style="width:140px;">
+              <label style="margin-left:24px;">Learner Reference No. (LRN)</label>
+              <input type="text" style="width:140px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Student's Name</label>
+              <input type="text" placeholder="Last Name" style="width:120px;">
+              <input type="text" placeholder="First Name" style="width:120px;">
+              <input type="text" placeholder="Middle Name" style="width:120px;">
+              <label style="margin-left:24px;">Sex</label>
+              <input type="radio" name="sex"> Male
+              <input type="radio" name="sex"> Female
+              <label style="margin-left:24px;">Birthdate</label>
+              <input type="text" placeholder="MM/DD/YYYY" style="width:110px;">
+              <label style="margin-left:12px;">Age</label>
+              <input type="text" style="width:40px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Place of Birth</label>
+              <input type="text" style="width:140px;">
+              <label style="margin-left:24px;">Mother Tongue</label>
+              <input type="text" style="width:120px;">
+              <label style="margin-left:24px;">Religion</label>
+              <input type="text" style="width:120px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Extension Name (e.g. Jr., III)</label>
+              <input type="text" placeholder="Leave blank if not applicable" style="width:180px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Belonging to any indigenous Peoples?</label>
+              <input type="checkbox">
+              <label style="margin-left:24px;">Is your family beneficiary of 4Ps?</label>
+              <input type="checkbox">
+              <label style="margin-left:24px;">If Yes, 4Ps Household ID number</label>
+              <input type="text" style="width:120px;">
+            </div>
+          </div>
+          <div class="enrollment-modal-section">
+            <div class="enrollment-modal-row">
+              <label>Current Address</label>
+              <input type="text" placeholder="House No./Street" style="width:120px;">
+              <input type="text" placeholder="Barangay" style="width:100px;">
+              <input type="text" placeholder="Province" style="width:100px;">
+              <input type="text" placeholder="Zip Code" style="width:80px;">
+              <input type="text" placeholder="Municipality/City" style="width:120px;">
+              <input type="text" placeholder="Country" style="width:100px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Permanent Address</label>
+              <input type="checkbox"> Same with Current Address
+              <input type="text" placeholder="House No./Street" style="width:120px;">
+              <input type="text" placeholder="Barangay" style="width:100px;">
+              <input type="text" placeholder="Province" style="width:100px;">
+              <input type="text" placeholder="Zip Code" style="width:80px;">
+              <input type="text" placeholder="Municipality/City" style="width:120px;">
+              <input type="text" placeholder="Country" style="width:100px;">
+            </div>
+          </div>
+          <div class="enrollment-modal-section" style="background:#eafbee;padding:8px 0;margin:16px 0 8px 0;text-align:center;font-weight:600;">PARENT'S/GUARDIAN'S INFORMATION</div>
+          <div class="enrollment-modal-section">
+            <div class="enrollment-modal-row">
+              <label>Father's Name</label>
+              <input type="text" placeholder="Last Name" style="width:100px;">
+              <input type="text" placeholder="First Name" style="width:100px;">
+              <input type="text" placeholder="Middle Name" style="width:100px;">
+              <label style="margin-left:24px;">Contact Number</label>
+              <input type="text" style="width:120px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Mother's Name</label>
+              <input type="text" placeholder="Last Name" style="width:100px;">
+              <input type="text" placeholder="First Name" style="width:100px;">
+              <input type="text" placeholder="Middle Name" style="width:100px;">
+              <label style="margin-left:24px;">Contact Number</label>
+              <input type="text" style="width:120px;">
+            </div>
+            <div class="enrollment-modal-row">
+              <label>Guardian's Name</label>
+              <input type="text" placeholder="Last Name" style="width:100px;">
+              <input type="text" placeholder="First Name" style="width:100px;">
+              <input type="text" placeholder="Middle Name" style="width:100px;">
+              <label style="margin-left:24px;">Contact Number</label>
+              <input type="text" style="width:120px;">
+            </div>
+          </div>
+         
+
+
+<!-- Modal Footer Buttons -->
+<div class="enrollment-modal-footer" 
+   style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+  
+  <button type="button" 
+      id="close-enrollment-modal-footer"
+      class="btn" 
+      style="padding:8px 16px; background:#ccc; border:none; border-radius:6px; cursor:pointer;">
+      Exit
+  </button>
+
+  <button type="button" 
+  id="saveEnrollment"
+  class="btn" 
+  style="padding:8px 16px; background:#4c7a67; color:#fff; border:none; border-radius:6px; cursor:pointer;">
+Save Changes
+</button>
+
+
+</div>
+<script>
+  document.getElementById('close-enrollment-modal-footer').onclick = function() {
+      document.getElementById('enrollment-modal').style.display = 'none';
+  };
+  </script>
+  
+
+    <script>
+    document.getElementById('open-enrollment-modal').onclick = function(e) {
+      e.preventDefault();
+      document.getElementById('enrollment-modal').style.display = 'flex';
+    };
+    document.getElementById('close-enrollment-modal').onclick = function() {
+      document.getElementById('enrollment-modal').style.display = 'none';
+    };
+    document.getElementById('enrollment-modal').onclick = function(e) {
+      if (e.target === this) this.style.display = 'none';
+    };
+    </script>
+
+    <!-- Add progress bar -->
+    <div class="logout-progress"></div>
+
+    <script>
+        // Logout functionality with animation
+        document.querySelector('.logout-btn').addEventListener('click', function(e) {
+            const btn = e.currentTarget;
+            const btnText = btn.querySelector('span');
+            const progressBar = document.querySelector('.logout-progress');
+            
+            // Add loading animation
+            btn.classList.add('btn-loading');
+            btnText.textContent = 'Logging out...';
+            progressBar.classList.add('start');
+            
+            // Simulate logout process
+            setTimeout(() => {
+                btn.classList.remove('btn-loading');
+                btn.classList.add('btn-success', 'animate');
+                btnText.textContent = 'Goodbye!';
+                
+                // Redirect after success animation
+                setTimeout(() => {
+                    window.location.href = '../index.html';
+                }, 1000);
+            }, 1500);
+        });
+    </script>
+    <script>
+      document.getElementById('saveEnrollment').addEventListener('click', function () {
+    const inputs = document.querySelectorAll('#enrollment-modal input[type="text"], #enrollment-modal input[type="radio"], #enrollment-modal input[type="checkbox"]');
+
+    let isValid = true;
+    let radioGroups = {};
+
+    // Validate text inputs
+    inputs.forEach(input => {
+        if (input.type === "text" && input.value.trim() === "") {
+            input.style.border = "1px solid red";
+            isValid = false;
+        } else if (input.type === "text") {
+            input.style.border = "1px solid #ccc";
+        }
+
+        // Validate radio groups
+        if (input.type === "radio") {
+            if (!radioGroups[input.name]) {
+                radioGroups[input.name] = false;
+            }
+            if (input.checked) {
+                radioGroups[input.name] = true;
+            }
+        }
+    });
+
+    // Check if all radio groups are selected
+    Object.keys(radioGroups).forEach(group => {
+        if (!radioGroups[group]) {
+            isValid = false;
+        }
+    });
+
+    if (!isValid) {
+        alert("Please fill out all required fields.");
+        return;
+    }
+
+    // If valid → show success alert
+    alert("Saved successfully!");
+});
+    </script>
+    <script>
+      document.getElementById('exitEnrollment').addEventListener('click', function () {
+    document.getElementById('enrollment-modal').style.display = 'none';
+});
+
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,202 @@
+:root {
+  --primary-green: #4c7a67;
+  --light-green: #a1c8b8;
+  --bg-green: #e6f0ea;
+  --hover-green: #5c8a77;
+}
+
+body {
+  background: var(--bg-green);
+}
+
+.main-content {
+  margin-left: 220px;
+  margin-top: 60px;
+  padding: 2.5rem 2rem 2rem 2rem;
+  min-height: 100vh;
+  background: var(--bg-green);
+}
+
+.grades-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.07);
+  padding: 0;
+  max-width: 100%;
+  margin: 0 auto;
+}
+
+.grades-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--primary-green);
+  border-radius: 18px 18px 0 0;
+}
+
+.grades-tab {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 600;
+  padding: 1.1rem 0;
+  border-radius: 18px 18px 0 0;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  opacity: 0.8;
+}
+
+.grades-tab.active {
+  background: rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  opacity: 1;
+  font-weight: 700;
+  transform: translateY(-2px);
+}
+
+.grades-tab.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 4px;
+  background: #fff;
+  border-radius: 4px 4px 0 0;
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.grades-tab:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0.9;
+}
+
+.grades-tab.active:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.grades-table-container {
+  overflow-x: auto;
+  transition: opacity 0.3s ease;
+}
+
+.grades-table-container.fade-out {
+  opacity: 0;
+}
+
+.grades-table-container.fade-in {
+  opacity: 1;
+}
+
+.grades-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.08rem;
+}
+
+.grades-table th, .grades-table td {
+  padding: 1rem 0.5rem;
+  text-align: left;
+}
+
+.grades-table th {
+  background: #f4fbf7;
+  color: #276749;
+  font-weight: 700;
+  border-bottom: 2px solid #e6f0ea;
+}
+
+.grades-table tr {
+  border-bottom: 1px solid #e6f0ea;
+  transition: background 0.18s;
+}
+
+.grades-table tr:nth-child(even) {
+  background: #f8fafc;
+}
+
+.grades-table tr:hover {
+  background: #e6f0ea;
+}
+
+.grades-table td {
+  vertical-align: middle;
+}
+
+.grades-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary-green);
+}
+
+.grades-table button {
+  background: var(--primary-green);
+  color: #fff;
+  border: none;
+  border-radius: 2rem;
+  padding: 0.6rem 2.2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.grades-table button:hover {
+  background: var(--hover-green);
+}
+
+#grades-search {
+  background: none;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.5rem 0;
+  outline: none;
+  width: 200px;
+  max-width: 100%;
+  transition: border-color 0.18s;
+}
+
+#grades-search::placeholder {
+  color: #e6f0ea;
+  opacity: 1;
+}
+
+.sidebar .logout-btn {
+  margin-top: 2rem;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--primary-green);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.75rem 0;
+  border-radius: 8px;
+  transition: background 0.18s, color 0.18s;
+}
+
+.sidebar .logout-btn:hover {
+  background: var(--bg-green);
+  color: var(--hover-green);
+}
+
+@media (max-width: 900px) {
+  .main-content {
+    margin-left: 0;
+    padding: 1rem;
+  }
+  .grades-card {
+    border-radius: 10px;
+  }
+  .grades-tabs {
+    border-radius: 10px 10px 0 0;
+  }
+}
+

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Masterlist - Sto. Niño National High School</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/teacher-common.css" />
+  <link rel="stylesheet" href="css/teacher-sidebar.css" />
+  <link rel="stylesheet" href="css/teacher-masterlist.css" />
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="../images/logo.jpg" alt="School Logo">
+    </div>
+    <ul>
+      <li>
+        <a href="teacher-dashboard.html">
+          <span class="icon">
+            <!-- Info icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </span>
+          Announcements
+        </a>
+      </li>
+      <li>
+        <a href="teacher-classes.html">
+          <span class="icon">
+            <!-- User icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+          </span>
+          Classes
+        </a>
+      </li>
+      <li>
+        <a href="teacher-grades.html">
+          <span class="icon">
+            <!-- Bar chart icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="4" y1="12" x2="4" y2="20"/><line x1="12" y1="8" x2="12" y2="20"/><line x1="20" y1="4" x2="20" y2="20"/></svg>
+          </span>
+          Grades
+        </a>
+      </li>
+      <li>
+        <a href="teacher-subject.html">
+          <span class="icon">
+            <!-- Outlined book icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><line x1="3" y1="8" x2="21" y2="8"/></svg>
+          </span>
+          Subjects
+        </a>
+      </li>
+      <li class="active">
+        <a href="teacher-masterlist.html">
+          <span class="icon">
+            <!-- List icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+          </span>
+          Masterlist
+        </a>
+      </li>
+      <li>
+        <a href="teacher-message.html">
+          <span class="icon">
+            <!-- Mail icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+          </span>
+          Messages
+        </a>
+      </li>
+      <li>
+        <a href="teacher-profile.html">
+          <span class="icon">
+            <!-- Home icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/></svg>
+          </span>
+          Profile
+        </a>
+      </li>
+      <li>
+        <a href="teacher-help.html">
+          <span class="icon">
+            <!-- Info icon (help) -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </span>
+          Help
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div class="top-header">
+    <div class="school-name">
+      Sto. Niño National High School
+    </div>
+    <div class="header-controls">
+      <div class="notifications">
+        <img src="https://cdn-icons-png.flaticon.com/128/3602/3602145.png" alt="Notifications" class="icon">
+        <span class="badge">3</span>
+      </div>
+      <div class="user-controls">
+        <div class="user-info">
+          <div class="user-name">Angelica Nanas</div>
+          <div class="user-role">Science Teacher</div>
+        </div>
+        <div class="user-avatar">
+          <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+        </div>
+        <button class="logout-btn">Logout</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-content">
+    <div class="header">
+      <h1>Masterlist</h1>
+    </div>
+    
+    <div class="info-cards">
+      <div class="card">
+        <h3>Total Students</h3>
+        <div class="icon">
+          <img src="https://cdn-icons-png.flaticon.com/128/3426/3426653.png" alt="Students Icon">
+        </div>
+        <div class="number">40</div>
+        <div class="subtext">Enrolled</div>
+      </div>
+      <div class="card">
+        <h3>Sections</h3>
+        <div class="icon">
+          <img src="https://cdn-icons-png.flaticon.com/128/3388/3388614.png" alt="Sections Icon">
+        </div>
+        <div class="number">4</div>
+        <div class="subtext">Active Sections</div>
+      </div>
+      <div class="card">
+        <h3>Average</h3>
+        <div class="icon">
+          <img src="https://cdn-icons-png.flaticon.com/128/3487/3487761.png" alt="Average Icon">
+        </div>
+        <div class="number">85</div>
+        <div class="subtext">Class Average</div>
+      </div>
+    </div>
+    
+    <div class="masterlist-container">
+      <div class="masterlist-card">
+        <div class="section-select">
+          <select id="sectionSelect">
+            <option value="8-lilac">Grade 7 - Dahlia</option>
+            <option value="8-tulip">Grade 8 - Tulip</option>
+            <option value="9-daisy">Grade 9 - Daisy</option>
+          </select>
+        </div>
+        <table class="masterlist-table">
+          <thead>
+            <tr>
+              <th>LRN</th>
+              <th>Name</th>
+              <th>Gender</th>
+              <th>Enrollment</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Grade & Note Edit Modal -->
+  <div id="grade-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-content">
+      <h3 id="modal-title">Enter Grade & Note</h3>
+      <form id="grade-form">
+        <label for="grade-input">Grade (60-100)</label>
+        <input type="number" id="grade-input" min="60" max="100" required placeholder="Enter grade (e.g. 85)" />
+        <label for="note-input">Note (optional)</label>
+        <textarea id="note-input" rows="3" placeholder="Add a note..."></textarea>
+        <div class="modal-buttons">
+          <button type="button" id="cancel-grade" class="btn-secondary">Cancel</button>
+          <button type="submit" class="btn-primary">Post</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Logout functionality
+    document.querySelector('.logout-btn').addEventListener('click', function() {
+      window.location.href = '../index.html';
+    });
+
+    // Student data for each section
+    const sectionStudents = {
+      '8-lilac': [
+        { lrn: '117283040001', name: 'Alonzo, Bam Carlo', gender: 'M' },
+        { lrn: '117283040002', name: 'Alvarez, Kiana Mae', gender: 'F' },
+        { lrn: '117283040003', name: 'Bautista, John Michael', gender: 'M' },
+        { lrn: '117283040004', name: 'Cruz, Maria Angela', gender: 'F' },
+        { lrn: '117283040005', name: 'Dela Cruz, Juan Paolo', gender: 'M' },
+        { lrn: '117283040006', name: 'Garcia, Sofia Marie', gender: 'F' },
+        { lrn: '117283040007', name: 'Lopez, Miguel Antonio', gender: 'M' },
+        { lrn: '117283040008', name: 'Mendoza, Andrea Nicole', gender: 'F' },
+        { lrn: '117283040009', name: 'Reyes, Gabriel James', gender: 'M' },
+        { lrn: '117283040010', name: 'Santos, Isabella Marie', gender: 'F' }
+      ],
+      '8-tulip': [
+        { lrn: '117283040011', name: 'Aquino, Rafael Miguel', gender: 'M' },
+        { lrn: '117283040012', name: 'Castro, Patricia Ann', gender: 'F' },
+        { lrn: '117283040013', name: 'Domingo, Christian Paul', gender: 'M' },
+        { lrn: '117283040014', name: 'Fernandez, Diana Rose', gender: 'F' },
+        { lrn: '117283040015', name: 'Gonzales, Marco Luis', gender: 'M' },
+        { lrn: '117283040016', name: 'Hernandez, Angela Mae', gender: 'F' },
+        { lrn: '117283040017', name: 'Lim, Joshua David', gender: 'M' },
+        { lrn: '117283040018', name: 'Morales, Christine Joy', gender: 'F' },
+        { lrn: '117283040019', name: 'Ramos, Daniel Joseph', gender: 'M' },
+        { lrn: '117283040020', name: 'Torres, Michelle Anne', gender: 'F' }
+      ],
+      '9-daisy': [
+        { lrn: '117283040021', name: 'Aguilar, Adrian James', gender: 'M' },
+        { lrn: '117283040022', name: 'Borja, Catherine Mae', gender: 'F' },
+        { lrn: '117283040023', name: 'Chua, Matthew Vincent', gender: 'M' },
+        { lrn: '117283040024', name: 'Delos Santos, Emma Louise', gender: 'F' },
+        { lrn: '117283040025', name: 'Enriquez, Francis John', gender: 'M' },
+        { lrn: '117283040026', name: 'Flores, Hannah Grace', gender: 'F' },
+        { lrn: '117283040027', name: 'Ignacio, Kyle Patrick', gender: 'M' },
+        { lrn: '117283040028', name: 'Martinez, Sarah Jane', gender: 'F' },
+        { lrn: '117283040029', name: 'Pascual, Andre Miguel', gender: 'M' },
+        { lrn: '117283040030', name: 'Villanueva, Rachel Anne', gender: 'F' }
+      ]
+    };
+
+    // Function to create table row HTML
+    function createStudentRow(student, index) {
+      return `
+        <tr data-row="${index + 1}">
+          <td>${student.lrn}</td>
+          <td>${student.name}</td>
+          <td>${student.gender}</td>
+          <td>08/25/2023</td>
+        </tr>
+      `;
+    }
+
+    // Function to update table with selected section's students
+    function updateStudentTable(sectionId) {
+      const tableBody = document.getElementById('studentTableBody');
+      const students = sectionStudents[sectionId];
+      tableBody.innerHTML = students.map((student, index) => createStudentRow(student, index)).join('');
+      
+      // Reattach event listeners for edit buttons
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          currentRow = btn.closest('tr');
+          modal.style.display = 'flex';
+          gradeInput.value = '';
+          noteInput.value = '';
+          gradeInput.focus();
+        });
+      });
+    }
+
+    // Handle section change
+    document.getElementById('sectionSelect').addEventListener('change', function(e) {
+      updateStudentTable(e.target.value);
+    });
+
+    // Initialize table with first section
+    updateStudentTable('8-lilac');
+
+    // Grade & Note edit modal logic
+    let currentRow = null;
+    const modal = document.getElementById('grade-modal');
+    const gradeForm = document.getElementById('grade-form');
+    const gradeInput = document.getElementById('grade-input');
+    const noteInput = document.getElementById('note-input');
+    const cancelGrade = document.getElementById('cancel-grade');
+
+    cancelGrade.addEventListener('click', function() {
+      modal.style.display = 'none';
+      currentRow = null;
+    });
+
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) {
+        modal.style.display = 'none';
+        currentRow = null;
+      }
+    });
+
+    gradeForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (!currentRow) return;
+      const grade = Number(gradeInput.value.trim());
+      if (isNaN(grade) || grade < 60 || grade > 100) {
+        alert('Please enter a valid grade between 60 and 100.');
+        gradeInput.focus();
+        return;
+      }
+      // Update grade cell
+      currentRow.querySelector('.grade-cell').textContent = grade;
+
+      // Update status with color and text
+      const statusText = currentRow.querySelector('.status-text');
+      statusText.classList.remove('status-passed', 'status-failed');
+      if (grade <= 74) {
+        statusText.textContent = 'Failed';
+        statusText.classList.add('status-failed');
+      } else {
+        statusText.textContent = 'Passed';
+        statusText.classList.add('status-passed');
+      }
+
+      // Update note cell
+      currentRow.querySelector('.note-cell').textContent = noteInput.value.trim();
+
+      modal.style.display = 'none';
+      currentRow = null;
+    });
+  </script>
+</body>
+</html>

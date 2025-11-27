@@ -1,0 +1,118 @@
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 220px !important;
+  box-sizing: border-box;
+  height: 100vh;
+  background-color: #ffffff;
+  padding: 1.25rem;
+  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.logoContainer {
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.logoContainer img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar li {
+  margin-bottom: 0.25rem;
+}
+
+.sidebar li a {
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  color: #636e72;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.sidebar li:hover a,
+.sidebar li.active a {
+  color: var(--primary-green);
+  background-color: var(--bg-green);
+  transform: translateX(5px);
+}
+
+.sidebar .icon {
+  margin-right: 0.75rem;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar .icon svg {
+  width: 20px;
+  height: 20px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+  transition: all 0.3s ease;
+}
+
+.sidebar li:hover .icon svg,
+.sidebar li.active .icon svg {
+  stroke: var(--primary-green);
+}
+
+/* Custom scrollbar for sidebar */
+.sidebar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+  background: var(--light-green);
+  border-radius: 3px;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-green);
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px !important;
+    min-width: 60px !important;
+    max-width: 60px !important;
+  }
+
+  .logoContainer img {
+    width: 40px;
+    height: 40px;
+  }
+
+  .sidebar li a {
+    justify-content: center;
+    padding: 0.6rem;
+  }
+
+  .sidebar li a span:not(.icon) {
+    display: none;
+  }
+}
+

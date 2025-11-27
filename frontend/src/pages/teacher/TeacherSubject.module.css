@@ -1,0 +1,316 @@
+/* Main Content */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  margin-top: var(--header-height);
+  padding: 1.5rem;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.subjectMain {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-top: 2rem;
+}
+
+.subjectLeft {
+  flex: 1.2;
+  min-width: 0;
+}
+
+.subjectLeft h1 {
+  color: #276749;
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+.sectionSelect {
+  margin-bottom: 1.25rem;
+  max-width: 350px;
+}
+
+.sectionSelect select {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 8px;
+  border: 1.5px solid #a1c8b8;
+  color: #276749;
+  font-size: 1.08rem;
+  font-weight: 600;
+  background: #f4fbf7;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+}
+
+.sectionSelect select:hover {
+  border-color: #276749;
+}
+
+.sectionSelect select:focus {
+  border-color: #276749;
+  box-shadow: 0 0 0 3px rgba(39, 103, 73, 0.1);
+}
+
+.resourcesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.25rem;
+  margin-top: 1rem;
+}
+
+.resourceCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 400px;
+}
+
+.resourceCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.12);
+}
+
+.resourceThumbnail {
+  width: 100%;
+  height: 180px;
+  overflow: hidden;
+  background: #f4fbf7;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.resourceThumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumbnailPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f4fbf7 0%, #e6f0ea 100%);
+}
+
+.resourceContent {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resourceMeta {
+  color: #636e72;
+  font-size: 0.98rem;
+  margin-bottom: 0.2rem;
+}
+
+.resourceTitle {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.2rem;
+  line-height: 1.4;
+}
+
+.resourceDuration {
+  color: #444;
+  font-size: 1.01rem;
+  margin-bottom: 0.5rem;
+}
+
+.resourceActions {
+  margin-top: 0.5rem;
+}
+
+.resourceButton {
+  background: #e6f0ea;
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1rem;
+  color: #276749;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+.resourceButton:hover {
+  background: #a1c8b8;
+}
+
+.resourceButton span {
+  font-size: 1.1em;
+}
+
+.subjectRight {
+  flex: 1;
+  min-width: 320px;
+  max-width: 400px;
+  background: #276749;
+  border-radius: 24px;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  color: #fff;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  height: fit-content;
+  position: sticky;
+  top: calc(var(--header-height) + 1.5rem);
+}
+
+.uploadCard {
+  background: #fff;
+  color: #184d27;
+  border-radius: 16px;
+  padding: 1.5rem 1.25rem 1.25rem 1.25rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.uploadCard h2 {
+  color: #184d27;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.uploadCard input[type="text"],
+.uploadCard textarea {
+  width: 100%;
+  border: none;
+  border-bottom: 2px solid #276749;
+  background: transparent;
+  font-size: 1rem;
+  padding: 0.5rem 0.25rem;
+  margin-bottom: 1rem;
+  color: #184d27;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+}
+
+.uploadCard input[type="text"]:focus,
+.uploadCard textarea:focus {
+  border-bottom-color: #4c7a67;
+}
+
+.uploadCard textarea {
+  min-height: 60px;
+  font-size: 0.98rem;
+}
+
+.uploadCard label {
+  font-weight: 600;
+  color: #276749;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.attachBtns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.attachBtns button {
+  background: #f4fbf7;
+  color: #276749;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.attachBtns button:hover {
+  background: #e6f0ea;
+}
+
+.selectedFile,
+.selectedLink {
+  background: #f4fbf7;
+  color: #276749;
+  padding: 0.5rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+}
+
+.uploadBtn {
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0.8rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.5rem;
+  transition: background 0.18s;
+  width: 100%;
+}
+
+.uploadBtn:hover {
+  background: #388e5c;
+}
+
+.uploadBtn:active {
+  transform: scale(0.98);
+}
+
+@media (max-width: 900px) {
+  .subjectMain {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .subjectRight {
+    max-width: 100%;
+    width: 100%;
+    position: static;
+  }
+
+  .resourcesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .subjectLeft h1 {
+    font-size: 1.5rem;
+  }
+
+  .resourcesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+

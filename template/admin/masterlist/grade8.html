@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Masterlist = Grade 8</title>
+  <link rel="stylesheet" href="../css/admin-dashboard.css">
+  <link rel="stylesheet" href="grade8.css">
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-container">
+          <img src="../../images/logo.jpg" alt="School Logo">
+        </div>
+    <ul>
+      <li>
+        <a href="../admin-main.html">
+          <span class="icon">
+            <!-- Dashboard icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          Dashboard
+        </a>
+      </li>
+      <li><a href="../admin-dashboard.html"><span class="icon"> <!-- Info icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>Announcements</a></li>
+      <li><a href="../admin-accounts.html"><span class="icon"> <!-- User icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg></span>Accounts</a></li>
+      <li><a href="../admin-grades.html"><span class="icon"> <!-- Bar chart icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Grades</a></li>
+      <li><a href="../admin-subject.html"><span class="icon"> <!-- Book icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 19.5A2.5 2.5 0 0 1 4.5 17H20"/><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H20v16H4.5A2.5 2.5 0 0 1 2 17.5z"/></svg></span>Subject</a></li>
+      <li><a href="../admin-schedule.html"><span class="icon"> <!-- Calendar icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Schedule</a></li>
+      <li><a href="../admin-enrollment.html"><span class="icon"> <!-- Open book icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 7v13a2 2 0 0 0 2 2h14"/><path d="M22 7v13a2 2 0 0 1-2 2H6"/><path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2"/><path d="M12 5v16"/></svg></span>Enrollment</a></li>
+      <li class="active"><a href="../admin-masterlist.html" aria-current="page"><span class="icon"> <!-- List icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg></span>Masterlist</a></li>
+      <li><a href="../admin-notification.html"><span class="icon"> <!-- Bell icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span>Notifications</a></li>
+      <li><a href="../admin-message.html"><span class="icon"> <!-- Mail icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg></span>Messages</a></li>
+      <li><a href="../admin-profile.html"><span class="icon"> <!-- Home icon --> <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/></svg></span>Profile</a></li>
+    </ul>
+  </div>
+  <div class="top-header">
+    <div class="school-name">Sto. Niño National High School</div>
+    <div class="header-controls">
+      <div class="notifications">
+        <img src="https://cdn-icons-png.flaticon.com/128/3602/3602145.png" alt="Notifications" class="icon">
+        <span class="badge">3</span>
+      </div>
+      <div class="user-controls">
+        <div class="user-info">
+          <div class="user-name">Erwin Acorda</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <div class="user-avatar">
+          <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+        </div>
+        <button class="logout-btn btn-smart-animate"><span>Logout</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="main-content">
+    <div class="header">
+      <h1>Masterlist - Grade 8</h1>
+    </div>
+    <div class="info-cards">
+      <div class="card">
+        <div class="number">42</div>
+        <div class="subtext">Enrolled</div>
+      </div>
+      <div class="card">
+        <div class="number">5</div>
+        <div class="subtext">Active Sections</div>
+      </div>
+      <div class="card">
+        <div class="number">87</div>
+        <div class="subtext">Class Average</div>
+      </div>
+    </div>
+    <div class="masterlist-container">
+      <div class="masterlist-card">
+        <div class="section-select">
+          <select id="sectionSelect">
+            <option value="tulip">Tulip</option>
+            <option value="sunflower">Sunflower</option>
+            <option value="orchid">Orchid</option>
+            <option value="jasmine">Jasmine</option>
+            <option value="lavender">Lavender</option>
+          </select>
+        </div>
+        <table class="masterlist-table">
+          <thead>
+            <tr>
+              <th>LRN</th>
+              <th>Name</th>
+              <th>Gender</th>
+              <th>Enrollment</th>
+            </tr>
+          </thead>
+          <tbody id="studentTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Example Grade 8 data for each section
+    const sectionStudents = {
+      'tulip': [
+        { lrn: '100000001', name: 'Alvarez, Kiana Mae L.', gender: 'F' },
+        { lrn: '100000002', name: 'Bautista, Maria Cristina P.', gender: 'F' },
+        { lrn: '100000003', name: 'Cruz, John Michael D.', gender: 'M' },
+        { lrn: '100000004', name: 'Dela Rosa, Sarah Jane M.', gender: 'F' },
+        { lrn: '100000017', name: 'Fernandez, Mark Anthony R.', gender: 'M' },
+        { lrn: '100000018', name: 'Garcia, Patricia Ann S.', gender: 'F' },
+        { lrn: '100000019', name: 'Hernandez, James Patrick T.', gender: 'M' },
+        { lrn: '100000020', name: 'Isidro, Angelica Marie U.', gender: 'F' },
+      ],
+      'sunflower': [
+        { lrn: '100000005', name: 'Javier, Robert Vincent V.', gender: 'M' },
+        { lrn: '100000006', name: 'Lopez, Michelle Anne W.', gender: 'F' },
+        { lrn: '100000007', name: 'Martinez, Christian Paul X.', gender: 'M' },
+        { lrn: '100000008', name: 'Nunez, Jennifer Rose Y.', gender: 'F' },
+        { lrn: '100000021', name: 'Ocampo, Daniel Joseph Z.', gender: 'M' },
+        { lrn: '100000022', name: 'Perez, Christine Joy A.', gender: 'F' },
+        { lrn: '100000023', name: 'Quinto, Michael Angelo B.', gender: 'M' },
+      ],
+      'orchid': [
+        { lrn: '100000009', name: 'Ramos, Stephanie Grace C.', gender: 'F' },
+        { lrn: '100000010', name: 'Santos, Kevin Bryan D.', gender: 'M' },
+        { lrn: '100000011', name: 'Torres, Nicole Anne E.', gender: 'F' },
+        { lrn: '100000012', name: 'Villanueva, Ryan Christopher F.', gender: 'M' },
+        { lrn: '100000024', name: 'Yap, Kimberly Ann G.', gender: 'F' },
+        { lrn: '100000025', name: 'Zamora, Joshua David H.', gender: 'M' },
+        { lrn: '100000026', name: 'Acosta, Maria Isabel I.', gender: 'F' },
+        { lrn: '100000027', name: 'Beltran, Carlo Emmanuel J.', gender: 'M' },
+      ],
+      'jasmine': [
+        { lrn: '100000013', name: 'Castro, Andrea Nicole K.', gender: 'F' },
+        { lrn: '100000014', name: 'Dizon, Paolo Miguel L.', gender: 'M' },
+        { lrn: '100000015', name: 'Espiritu, Rachel Anne M.', gender: 'F' },
+        { lrn: '100000016', name: 'Flores, Adrian Paul N.', gender: 'M' },
+        { lrn: '100000028', name: 'Gonzales, Mary Grace O.', gender: 'F' },
+        { lrn: '100000029', name: 'Ibarra, John Carlo P.', gender: 'M' },
+        { lrn: '100000030', name: 'Javier, Kristine Mae Q.', gender: 'F' },
+      ],
+      'lavender': [
+        { lrn: '100000031', name: 'Lim, Vincent Paul R.', gender: 'M' },
+        { lrn: '100000032', name: 'Mendoza, Angelica Rose S.', gender: 'F' },
+        { lrn: '100000033', name: 'Navarro, Bryan Joseph T.', gender: 'M' },
+        { lrn: '100000034', name: 'Ong, Catherine Ann U.', gender: 'F' },
+        { lrn: '100000035', name: 'Pineda, Mark Daniel V.', gender: 'M' },
+        { lrn: '100000036', name: 'Quizon, Patricia Joy W.', gender: 'F' },
+      ]
+    };
+    function createStudentRow(student, index) {
+      return `
+        <tr data-row="${index + 1}">
+          <td>${student.lrn}</td>
+          <td>${student.name}</td>
+          <td>${student.gender}</td>
+          <td>08/25/2023</td>
+        </tr>
+      `;
+    }
+    function updateTotalStudents(sectionId) {
+      const totalElem = document.querySelectorAll('.card .number')[0];
+      if (totalElem) {
+        totalElem.textContent = sectionStudents[sectionId]?.length || 0;
+      }
+    }
+    function updateStudentTable(sectionId) {
+      const tableBody = document.getElementById('studentTableBody');
+      const students = sectionStudents[sectionId] || [];
+      tableBody.innerHTML = students.map((student, index) => createStudentRow(student, index)).join('');
+      updateTotalStudents(sectionId);
+    }
+    document.getElementById('sectionSelect').addEventListener('change', function(e) {
+      updateStudentTable(e.target.value);
+    });
+    // Initialize table with first section
+    updateStudentTable('tulip');
+
+    // Logout functionality with animation
+    document.querySelector('.logout-btn').addEventListener('click', function(e) {
+      const btn = e.currentTarget;
+      const btnText = btn.querySelector('span');
+      
+      // Add loading animation
+      btn.classList.add('btn-loading');
+      btnText.textContent = 'Logging out...';
+      
+      // Simulate logout process
+      setTimeout(() => {
+        btn.classList.remove('btn-loading');
+        btn.classList.add('btn-success', 'animate');
+        btnText.textContent = 'Goodbye!';
+        
+        // Redirect after success animation
+        setTimeout(() => {
+          window.location.href = '../../index.html';
+        }, 1000);
+      }, 1500);
+    });
+  </script>
+   <a href="../admin-masterlist.html" class="back-fab-btn" title="Back">
+    <svg width="32" height="32" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+  </a>
+</body>
+</html>
+

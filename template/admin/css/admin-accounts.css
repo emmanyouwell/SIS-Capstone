@@ -1,0 +1,630 @@
+/* Unified Admin Styles (copied from admin-dashboard.css) */
+:root {
+    --primary-green: #4c7a67;
+    --light-green: #a1c8b8;
+    --bg-green: #e6f0ea;
+    --hover-green: #5c8a77;
+    --sidebar-width: 220px;
+    --header-height: 60px;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    color: #2d3748;
+    background-color: var(--bg-green);
+    min-height: 100vh;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    box-sizing: border-box;
+    height: 100vh;
+    background-color: #ffffff;
+    padding: 1.25rem;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.logo-container {
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.logo-container img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar li {
+    margin-bottom: 0.25rem;
+}
+
+.sidebar li a {
+    display: flex;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    color: #636e72;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-radius: 6px;
+    font-size: 0.9rem;
+}
+
+.sidebar li:hover a,
+.sidebar li.active a {
+    color: var(--primary-green);
+    background-color: var(--bg-green);
+    transform: translateX(5px);
+}
+
+.sidebar .icon {
+    margin-right: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.sidebar .icon img {
+    width: 18px;
+    height: 18px;
+}
+
+.top-header {
+    position: fixed;
+    top: 0;
+    left: var(--sidebar-width);
+    right: 0;
+    height: var(--header-height);
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+    z-index: 100;
+}
+
+.school-name {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary-green);
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.notifications {
+    position: relative;
+    cursor: pointer;
+}
+
+.notifications .icon {
+    width: 24px;
+    height: 24px;
+    color: #636e72;
+}
+
+.notifications .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #e53e3e;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-controls {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.user-info {
+    text-align: right;
+}
+
+.user-name {
+    font-weight: 600;
+    color: #2d3748;
+    font-size: 0.95rem;
+}
+
+.user-role {
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: var(--primary-green);
+    font-size: var(--text-sm, 0.875rem);
+    font-weight: 500;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.logout-btn:hover {
+    color: var(--hover-green);
+    text-decoration: underline;
+}
+
+.main-content {
+    margin-left: var(--sidebar-width);
+    margin-top: var(--header-height);
+    padding: 1.5rem;
+    min-height: calc(100vh - var(--header-height));
+}
+
+.card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+    padding: 1.25rem 2rem;
+    margin-bottom: 1.5rem;
+}
+
+.btn-smart-animate {
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.btn-smart-animate:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Loading Animation */
+.btn-loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: button-loading-spinner 0.6s linear infinite;
+}
+
+.btn-loading span {
+    opacity: 0;
+}
+
+@keyframes button-loading-spinner {
+    from {
+        transform: rotate(0turn);
+    }
+    to {
+        transform: rotate(1turn);
+    }
+}
+
+/* Success Animation */
+.btn-success {
+    background-color: var(--primary-green, #4c7a67) !important;
+    color: white !important;
+    transition: all 0.3s ease !important;
+}
+
+.btn-success::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.btn-success.animate::after {
+    opacity: 1;
+}
+
+/* Accounts Specific Styles */
+.accounts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+.account-card {
+  background: white;
+  border-radius: 18px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  transition: all 0.3s ease;
+}
+.account-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.account-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.account-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.account-info h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+}
+.account-info p {
+  color: #666;
+  font-size: 0.9rem;
+}
+.account-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+.account-actions button {
+  flex: 1;
+  padding: 0.5rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+.edit-btn {
+  background: var(--primary-green);
+  color: white;
+}
+.delete-btn {
+  background: #e74c3c;
+  color: white;
+}
+
+.accounts-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  color: #222;
+}
+.accounts-summary-cards {
+  display: flex;
+  gap: 2.5rem;
+  margin: 2.5rem 0 2rem 0;
+  justify-content: flex-start;
+}
+.account-summary-outer {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 4px 16px rgba(44,62,80,0.10);
+  padding: 2.5rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 650px;
+  min-width: 350px;
+  margin: 0 1.25rem;
+  max-width: 100%;
+}
+.account-summary-card {
+  width: 100%;
+  min-width: 0;
+  border-radius: 24px;
+  padding: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.account-summary-top {
+  background: #d6f9e2;
+  width: 92%;
+  margin: 0 auto;
+  padding: 1.2rem 1.5rem 0.7rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  box-sizing: border-box;
+  border-radius: 24px 24px 0 0;
+}
+.account-summary-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #184d27;
+  margin-bottom: 0.7rem;
+}
+.account-summary-count {
+  font-size: 2.3rem;
+  font-weight: 700;
+  color: #184d27;
+}
+.account-summary-bottom {
+  background: #4c7a67;
+  width: 92%;
+  margin: 0 auto;
+  padding: 1.1rem 0;
+  display: flex;
+  gap: 1.2rem;
+  justify-content: center;
+  box-sizing: border-box;
+  border-radius: 0 0 24px 24px;
+}
+.account-summary-btn {
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+.account-summary-btn:hover {
+  text-decoration: none;
+}
+.account-summary-btn.view {
+  background: #d6f9e2;
+  color: #184d27;
+}
+.account-summary-btn.edit {
+  background: #fff7cc;
+  color: #184d27;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 60px;
+  }
+  
+  .sidebar a span:not(.icon) {
+    display: none;
+  }
+  
+  .main-content {
+    margin-left: 60px;
+    width: calc(100% - 60px);
+  }
+  
+  .top-header {
+    left: 60px;
+  }
+  
+  .school-name {
+    display: none;
+  }
+}
+
+.accounts-table-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+.add-account-btn {
+  background: #39916f;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.08);
+}
+.add-account-btn:hover {
+  background: #276749;
+}
+.accounts-table-container {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(44,62,80,0.10);
+  padding: 1.5rem 1.5rem 1rem 1.5rem;
+  margin-top: 1.5rem;
+}
+.accounts-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.accounts-table th, .accounts-table td {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+}
+.accounts-table th {
+  font-weight: 700;
+  color: #2d3748;
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 1.05rem;
+}
+.accounts-table td {
+  font-size: 1rem;
+  color: #222;
+  border-bottom: 1px solid #f1f1f1;
+  vertical-align: middle;
+}
+.accounts-table tr:last-child td {
+  border-bottom: none;
+}
+.status.active {
+  color: #276749;
+  background: #c6f7e2;
+  border-radius: 4px;
+  padding: 0.2rem 0.7rem;
+  font-weight: 600;
+}
+.status.inactive {
+  color: #b7791f;
+  background: #fffbea;
+  border-radius: 4px;
+  padding: 0.2rem 0.7rem;
+  font-weight: 600;
+}
+.dots-btn {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 1.3rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+.dots-btn:hover {
+  background: #e6f0ea;
+  border: 1px solid #39916f;
+}
+
+/* --- Student Table Consistency & Fixes --- */
+.faculty-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+}
+.faculty-table th, .faculty-table td {
+  padding: 0.9rem 1.2rem;
+  text-align: left;
+}
+.faculty-table th {
+  font-weight: 700;
+  color: #2d3748;
+  background: #f7fafc;
+  border-bottom: 2px solid #e2e8f0;
+  font-size: 1.05rem;
+}
+.faculty-table td {
+  font-size: 1rem;
+  color: #222;
+  border-bottom: 1px solid #f1f1f1;
+  vertical-align: middle;
+}
+.faculty-table tr:last-child td {
+  border-bottom: none;
+}
+.faculty-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  vertical-align: middle;
+}
+
+/* Status badge for Enrolled */
+.status.enrolled {
+  color: #276749;
+  background: #c6f7e2;
+  border-radius: 4px;
+  padding: 0.2rem 0.7rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+/* Responsive Table */
+@media (max-width: 900px) {
+  .faculty-table, .accounts-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Faculty Table and Toolbar Styles (from admin-account-edit.html) */
+.faculty-table-toolbar { display:flex;justify-content:flex-end;align-items:center;margin-bottom:1.2rem;gap:1.2rem; }
+.faculty-search { position:relative; }
+.faculty-search input { padding:0.6rem 2.2rem 0.6rem 0.9rem;border-radius:6px;border:1px solid #e0e0e0;font-size:1rem; }
+.faculty-search svg { position:absolute;right:0.7rem;top:50%;transform:translateY(-50%);color:#888; }
+.add-user-btn { background:#ffe066;color:#222;font-weight:600;font-size:1rem;padding:0.7rem 1.5rem;border:none;border-radius:6px;box-shadow:0 2px 8px rgba(44,62,80,0.08);display:flex;align-items:center;gap:0.7rem;cursor:pointer; }
+.faculty-table { width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden; }
+.faculty-table th { background:#f0f8ef;color:#222;font-weight:600;font-size:1rem;padding:1rem 0.8rem;text-align:left; }
+.faculty-table td { padding:1.1rem 0.8rem;font-size:1rem;color:#222;border-bottom:1px solid #f1f1f1;vertical-align:middle; }
+.faculty-table tr:last-child td { border-bottom:none; }
+.role-badge.teacher { background:#d4f8e8;color:#1a7f37;padding:0.3em 0.9em;border-radius:6px;font-weight:600;font-size:0.98em; }
+.role-badge.admin { background:#e3f1fb;color:#1976d2;padding:0.3em 0.9em;border-radius:6px;font-weight:600;font-size:0.98em; }
+.dots-btn { background:#f7fafc;border:1px solid #e2e8f0;border-radius:5px;font-size:1.3rem;width:2.2rem;height:2.2rem;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:background 0.2s,border 0.2s; }
+.dots-btn:hover { background:#e6f0ea;border:1px solid #39916f; }
+.faculty-table a { color:#2196f3;font-weight:600;text-decoration:none; }
+.faculty-table a:hover { text-decoration:underline; }
+.fab-btn {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 54px;
+  height: 54px;
+  background: #39916f;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+  cursor: pointer;
+  z-index: 100;
+  transition: background 0.2s;
+}
+.fab-btn:hover {
+  background: #276749;
+} 

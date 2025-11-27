@@ -1,0 +1,91 @@
+.pending-main-content {
+    margin-left: 200px;
+    padding: 96px 32px 32px 32px;
+    min-height: 100vh;
+    background: #f7f7f7;
+}
+.pending-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.10);
+  padding: 24px 48px 18px 48px;
+  margin-bottom: 18px;
+  min-width: 420px;
+  max-width: 900px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.pending-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+.pending-table td {
+  padding: 14px 8px;
+  font-size: 1.08rem;
+  color: #222;
+  border-bottom: 1px solid #eee;
+}
+.pending-table tr:last-child td {
+  border-bottom: none;
+}
+.pending-view-btn {
+  background: #4caf7a;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.6rem;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.pending-view-btn:hover {
+  background: #388e5c;
+}
+.pending-viewall {
+  text-align: right;
+  width: 100%;
+  margin-top: 6px;
+  font-size: 1rem;
+}
+.pending-viewall a {
+  color: #888;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.18s;
+}
+.pending-viewall a:hover {
+  color: #184d27;
+  text-decoration: underline;
+}
+.pending-upcoming-label {
+  font-size: 1.08rem;
+  font-weight: 500;
+  color: #222;
+  margin-bottom: 18px;
+}
+.pending-grade-btn-row {
+  display: flex;
+  gap: 24px;
+}
+.pending-grade-btn {
+  border: none;
+  border-radius: 10px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  padding: 14px 32px;
+  cursor: pointer;
+  margin-bottom: 0;
+  transition: background 0.18s, color 0.18s;
+}
+.grade8 { background: #f8b6c2; color: #184d27; }
+.grade9 { background: #f89b8c; color: #184d27; }
+.grade10 { background: #ffe08c; color: #184d27; }
+.pending-grade-btn:hover { filter: brightness(0.95); }
+@media (max-width: 900px) {
+  .pending-main-content { margin-left: 0; padding: 16px 4px 4px 4px; }
+  .pending-card { min-width: 0; max-width: 99vw; padding: 16px 8px; }
+}

@@ -1,0 +1,282 @@
+.mainContent {
+  margin-left: var(--sidebar-width, 240px);
+  padding-top: 24px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  position: relative;
+  max-width: 1200px;
+  padding-left: 24px;
+  padding-right: 24px;
+}
+
+.scheduleTitle {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: #184d27;
+  margin-bottom: 18px;
+  margin-top: 0;
+  align-self: flex-start;
+}
+
+.gradeSelect {
+  margin-bottom: 24px;
+  font-size: 1.1rem;
+  padding: 8px 18px;
+  border-radius: 10px;
+  border: 1px solid #bdbdbd;
+  background: #eafbee;
+  color: #184d27;
+  font-weight: 600;
+  width: 220px;
+  cursor: pointer;
+}
+
+.gradeSelect:focus {
+  outline: none;
+  border-color: #184d27;
+}
+
+.contentLayout {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.sectionListCard {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
+  padding: 20px 0 12px 0;
+  min-width: 200px;
+  max-width: 220px;
+  margin-bottom: 0;
+  align-self: flex-start;
+}
+
+.sectionListTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #184d27;
+  padding: 0 24px 12px 24px;
+}
+
+.sectionList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sectionItem {
+  padding: 12px 24px;
+  font-size: 1.08rem;
+  cursor: pointer;
+  color: #222;
+  font-weight: 400;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sectionItem:hover {
+  background-color: #eafbee;
+}
+
+.sectionItem.active {
+  color: #184d27;
+  background: #b0bbb5;
+  font-weight: 600;
+}
+
+.scheduleContainer {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.schedContainer {
+  margin-top: 0;
+  max-width: 900px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
+  padding: 24px;
+}
+
+.schedHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.schedTitle {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #184d27;
+}
+
+.schedTitle b {
+  font-weight: 700;
+}
+
+.schedTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 12px;
+}
+
+.schedTable th,
+.schedTable td {
+  border: 1px solid #d0d0d0;
+  text-align: center;
+  padding: 8px;
+}
+
+.schedTable th {
+  background: #a5d6a7;
+  color: #184d27;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.schedTable .timeCol {
+  background: #eafbee;
+  font-weight: 600;
+  color: #184d27;
+}
+
+.schedTable .breakRow td {
+  background: #f7f7f7;
+  font-weight: 700;
+  color: #888;
+  font-size: 1.1rem;
+}
+
+.subjectDropdown,
+.teacherDropdown {
+  width: 100%;
+  padding: 4px 6px;
+  border-radius: 6px;
+  border: 1px solid #bdbdbd;
+  font-size: 1rem;
+  background: #fff;
+  cursor: pointer;
+}
+
+.subjectDropdown:focus,
+.teacherDropdown:focus {
+  outline: none;
+  border-color: #184d27;
+}
+
+.schedActions {
+  margin-top: 18px;
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.schedBtn {
+  padding: 8px 20px;
+  border-radius: 16px;
+  border: none;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.schedBtn:hover {
+  transform: translateY(-1px);
+}
+
+.schedBtn:active {
+  transform: translateY(0);
+}
+
+.schedBtn.saveBtn {
+  background: #eafbee;
+  color: #276749;
+}
+
+.schedBtn.saveBtn:hover {
+  background: #d4f4e0;
+}
+
+.schedBtn.editBtn {
+  background: #276749;
+  color: #fff;
+}
+
+.schedBtn.editBtn:hover {
+  background: #184d27;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 12px;
+    max-width: 100%;
+  }
+
+  .contentLayout {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .sectionListCard {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .schedContainer {
+    padding: 16px;
+    width: 100%;
+  }
+
+  .schedHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .schedTable {
+    font-size: 0.9rem;
+  }
+
+  .schedTable th,
+  .schedTable td {
+    padding: 6px 4px;
+  }
+}
+
+@media (max-width: 600px) {
+  .scheduleTitle {
+    font-size: 1.4rem;
+  }
+
+  .gradeSelect {
+    width: 100%;
+    max-width: 220px;
+  }
+
+  .schedTable {
+    font-size: 0.8rem;
+  }
+
+  .schedTable th,
+  .schedTable td {
+    padding: 4px 2px;
+  }
+
+  .subjectDropdown,
+  .teacherDropdown {
+    font-size: 0.9rem;
+    padding: 2px 4px;
+  }
+}
+

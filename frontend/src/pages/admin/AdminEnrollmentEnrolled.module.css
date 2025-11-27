@@ -1,0 +1,362 @@
+.mainContent {
+  margin-left: var(--sidebar-width, 220px);
+  margin-top: var(--header-height, 60px);
+  padding: 48px 32px 32px 32px;
+  min-height: calc(100vh - var(--header-height, 60px));
+  background: #f7f7f7;
+}
+
+.enrollmentFlexRow {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+.enrollmentCol {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.enrollmentCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
+  padding: 28px 32px 24px 32px;
+  margin-bottom: 18px;
+  min-width: 320px;
+  max-width: 420px;
+  min-height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.donutCard {
+  min-width: 340px;
+  max-width: 420px;
+  align-items: center;
+  padding-bottom: 18px;
+}
+
+.cardLabel {
+  font-size: 1.1rem;
+  margin-bottom: 8px;
+}
+
+.cardCount {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.chartCanvas {
+  margin: 12px 0 0 0;
+}
+
+.enrollLegend {
+  margin-top: 18px;
+  width: 100%;
+  font-size: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.legendDot {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+
+.legendPct {
+  margin-left: auto;
+  font-weight: 600;
+  color: #444;
+}
+
+.totalCard {
+  margin-bottom: 24px;
+  box-shadow: 2px 4px 8px rgba(44, 62, 80, 0.1);
+}
+
+.totalLabel {
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+}
+
+.totalCount {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #184d27;
+}
+
+.gradeBtnCard {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 2px 4px 8px rgba(44, 62, 80, 0.1);
+}
+
+.gradeBtnRow {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 8px;
+}
+
+.gradeBtn {
+  border: none;
+  border-radius: 10px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  padding: 18px 38px;
+  cursor: pointer;
+  transition: filter 0.18s;
+  margin-bottom: 0;
+}
+
+.gradeBtn.grade7 {
+  background: #26c6da;
+  color: #fff;
+}
+
+.gradeBtn.grade8 {
+  background: #f8b6c2;
+  color: #184d27;
+}
+
+.gradeBtn.grade9 {
+  background: #f89b8c;
+  color: #184d27;
+}
+
+.gradeBtn.grade10 {
+  background: #ffe08c;
+  color: #184d27;
+}
+
+.gradeBtn:hover {
+  filter: brightness(0.95);
+}
+
+.backFabBtn {
+  position: fixed;
+  right: 32px;
+  bottom: 32px;
+  display: flex;
+  z-index: 99999;
+  background: #4c7a67;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.backFabBtn:hover {
+  background: #39916f;
+}
+
+/* Modal Styles */
+.gradeModal {
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(44, 62, 80, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gradeModalContent {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 700px;
+  width: 95vw;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #184d27;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.modalClose:hover {
+  background: #f0f0f0;
+}
+
+.modalTitle {
+  margin-bottom: 1.5rem;
+  color: #184d27;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.modalStats {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.modalStatsLabel {
+  font-size: 1.1rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.modalStatsCount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #184d27;
+}
+
+.modalSection {
+  margin-bottom: 1.5rem;
+}
+
+.modalSectionTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #184d27;
+  margin-bottom: 1rem;
+}
+
+.sectionsList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.sectionCard {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+}
+
+.sectionName {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.sectionCount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #184d27;
+}
+
+.sectionLabel {
+  font-size: 0.85rem;
+  color: #999;
+  margin-top: 0.25rem;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btnPrimary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  background-color: #39916f;
+  color: white;
+  border: none;
+  transition: background-color 0.2s;
+}
+
+.btnPrimary:hover {
+  background-color: #276749;
+}
+
+/* Responsive Design */
+@media (max-width: 1100px) {
+  .enrollmentFlexRow {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .enrollmentCol {
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .enrollmentCard {
+    min-width: 220px;
+    max-width: 99vw;
+  }
+
+  .donutCard {
+    min-width: 220px;
+  }
+}
+
+@media (max-width: 700px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 16px 4px 4px 4px;
+  }
+
+  .enrollmentFlexRow {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .enrollmentCol {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .enrollmentCard {
+    min-width: 0;
+    max-width: 99vw;
+    padding: 16px 8px;
+  }
+
+  .donutCard {
+    min-width: 0;
+  }
+
+  .gradeBtnRow {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .gradeBtn {
+    width: 100%;
+  }
+}
+

@@ -1,0 +1,364 @@
+/* Main content styles */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  padding-top: calc(var(--header-height, 60px) + 2rem);
+}
+
+.mainContent h1 {
+  color: var(--primary-green);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+}
+
+/* Enrollment info styles */
+.enrollmentInfo {
+  background: white;
+  padding: 1.25rem;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+  border-left: 4px solid var(--primary-green);
+}
+
+.enrollmentInfo div {
+  margin: 0.75rem 0;
+  color: #2d3748;
+  font-size: 1rem;
+}
+
+.enrollmentInfo strong {
+  color: var(--primary-green);
+  font-weight: 600;
+  margin-right: 0.75rem;
+}
+
+/* Enrollment status box */
+.enrollmentStatusBox {
+  background: #f4fbf7;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
+  padding: 2.2rem 2.2rem 1.5rem 2.2rem;
+  text-align: center;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.enrollmentStatusBox:hover {
+  box-shadow: 0 8px 24px rgba(44, 62, 80, 0.13);
+  transform: translateY(-6px) scale(1.03);
+  z-index: 2;
+}
+
+.enrollmentStatusTitle {
+  color: var(--primary-green);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.enrollmentFormBtn {
+  display: inline-block;
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  font-size: 1rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.enrollmentFormBtn:hover {
+  background: var(--hover-green);
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(76, 122, 103, 0.2);
+}
+
+.enrollmentSyNext {
+  margin-top: 1.5rem;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Animation classes */
+.fadeIn {
+  animation: fadeIn 0.3s ease-in;
+}
+
+.slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Modal styles */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  padding: 32px 32px 24px 32px;
+  max-width: 900px;
+  width: 98vw;
+  max-height: 95vh;
+  overflow-y: auto;
+  position: relative;
+  font-family: 'Inter', sans-serif;
+}
+
+.modalClose {
+  position: absolute;
+  top: 18px;
+  right: 24px;
+  background: none;
+  border: none;
+  font-size: 2.2rem;
+  color: #888;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.18s;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modalClose:hover {
+  color: #184d27;
+}
+
+.modalLogo {
+  display: block;
+  margin: 0 auto 18px auto;
+  height: 60px;
+  width: auto;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
+}
+
+.modalHeader {
+  margin-bottom: 18px;
+  position: relative;
+  padding-top: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modalHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.modalHeaderRight {
+  text-align: right;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.modalSection {
+  margin-bottom: 12px;
+}
+
+.sectionHeader {
+  background: #eafbee;
+  padding: 8px 0;
+  margin: 16px 0 8px 0;
+  text-align: center;
+  font-weight: 600;
+  border-radius: 4px;
+}
+
+.modalRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.modalRow label {
+  font-size: 0.9rem;
+  color: #2d3748;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.modalRow input[type="text"] {
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  font-family: 'Inter', sans-serif;
+  transition: border-color 0.2s;
+}
+
+.modalRow input[type="text"]:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 2px rgba(76, 122, 103, 0.1);
+}
+
+.modalRow input[type="checkbox"],
+.modalRow input[type="radio"] {
+  margin: 0 4px;
+  cursor: pointer;
+}
+
+.modalRow input[type="radio"] {
+  margin-right: 8px;
+}
+
+.inputError {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.1) !important;
+}
+
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.btnExit {
+  padding: 8px 16px;
+  background: #ccc;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btnExit:hover {
+  background: #bbb;
+}
+
+.btnSave {
+  padding: 8px 16px;
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.btnSave:hover:not(:disabled) {
+  background: var(--hover-green);
+}
+
+.btnSave:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: calc(var(--header-height, 60px) + 1rem);
+  }
+
+  .enrollmentStatusBox {
+    padding: 1.5rem 1rem;
+  }
+
+  .enrollmentStatusTitle {
+    font-size: 1.25rem;
+  }
+
+  .enrollmentFormBtn {
+    width: 100%;
+    padding: 0.875rem;
+  }
+
+  .modalContent {
+    padding: 12px 4px 8px 4px;
+    max-width: 99vw;
+  }
+
+  .modalHeader {
+    padding-top: 0;
+  }
+
+  .modalLogo {
+    height: 36px !important;
+    margin-bottom: 8px;
+  }
+
+  .modalRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .modalRow label {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .modalRow input[type="text"] {
+    width: 100% !important;
+  }
+
+  .modalHeaderRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .modalHeaderRight {
+    text-align: left;
+  }
+}
+

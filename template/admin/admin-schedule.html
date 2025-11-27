@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Schedule - Sto. Niño National High School</title>
+  <link rel="stylesheet" href="css/admin-dashboard.css" />
+  <link rel="stylesheet" href="css/admin-schedule.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="../images/logo.jpg" alt="School Logo">
+    </div>
+    <ul>
+      <li>
+        <a href="admin-main.html">
+          <span class="icon">
+            <!-- Dashboard icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="admin-dashboard.html">
+          <span class="icon">
+            <!-- Info icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </span>
+          Announcements
+        </a>
+      </li>
+      <li>
+        <a href="admin-accounts.html">
+          <span class="icon">
+            <!-- User icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+          </span>
+          Accounts
+        </a>
+      </li>
+      <li>
+        <a href="admin-grades.html">
+          <span class="icon">
+            <!-- Bar chart icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </span>
+          Grades
+        </a>
+      </li>
+      <li>
+        <a href="admin-subject.html">
+          <span class="icon">
+            <!-- Book icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 19.5A2.5 2.5 0 0 1 4.5 17H20"/><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H20v16H4.5A2.5 2.5 0 0 1 2 17.5z"/></svg>
+          </span>
+          Subject
+        </a>
+      </li>
+      <li class="active">
+        <a href="admin-schedule.html" aria-current="page">
+          <span class="icon">
+            <!-- Calendar icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+          Schedule
+        </a>
+      </li>
+      <li>
+        <a href="admin-enrollment.html">
+          <span class="icon">
+            <!-- Open book icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 7v13a2 2 0 0 0 2 2h14"/><path d="M22 7v13a2 2 0 0 1-2 2H6"/><path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2"/><path d="M12 5v16"/></svg>
+          </span>
+          Enrollment
+        </a>
+      </li>
+      <li>
+        <a href="admin-masterlist.html">
+          <span class="icon">
+            <!-- List icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+          </span>
+          Masterlist
+        </a>
+      </li>
+      <li>
+        <a href="admin-notification.html">
+          <span class="icon">
+            <!-- Bell icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </span>
+          Notifications
+        </a>
+      </li>
+      <li>
+        <a href="admin-message.html">
+          <span class="icon">
+            <!-- Mail icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+          </span>
+          Messages
+        </a>
+      </li>
+      <li>
+        <a href="admin-profile.html">
+          <span class="icon">
+            <!-- Home icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/></svg>
+          </span>
+          Profile
+        </a>
+      </li>
+    </ul>
+  </div>
+  <!-- Top Header -->
+  <div class="top-header">
+    <div class="school-name">Sto. Niño National High School</div>
+    <div class="header-controls">
+      <div class="notifications">
+        <img src="https://cdn-icons-png.flaticon.com/128/3602/3602145.png" alt="Notifications" class="icon">
+        <span class="badge">3</span>
+      </div>
+      <div class="user-controls">
+        <div class="user-info">
+          <div class="user-name">Erwin Acorda</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <div class="user-avatar">
+          <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+        </div>
+        <button class="logout-btn btn-smart-animate"><span>Logout</span></button>
+      </div>
+    </div>
+  </div>
+  <!-- Main Content -->
+  <div class="main-content" style="display: flex; flex-direction: column; align-items: flex-start; position: relative; max-width: 1200px; margin-left: 240px; padding-top: 24px; min-height: 100vh;">
+    <div id="schedule-title" style="font-size:1.7rem;font-weight:700;color:#184d27;margin-bottom:18px;margin-top:0;align-self:flex-start;">Schedule - Grade 7</div>
+    <select id="grade-select" style="margin-bottom: 24px; font-size: 1.1rem; padding: 8px 18px; border-radius: 10px; border: 1px solid #bdbdbd; background: #eafbee; color: #184d27; font-weight: 600; width: 220px;"></select>
+    <div style="display: flex; flex-direction: row; gap: 32px; align-items: flex-start; width: 100%;">
+      <div class="section-list-card" style="background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(44,62,80,0.10); padding: 20px 0 12px 0; min-width: 200px; max-width: 220px; margin-bottom: 0; align-self: flex-start;">
+        <div class="section-list-title" style="font-size: 1.25rem; font-weight: 700; color: #184d27; padding: 0 24px 12px 24px;">Sections</div>
+        <ul id="section-list" class="section-list" style="list-style: none; margin: 0; padding: 0;"></ul>
+      </div>
+      <div style="flex: 1; min-width: 0; position: relative;">
+        <div class="sched-container" style="margin-top:0;">
+          <div class="sched-header">
+            <div class="sched-title">Grade and Section: <b id="section-title">7 - Dahlia</b></div>
+            <div class="sched-title">Adviser: <b id="adviser-title">Flores, Mariah J.</b></div>
+          </div>
+          <table class="sched-table" id="sched-table">
+            <thead>
+              <tr>
+                <th class="time-col">TIME</th>
+                <th>Monday</th>
+                <th>Tuesday</th>
+                <th>Wednesday</th>
+                <th>Thursday</th>
+                <th>Friday</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Table rows will be generated by JS -->
+            </tbody>
+          </table>
+          <div class="sched-actions">
+            <button class="sched-btn save" id="save-btn" style="display:none;">Save Changes</button>
+            <button class="sched-btn edit" id="edit-btn">Edit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Data for grades, sections, advisers
+    const gradeSections = {
+      7: ["Dahlia", "Rose", "Lilac", "Foxglove", "Lily"],
+      8: ["Sunflower", "Tulip", "Orchid", "Peony", "Daisy"],
+      9: ["Jasmine", "Magnolia", "Azalea", "Camellia", "Begonia"],
+      10: ["Iris", "Poppy", "Violet", "Marigold", "Petunia"]
+    };
+    const advisers = {
+      Dahlia: 'Flores, Mariah J.', Rose: 'Santos, Ana M.', Lilac: 'Reyes, John P.', Foxglove: 'Garcia, Liza S.', Lily: 'Torres, Mark D.',
+      Sunflower: 'Cruz, Bella R.', Tulip: 'Lopez, Carla S.', Orchid: 'Lim, Peter Q.', Peony: 'Tan, Grace L.', Daisy: 'Uy, Henry T.',
+      Jasmine: 'Dela Cruz, Maria F.', Magnolia: 'Sison, Paul G.', Azalea: 'Chua, Linda V.', Camellia: 'Go, Steven H.', Begonia: 'Yu, Anna K.',
+      Iris: 'Reyes, Carla M.', Poppy: 'Santos, John D.', Violet: 'Lim, Sarah P.', Marigold: 'Tan, Michael S.', Petunia: 'Uy, Lisa C.'
+    };
+    // Sample subjects and teachers
+    const subjects = ["Math", "Science", "English", "MAPEH", "Filipino", "A.P.", "TLE", "ESP"];
+    const teachers = [
+      "Hermano Puli", "Carla Sainz", "Kim Perez", "Baby Mandaguayon", "Yna Clarente", "Karylle Samonte", "Kyle Echavez", "Mary Marilag"
+    ];
+    const times = [
+      "7:00-8:00 AM",
+      "8:00-9:00 AM",
+      "BREAK",
+      "9:15-10:15 AM",
+      "10:15-11:15 AM",
+      "11:15-12:15 PM"
+    ];
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
+    // Schedules per section (for demo, all empty)
+    let schedules = {};
+    Object.values(gradeSections).flat().forEach(section => {
+      schedules[section] = {};
+      times.forEach(time => {
+        if (time !== "BREAK") {
+          schedules[section][time] = {};
+          days.forEach(day => {
+            schedules[section][time][day] = { subject: "", teacher: "" };
+          });
+        }
+      });
+    });
+    // State
+    let currentGrade = 7;
+    let currentSection = "Dahlia";
+    let editMode = false;
+    // Populate grade dropdown
+    const gradeSelect = document.getElementById('grade-select');
+    gradeSelect.innerHTML = Object.keys(gradeSections).map(g => `<option value="${g}">Grade ${g}</option>`).join('');
+    gradeSelect.value = currentGrade;
+    // Populate section list
+    function renderSectionList() {
+      const sectionList = document.getElementById('section-list');
+      sectionList.innerHTML = '';
+      gradeSections[currentGrade].forEach(section => {
+        const li = document.createElement('li');
+        li.textContent = section;
+        li.style.padding = '12px 24px';
+        li.style.fontSize = '1.08rem';
+        li.style.cursor = 'pointer';
+        li.style.color = section === currentSection ? '#184d27' : '#222';
+        li.style.background = section === currentSection ? '#b0bbb5' : 'none';
+        li.style.fontWeight = section === currentSection ? '600' : '400';
+        li.onclick = function() {
+          currentSection = section;
+          updateHeader();
+          renderTable();
+          renderSectionList();
+        };
+        sectionList.appendChild(li);
+      });
+    }
+    // Update header/title/adviser
+    function updateHeader() {
+      document.getElementById('schedule-title').textContent = `Schedule - Grade ${currentGrade}`;
+      document.getElementById('section-title').textContent = `${currentGrade} - ${currentSection}`;
+      document.getElementById('adviser-title').textContent = advisers[currentSection] || '';
+    }
+    // Render schedule table
+    function renderTable() {
+      const tbody = document.querySelector('#sched-table tbody');
+      tbody.innerHTML = '';
+      for (let i = 0; i < times.length; i++) {
+        const time = times[i];
+        if (time === "BREAK") {
+          const tr = document.createElement('tr');
+          tr.className = 'break-row';
+          tr.innerHTML = `<td class="time-col" colspan="6">BREAK</td>`;
+          tbody.appendChild(tr);
+          continue;
+        }
+        // Subject row
+        const trSubj = document.createElement('tr');
+        trSubj.innerHTML = `<td class="time-col" rowspan="2">${time}</td>` + days.map(day => {
+          const val = schedules[currentSection][time][day].subject;
+          if (editMode) {
+            let opts = '<option value="">Subject</option>' + subjects.map(s => `<option value="${s}"${val===s?' selected':''}>${s}</option>`).join('');
+            return `<td><select class="subject-dd">${opts}</select></td>`;
+          } else {
+            return `<td>${val ? val : ''}</td>`;
+          }
+        }).join('');
+        tbody.appendChild(trSubj);
+        // Teacher row
+        const trTeach = document.createElement('tr');
+        trTeach.innerHTML = days.map(day => {
+          const val = schedules[currentSection][time][day].teacher;
+          if (editMode) {
+            let opts = '<option value="">Teacher</option>' + teachers.map(t => `<option value="${t}"${val===t?' selected':''}>${t}</option>`).join('');
+            return `<td><select class="teacher-dd">${opts}</select></td>`;
+          } else {
+            return `<td>${val ? val : ''}</td>`;
+          }
+        }).join('');
+        tbody.appendChild(trTeach);
+      }
+    }
+    function enableEdit() {
+      editMode = true;
+      document.getElementById('edit-btn').style.display = 'none';
+      document.getElementById('save-btn').style.display = '';
+      renderTable();
+    }
+    function saveChanges() {
+      // Read all dropdowns and update schedule
+      let i = 0;
+      document.querySelectorAll('.subject-dd').forEach(sel => {
+        const time = times.filter(t => t !== 'BREAK')[Math.floor(i/5)];
+        const day = days[i%5];
+        schedules[currentSection][time][day].subject = sel.value;
+        i++;
+      });
+      i = 0;
+      document.querySelectorAll('.teacher-dd').forEach(sel => {
+        const time = times.filter(t => t !== 'BREAK')[Math.floor(i/5)];
+        const day = days[i%5];
+        schedules[currentSection][time][day].teacher = sel.value;
+        i++;
+      });
+      editMode = false;
+      document.getElementById('edit-btn').style.display = '';
+      document.getElementById('save-btn').style.display = 'none';
+      renderTable();
+      alert('Schedule successfully updated!');
+    }
+    gradeSelect.addEventListener('change', function() {
+      currentGrade = parseInt(this.value);
+      currentSection = gradeSections[currentGrade][0];
+      updateHeader();
+      renderSectionList();
+      renderTable();
+    });
+    document.getElementById('edit-btn').onclick = enableEdit;
+    document.getElementById('save-btn').onclick = saveChanges;
+    // Initial render
+    updateHeader();
+    renderSectionList();
+    renderTable();
+  </script>
+  <script>
+    // Logout functionality with animation
+    document.querySelector('.logout-btn').addEventListener('click', function(e) {
+      const btn = e.currentTarget;
+      const btnText = btn.querySelector('span');
+      
+      // Add loading animation
+      btn.classList.add('btn-loading');
+      btnText.textContent = 'Logging out...';
+      
+      // Simulate logout process
+      setTimeout(() => {
+        btn.classList.remove('btn-loading');
+        btn.classList.add('btn-success', 'animate');
+        btnText.textContent = 'Goodbye!';
+        
+        // Redirect after success animation
+        setTimeout(() => {
+          window.location.href = '../index.html';
+        }, 1000);
+      }, 1500);
+    });
+  </script>
+</body>
+</html>
+
+</html>

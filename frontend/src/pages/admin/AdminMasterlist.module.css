@@ -1,0 +1,182 @@
+.mainContent {
+  padding: 2rem;
+  margin-left: 220px;
+  margin-top: 60px;
+  min-height: calc(100vh - 60px);
+  background-color: #e6f0ea;
+}
+
+.pageTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #184d27;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.5rem;
+  text-align: left;
+}
+
+/* Top Card: View & Edit Lists */
+.topCard {
+  background: #d6f9e2;
+  border-radius: 18px;
+  width: 600px;
+  max-width: 100%;
+  margin: 0 auto 2.5rem auto;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.1);
+  padding-bottom: 2rem;
+}
+
+.topHeader {
+  background: #4c7a67;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 700;
+  border-radius: 18px 18px 0 0;
+  padding: 1.2rem 2rem;
+}
+
+.gradeButtons {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+}
+
+.gradeButtonRow {
+  display: flex;
+  gap: 2.2rem;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.gradeButton {
+  font-weight: 700;
+  border: none;
+  border-radius: 18px;
+  padding: 1.1rem 3.2rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  min-width: 220px;
+  background: #fff;
+  color: #184d27;
+  transition: all 0.2s ease;
+}
+
+.gradeButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.grade7 {
+  background: #7ee6e6;
+}
+
+.grade8 {
+  background: #f7b6c2;
+}
+
+.grade9 {
+  background: #f89b8c;
+}
+
+.grade10 {
+  background: #ffe08c;
+}
+
+/* Bottom Cards: Assign Teachers/Students */
+.bottomCards {
+  display: flex;
+  gap: 2.5rem;
+  justify-content: center;
+  margin-top: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.bottomCard {
+  background: #d6f9e2;
+  border-radius: 18px;
+  width: 300px;
+  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 2rem;
+}
+
+.bottomTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #222;
+  padding: 2rem 2rem 1.2rem 2rem;
+  text-align: left;
+}
+
+.bottomGreen {
+  background: #4c7a67;
+  border-radius: 0 0 18px 18px;
+  padding: 2rem 0;
+  display: flex;
+  justify-content: center;
+}
+
+.viewButton {
+  background: #2ecc91;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 2.2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  transition: background 0.2s;
+}
+
+.viewButton:hover {
+  background: #27ae60;
+}
+
+.viewButton svg {
+  flex-shrink: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .topCard {
+    width: 100%;
+  }
+
+  .gradeButtonRow {
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .gradeButton {
+    min-width: 200px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .bottomCards {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bottomCard {
+    width: 100%;
+    max-width: 400px;
+  }
+}
+

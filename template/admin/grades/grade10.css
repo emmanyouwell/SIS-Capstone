@@ -1,0 +1,557 @@
+.grade10-container {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.08);
+  padding: 0;
+  margin: 1.5rem auto;
+  max-width: 98%;
+  width: 96%;
+}
+
+.grade10-tabs {
+  display: flex;
+  align-items: center;
+  background: #4c7a67;
+  border-radius: 12px 12px 0 0;
+  padding: 0 2rem;
+  height: 56px;
+  position: relative;
+}
+
+.grade10-tab {
+  color: #fff;
+  font-size: 1.1rem;
+  font-weight: 500;
+  padding: 0 1.7rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border: none;
+  background: none;
+  outline: none;
+  border-bottom: 3px solid transparent;
+  transition: border 0.2s, color 0.2s;
+}
+
+.grade10-tab.active {
+  border-bottom: 3px solid #fff;
+  color: #fff;
+  font-weight: 700;
+}
+
+.grade10-search {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  color: #fff;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.grade10-search input {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid #fff;
+  color: #fff;
+  font-size: 1.1rem;
+  padding: 0.2rem 2.2rem 0.2rem 1.2rem;
+  outline: none;
+  width: 140px;
+  transition: border 0.2s;
+}
+
+.grade10-search input::placeholder {
+  color: #e0f7fa;
+  opacity: 1;
+}
+
+.grade10-search svg {
+  position: absolute;
+  left: 0.2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #fff;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.grade10-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 0;
+}
+
+.grade10-table th, .grade10-table td {
+  padding: 1rem 0.8rem;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.grade10-table th {
+  background: #fff;
+  color: #222;
+  font-weight: 700;
+  border-bottom: 2px solid #f1f1f1;
+}
+
+.grade10-table td {
+  background: #fff;
+  color: #222;
+  border-bottom: 1px solid #f1f1f1;
+  vertical-align: middle;
+}
+
+.grade10-table tr:nth-child(even) td {
+  background: #f5f7fa;
+}
+
+.grade10-table tr.selected td {
+  background: #eafbe7;
+}
+
+.status-completed {
+  color: #247a5a;
+  font-weight: 700;
+}
+
+.status-incomplete {
+  color: #4c7a67;
+  font-weight: 700;
+}
+
+.status-failed {
+  color: #d84315;
+  font-weight: 700;
+  background: #fff3e0;
+  border-radius: 4px;
+  padding: 0.2rem 0.7rem;
+}
+
+.grade10-view-btn {
+  background: #247a5a;
+  color: #fff;
+  font-weight: 600;
+  border: none;
+  border-radius: 20px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+
+.grade10-view-btn:hover {
+  background: #184d27;
+}
+
+.grade10-view-btn svg {
+  width: 1.2em;
+  height: 1.2em;
+  stroke: #fff;
+}
+
+.grade10-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(44,62,80,0.10);
+  margin: 2rem auto;
+  max-width: 97%;
+  width: 98%;
+  padding-bottom: 1.5rem;
+}
+
+.grade-modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+.grade-modal-content {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem 2.5rem;
+  max-width: 950px;
+  width: 98vw;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 8px 32px rgba(44,62,80,0.18);
+  position: relative;
+}
+.grade-modal-close {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #888;
+  cursor: pointer;
+}
+.grade-modal-header {
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 0.2rem;
+}
+.grade-modal-name { font-size: 1.2rem; font-weight: 600; }
+.grade-modal-lrn { font-size: 1rem; color: #444; margin-bottom: 1.2rem; }
+.grade-modal-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.7rem;
+}
+.grade-modal-table th, .grade-modal-table td {
+  padding: 0.7rem 0.6rem;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+.grade-modal-table th {
+  background: #f8f8f8;
+  font-weight: 700;
+}
+.grade-modal-edit-btn {
+  background: #247a5a;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 0.3rem 1.2rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.grade-modal-gwa {
+  text-align: right;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0.7rem 0 1.2rem 0;
+}
+.grade-modal-bottom {
+  display: flex;
+  gap: 2.5rem;
+  margin-top: 1.2rem;
+  justify-content: space-between;
+}
+.grade-modal-notify {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.2rem 2rem;
+  min-width: 220px;
+  font-size: 1.1rem;
+}
+.grade-modal-notify div {
+  margin-bottom: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+.grade-modal-notify div:last-child { margin-bottom: 0; }
+.notify-btn {
+  background: #d32f2f;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 0.3rem 1.1rem;
+  font-size: 1rem;
+  cursor: pointer;
+}
+.grade-modal-summary {
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.2rem 2rem;
+  min-width: 220px;
+  font-size: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.7rem;
+}
+.final-grade {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #111;
+  margin-left: 0.7rem;
+}
+.status-passed {
+  color: #247a5a;
+  font-weight: 700;
+  margin-left: 0.7rem;
+  font-size: 1.2rem;
+}
+.retain-btn, .promote-btn {
+  border: none;
+  border-radius: 16px;
+  padding: 0.5rem 1.5rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-right: 0.7rem;
+  cursor: pointer;
+}
+.retain-btn { background: #d32f2f; color: #fff; }
+.promote-btn { background: #43a047; color: #fff; }
+
+.back-fab-btn {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 54px;
+  height: 54px;
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.10);
+  cursor: pointer;
+  z-index: 100;
+  transition: background 0.2s;
+  text-decoration: none;
+}
+.back-fab-btn:hover {
+  background: #276749;
+}
+
+/* Password Modal Styles */
+.password-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+
+.password-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.password-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.password-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.password-modal-content h3 {
+  margin: 0 0 0.5rem 0;
+  color: #184d27;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.password-modal-content p {
+  margin: 0 0 1.5rem 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.password-modal-content input[type="password"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+}
+
+.password-modal-content input[type="password"]:focus {
+  outline: none;
+  border-color: #4c7a67;
+}
+
+.password-modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.password-modal-buttons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#password-cancel-btn {
+  background: #f0f0f0;
+  color: #666;
+}
+
+#password-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+#password-submit-btn {
+  background: #4c7a67;
+  color: #fff;
+}
+
+#password-submit-btn:hover {
+  background: #276749;
+}
+
+/* Edit Grade Modal Styles */
+.edit-grade-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+}
+
+.edit-grade-modal-content {
+  background: #fff;
+  border-radius: 12px;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  position: relative;
+}
+
+.edit-grade-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.edit-grade-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.edit-grade-modal-content h3 {
+  margin: 0 0 1.5rem 0;
+  color: #184d27;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.edit-grade-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.edit-grade-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.edit-grade-field label {
+  margin-bottom: 0.5rem;
+  color: #333;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.edit-grade-field input {
+  padding: 0.75rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.edit-grade-field input:focus {
+  outline: none;
+  border-color: #4c7a67;
+}
+
+.edit-grade-modal-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.edit-grade-modal-buttons button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+#edit-grade-cancel-btn {
+  background: #f0f0f0;
+  color: #666;
+}
+
+#edit-grade-cancel-btn:hover {
+  background: #e0e0e0;
+}
+
+#edit-grade-save-btn {
+  background: #4c7a67;
+  color: #fff;
+}
+
+#edit-grade-save-btn:hover {
+  background: #276749;
+}
+

@@ -1,0 +1,307 @@
+.loginProgress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0%;
+  height: 3px;
+  background: linear-gradient(to right, #4c7a67, #10B981);
+  transition: width 1.5s ease;
+  z-index: 1000;
+}
+
+.loginProgress.start {
+  width: 100%;
+}
+
+.rectangle1 {
+  background: 
+    linear-gradient(rgba(24, 77, 39, 0.88), rgba(24, 77, 39, 0.88)),
+    url('/images/snhs.jpg') center center/cover no-repeat;
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.schoolCard {
+  position: relative;
+  z-index: 2;
+  padding: 2.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.schoolLogo {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  margin-bottom: 1.5rem;
+  border: 3px solid #fff;
+  box-shadow: 0 2px 8px rgba(24,77,39,0.12);
+  background: #fff;
+}
+
+.coverTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  text-align: center;
+  letter-spacing: 1px;
+  text-shadow: 2px 2px 8px rgba(0,0,0,0.25);
+  margin-top: 1.5rem;
+}
+
+.rightContent {
+  background: white;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.loginWrapper {
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+.welcomeText {
+  color: var(--primary-green);
+  font-weight: 700;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.textGray {
+  color: #666;
+  margin-bottom: 2rem;
+}
+
+.loginForm {
+  margin-top: 1.5rem;
+}
+
+.form-floating > .form-control:focus,
+.form-floating > .form-control:not(:placeholder-shown) {
+  padding-top: 1.625rem;
+  padding-bottom: 0.625rem;
+}
+
+.form-floating > label {
+  padding: 1rem 0.75rem;
+}
+
+.form-control {
+  border: 2px solid #e0e0e0;
+  padding: 1rem 0.75rem;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+}
+
+.form-control:focus {
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 0.25rem rgba(76, 122, 103, 0.15);
+}
+
+.forgotLink {
+  color: var(--primary-green);
+  text-decoration: none;
+  font-size: 0.85rem;
+  transition: color 0.3s ease;
+}
+
+.forgotLink:hover {
+  color: var(--hover-green);
+}
+
+.btnLogin {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  transform-style: preserve-3d;
+  background: var(--primary-green);
+}
+
+.btnLogin:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 122, 103, 0.2);
+}
+
+.buttonContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.3s ease;
+}
+
+.btnLogin.loading {
+  pointer-events: none;
+}
+
+.btnLogin.loading .buttonContent {
+  animation: buttonContentSlideUp 0.3s ease forwards;
+}
+
+.btnLogin.loading::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin-left: -10px;
+  margin-top: -10px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite, fadeIn 0.3s ease 0.3s forwards;
+  opacity: 0;
+}
+
+.btnLogin.success {
+  background: #10B981;
+  pointer-events: none;
+}
+
+.btnLogin.success .buttonContent {
+  transform: scale(0);
+}
+
+.btnLogin.success::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  width: 300px;
+  height: 300px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: ripple 0.6s ease-out;
+}
+
+.btnLogin.success::after {
+  content: '✓';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0);
+  font-size: 24px;
+  color: white;
+  animation: checkmark 0.5s ease-out 0.3s forwards;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.divider span {
+  padding: 0 1rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+.termsConditions {
+  color: #666;
+  font-size: 0.8rem;
+  margin-bottom: 0;
+}
+
+.termsConditions a {
+  color: var(--primary-green);
+}
+
+.termsConditions a:hover {
+  color: var(--hover-green);
+}
+
+.alert {
+  border-radius: 10px;
+  border: none;
+  font-size: 0.9rem;
+}
+
+@keyframes buttonContentSlideUp {
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ripple {
+  from {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+  }
+}
+
+@keyframes checkmark {
+  0% {
+    transform: translate(-50%, -50%) scale(0) rotate(-45deg);
+    opacity: 0;
+  }
+  70% {
+    transform: translate(-50%, -50%) scale(1.2) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@media (max-width: 991.98px) {
+  .loginWrapper {
+    max-width: 100%;
+  }
+
+  .rightContent {
+    box-shadow: none;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .welcomeText {
+    font-size: 1.25rem;
+  }
+
+  .btn {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+  }
+}
+

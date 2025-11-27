@@ -1,0 +1,576 @@
+/* Use the same variables as dashboard */
+:root {
+    --primary-green: #4c7a67;
+    --light-green: #a1c8b8;
+    --bg-green: #e6f0ea;
+    --hover-green: #5c8a77;
+    --primary-color: #2e7d32;
+    --secondary-color: #4caf50;
+    --text-color: #333;
+    --border-color: #e0e0e0;
+    --hover-color: #f5f5f5;
+    --header-bg: #f8f9fa;
+}
+
+/* Remove duplicate body styles since they're in dashboard.css */
+.grades-container {
+    margin: 1rem;
+    padding: 1.5rem;
+    background: transparent;
+    position: relative;
+    width: calc(100% - 2rem);
+    min-height: 500px; /* Add minimum height to ensure container is tall enough */
+    background-size: 600px 600px;
+    /* Faint effect */
+    opacity: 1;
+    /* Use a white overlay for extra subtlety if needed */
+    /* background-blend-mode: lighten; */
+}
+
+.grades-container::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 400px;
+  height: 400px;
+  background: url('/images/logo.jpg') center center/cover no-repeat;
+  border-radius: 50%;
+  opacity: 0.07;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Ensure content stays above watermark */
+.grades-header,
+.grades-table,
+.grading-system {
+    position: relative;
+    z-index: 2;
+}
+
+.grades-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color);
+}
+.grades-header .left {
+  font-size: 1.05rem;
+  color: #222;
+  line-height: 1.6;
+}
+.grades-header .right {
+  text-align: right;
+  font-size: 1.05rem;
+  color: #222;
+  line-height: 1.6;
+}
+.grades-table {
+  width: 70%;
+  float: left;
+  margin-right: 2%;
+  background: rgba(255,255,255,0.85); /* Semi-transparent so watermark shows through */
+  border-radius: 6px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  overflow: hidden;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  background: rgba(255,255,255,0.85); /* Semi-transparent so watermark shows through */
+}
+th, td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+}
+th {
+  background: var(--primary-green);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border-bottom: 2px solid var(--hover-green);
+}
+tr:not(:last-child) td {
+  border-bottom: 1px solid #e0e0e0;
+}
+.grades-table td:last-child, .grades-table th:last-child {
+  text-align: center;
+}
+.grades-table tr:last-child td {
+  font-weight: 600;
+  background: var(--bg-green);
+}
+.remarks {
+  font-weight: 500;
+  color: var(--primary-green);
+  text-align: center;
+}
+.grading-system {
+  float: right;
+  width: 28%;
+  background: rgba(255,255,255,0.85); /* Semi-transparent so watermark shows through */
+  border-radius: 8px;
+  box-shadow: 2px 4px 12px rgba(44,62,80,0.10);
+  padding: 0;
+  margin-top: 0;
+  font-size: 1rem;
+  overflow: hidden;
+}
+.grading-system-title {
+  background: var(--light-green);
+  color: var(--primary-green);
+  font-weight: 700;
+  text-align: center;
+  padding: 0.75rem 0;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--primary-green);
+}
+.grading-system-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  padding: 0.5rem;
+}
+.grading-system-table td {
+  padding: 0.6rem 0.8rem;
+  line-height: 1.4;
+}
+.grading-system-table td:first-child {
+  font-weight: 600;
+  color: var(--primary-green);
+  width: 40%;
+  text-align: right;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(0,0,0,0.1);
+}
+.grading-system-table td:last-child {
+  padding-left: 1rem;
+  color: #2d3748;
+}
+.grading-system-table tr:not(:last-child) td {
+  border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+.grading-system-table tr:hover {
+  background-color: rgba(255,255,255,0.5);
+}
+@media (max-width: 1200px) {
+  .grades-table {
+    width: 65%;
+  }
+  .grading-system {
+    width: 33%;
+  }
+}
+@media (max-width: 900px) {
+  .grades-container {
+    margin: 0.5rem;
+    width: calc(100% - 1rem);
+    padding: 1rem;
+  }
+  .grades-table, .grading-system {
+    float: none;
+    width: 100%;
+    margin: 0 0 1.5rem 0;
+  }
+  .grades-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .grades-header .right {
+    text-align: left;
+  }
+  .grading-system-table td:first-child {
+    width: 35%;
+  }
+}
+
+.header-logo {
+  width: 90px;
+  height: 90px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
+.main-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0.5rem 0;
+  background: var(--bg-green);
+  min-height: 100vh;
+}
+
+.grades-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+  padding: 0.7rem 0.7rem 0.7rem 0.7rem;
+  max-width: 1150px;
+  width: 100px;
+  position: relative;
+}
+
+.transcript-header {
+  margin-bottom: 0.7rem;
+}
+
+.header-logo {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 0.3rem;
+}
+
+.school-info {
+  text-align: center;
+}
+.school-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  margin-bottom: 0.2rem;
+}
+.school-address {
+  font-size: 0.92rem;
+  color: #444;
+  margin-bottom: 0.1rem;
+}
+.school-year {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.divider {
+  margin: 0.7rem 0 1rem 0;
+}
+
+.report-title {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #222;
+  margin-bottom: 0.7rem;
+}
+
+.student-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.98rem;
+  margin-bottom: 0.2rem;
+}
+.badge, .lrn {
+  background: none !important;
+  color: inherit !important;
+  border-radius: 0;
+  padding: 0;
+  font-weight: 600;
+  font-size: 1.01rem;
+  box-shadow: none;
+}
+
+.signature-area, .sig-line {
+  display: none !important;
+}
+
+.grades-table, .grading-system, table {
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+}
+
+th, td {
+  padding: 0.45rem 0.6rem;
+}
+
+/* Creative grading system styles */
+.creative-grading-system {
+  margin: 1.2rem 0 0.2rem 0;
+  padding: 0.5rem 0.2rem 0.2rem 0.2rem;
+}
+.grading-scale-bar {
+  width: 100%;
+  height: 26px;
+  border-radius: 14px;
+  margin-bottom: 0.5rem;
+  font-size: 0.92rem;
+}
+.grading-segment {
+  font-size: 0.92rem;
+}
+.grading-labels {
+  width: 100%;
+  font-size: 0.85rem;
+  margin-top: -0.3rem;
+}
+
+@media (max-width: 900px) {
+  .grades-card {
+    padding: 0.2rem 0.1rem 0.2rem 0.1rem;
+  }
+  .student-info-row {
+    gap: 0.3rem;
+  }
+  .grading-scale-bar, .grading-labels {
+    width: 100%;
+  }
+}
+
+.grades-flex-row {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-top: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.grades-table-container {
+  flex: 2 1 0;
+  min-width: 340px;
+}
+.creative-grading-system {
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 320px;
+  margin: 0;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.grades-table, table {
+  font-size: 1.02rem;
+  margin: 0 0 1.2rem 0;
+}
+th, td {
+  padding: 0.55rem 0.8rem;
+}
+.grading-scale-bar {
+  width: 100%;
+  height: 32px;
+  border-radius: 16px;
+  margin-bottom: 0.7rem;
+  font-size: 1rem;
+}
+.grading-labels {
+  width: 100%;
+  font-size: 0.93rem;
+  margin-top: -0.2rem;
+}
+@media (max-width: 900px) {
+  .grades-flex-row {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .grades-table-container, .creative-grading-system {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .grading-scale-bar, .grading-labels {
+    width: 100%;
+  }
+}
+
+.grades-page .main-content {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 0.5rem 0;
+  background: var(--bg-green);
+  min-height: 100vh;
+}
+
+.grades-page .grades-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(44,62,80,0.07);
+  padding: 0.7rem 0.7rem 0.7rem 0.7rem;
+  max-width: 1000px;
+  width: 100%;
+  position: relative;
+}
+
+.grades-page .transcript-header {
+  margin-bottom: 0.7rem;
+}
+
+.grades-page .header-logo {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 0.3rem;
+}
+
+.grades-page .school-name {
+  font-size: 1.05rem;
+}
+.grades-page .school-address {
+  font-size: 0.92rem;
+}
+.grades-page .school-year {
+  font-size: 0.9rem;
+}
+
+.grades-page .divider {
+  margin: 0.7rem 0 1rem 0;
+}
+
+.grades-page .report-title {
+  font-size: 1.05rem;
+  margin-bottom: 0.7rem;
+}
+
+.grades-page .student-info-row {
+  font-size: 0.98rem;
+  gap: 1rem;
+  margin-bottom: 0.2rem;
+}
+
+.grades-page .grades-flex-row {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  margin-top: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+.grades-page .grades-table-container {
+  flex: 2 1 0;
+  min-width: 340px;
+}
+.grades-page .creative-grading-system {
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 320px;
+  margin: 0;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.grades-page .grades-table, .grades-page table {
+  font-size: 1.02rem;
+  margin: 0 0 1.2rem 0;
+}
+.grades-page th, .grades-page td {
+  padding: 0.55rem 0.8rem;
+}
+.grades-page .grading-scale-bar {
+  width: 100%;
+  height: 32px;
+  border-radius: 16px;
+  margin-bottom: 0.7rem;
+  font-size: 1rem;
+}
+.grades-page .grading-labels {
+  width: 100%;
+  font-size: 0.93rem;
+  margin-top: -0.2rem;
+}
+@media (max-width: 900px) {
+  .grades-page .grades-card {
+    padding: 0.2rem 0.1rem 0.2rem 0.1rem;
+  }
+  .grades-page .student-info-row {
+    gap: 0.3rem;
+  }
+  .grades-page .grades-flex-row {
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .grades-page .grades-table-container, .grades-page .creative-grading-system {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .grades-page .grading-scale-bar, .grades-page .grading-labels {
+    width: 100%;
+  }
+}
+
+.grades-page .refined-grading-system {
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 320px;
+  margin: 0;
+  padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f8fafb;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(44,62,80,0.06);
+}
+.grades-page .grading-system-title {
+  font-size: 1.08rem;
+  font-weight: 600;
+  color: var(--primary-green);
+  margin-bottom: 0.7rem;
+  letter-spacing: 0.5px;
+}
+.grades-page .grading-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+.grades-page .grading-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.38rem 0.7rem;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.98rem;
+  background: #fff;
+}
+.grades-page .grading-item:last-child {
+  border-bottom: none;
+}
+.grades-page .grade-range {
+  font-weight: 600;
+  color: var(--primary-green);
+}
+.grades-page .grade-desc {
+  color: #444;
+  font-weight: 500;
+  text-align: right;
+  margin-left: 1.2rem;
+}
+@media (max-width: 900px) {
+  .grades-page .refined-grading-system {
+    max-width: 100%;
+    min-width: 0;
+    margin-top: 1.2rem;
+  }
+}
+@media (max-width: 1200px) {
+  .grades-page .grades-card {
+    max-width: 100%;
+  }
+  .grades-page .grades-table-container {
+    min-width: 0;
+  }
+  .grades-page .refined-grading-system {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+.grades-page .student-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+.grades-page .class-adviser-meta {
+  text-align: right;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 1rem;
+}
+
+
+
+

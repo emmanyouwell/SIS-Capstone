@@ -1,0 +1,371 @@
+/* Main content styles */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  padding-top: calc(var(--header-height, 60px) + 2rem);
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.header h1 {
+  color: var(--primary-green, #4c7a67);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+/* Profile Container */
+.profileContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Profile Header */
+.profileHeader {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.profileCover {
+  height: 200px;
+  background: linear-gradient(135deg, var(--primary-green, #4c7a67), var(--light-green, #a8d5ba));
+}
+
+.profileInfo {
+  display: flex;
+  padding: 2rem;
+  margin-top: -60px;
+}
+
+.profileAvatar {
+  position: relative;
+  margin-right: 2rem;
+}
+
+.profileAvatar img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background: white;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.profileAvatar img:hover {
+  transform: scale(1.05);
+}
+
+.changeAvatarBtn {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.changeAvatarBtn:hover {
+  background: var(--hover-green, #5c8a77);
+}
+
+.profileDetails {
+  padding-top: 2rem;
+}
+
+.profileDetails h2 {
+  color: var(--primary-green, #4c7a67);
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+.profileDetails .department {
+  color: #718096;
+  font-size: 1rem;
+}
+
+/* Profile Content */
+.profileContent {
+  /* Container for profile sections */
+}
+
+.profileSection {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profileSection h3 {
+  color: var(--primary-green, #4c7a67);
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--bg-green, #e6f0ea);
+  font-weight: 600;
+}
+
+/* Information Grid */
+.infoGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+}
+
+.infoItem label {
+  color: #718096;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+}
+
+.infoItem p {
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+/* Edit Button */
+.editBtn {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  border: none;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  margin-top: 1rem;
+}
+
+.editBtn:hover {
+  background: var(--hover-green, #5c8a77);
+}
+
+/* Edit Form */
+.editForm {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-top: 1rem;
+}
+
+.editForm h3 {
+  color: var(--primary-green, #4c7a67);
+  font-size: 1.25rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--bg-green, #e6f0ea);
+  font-weight: 600;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.formGroup input {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--primary-green, #4c7a67);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.15);
+}
+
+.formGroup input:invalid {
+  border-color: #e53e3e;
+}
+
+.formGroup input:invalid:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+}
+
+.formButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.cancelBtn,
+.saveBtn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  border: none;
+}
+
+.cancelBtn {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  background-color: #cbd5e0;
+}
+
+.saveBtn {
+  background-color: var(--primary-green, #4c7a67);
+  color: white;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background-color: var(--hover-green, #5c8a77);
+}
+
+.saveBtn:disabled,
+.cancelBtn:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Success/Error Messages */
+.message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 8px;
+  animation: slideIn 0.3s ease-out;
+}
+
+.message.success {
+  background-color: #c6f6d5;
+  color: #2f855a;
+  border: 1px solid #9ae6b4;
+}
+
+.message.error {
+  background-color: #fed7d7;
+  color: #c53030;
+  border: 1px solid #feb2b2;
+}
+
+.messageIcon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.message.success .messageIcon {
+  background-color: #48bb78;
+  color: white;
+}
+
+.message.error .messageIcon {
+  background-color: #e53e3e;
+  color: white;
+}
+
+.messageText h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.messageText p {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: calc(var(--header-height, 60px) + 1rem);
+  }
+
+  .profileInfo {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-top: -40px;
+  }
+
+  .profileAvatar {
+    margin-right: 0;
+    margin-bottom: 1.5rem;
+  }
+
+  .profileDetails {
+    padding-top: 0;
+  }
+
+  .infoGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+}
+

@@ -1,0 +1,174 @@
+.mainContent {
+  margin-left: 220px;
+  margin-top: 60px;
+  padding: 32px 24px 24px 24px;
+  background: #e6f0ea;
+  min-height: calc(100vh - 60px);
+}
+
+.header {
+  color: #4c7a67;
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  color: #4c7a67;
+  margin: 0;
+}
+
+.infoCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(76, 122, 103, 0.15);
+}
+
+.card .number {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #4c7a67;
+  margin: 0;
+  margin-bottom: 0.5rem;
+}
+
+.card .subtext {
+  color: #636e72;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.masterlistContainer {
+  background: #e6f0ea;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.masterlistCard {
+  padding: 1.5rem;
+  background: #e6f0ea;
+  border-radius: 12px;
+}
+
+.sectionSelect {
+  margin-bottom: 1.5rem;
+}
+
+.sectionSelect select {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.75rem 1rem;
+  border: 1px solid #a1c8b8;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #4c7a67;
+  background-color: white;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.masterlistTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1rem;
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.masterlistTable thead {
+  background-color: #e6f0ea;
+}
+
+.masterlistTable th,
+.masterlistTable td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.masterlistTable th {
+  background-color: #e6f0ea;
+  color: #4c7a67;
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.masterlistTable tbody tr {
+  background-color: white;
+}
+
+.masterlistTable tbody tr:nth-child(even) {
+  background-color: #e6f0ea;
+}
+
+.masterlistTable tbody tr:hover {
+  background-color: #d4e8dd;
+}
+
+.backButton {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  width: 54px;
+  height: 54px;
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
+  cursor: pointer;
+  z-index: 100;
+  transition: background 0.2s;
+}
+
+.backButton:hover {
+  background: #276749;
+}
+
+@media (max-width: 900px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+  }
+
+  .infoCards {
+    grid-template-columns: 1fr;
+  }
+
+  .masterlistContainer {
+    margin-top: 1rem;
+  }
+
+  .masterlistCard {
+    padding: 1rem;
+  }
+
+  .sectionSelect select {
+    font-size: 0.95rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+

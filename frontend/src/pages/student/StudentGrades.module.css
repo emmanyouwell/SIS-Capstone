@@ -1,0 +1,303 @@
+/* Main container */
+.gradesPage {
+  margin-left: var(--sidebar-width, 220px);
+  min-height: 100vh;
+}
+
+.mainContent {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem;
+  padding-top: calc(var(--header-height, 60px) + 2rem);
+  background: var(--bg-green, #e6f0ea);
+  min-height: calc(100vh - var(--header-height, 60px));
+}
+
+.gradesCard {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  padding: 1.5rem;
+  max-width: 1150px;
+  width: 100%;
+  position: relative;
+}
+
+/* Transcript Header */
+.transcriptHeader {
+  margin-bottom: 1rem;
+}
+
+.schoolInfo {
+  text-align: center;
+}
+
+.headerLogo {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border-radius: 50%;
+  margin-bottom: 0.5rem;
+}
+
+.schoolName {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--primary-green, #4c7a67);
+  margin-bottom: 0.3rem;
+}
+
+.schoolAddress {
+  font-size: 0.92rem;
+  color: #444;
+  margin-bottom: 0.2rem;
+}
+
+.schoolYear {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 1rem 0;
+}
+
+.reportTitle {
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #222;
+  margin-bottom: 1rem;
+}
+
+/* Student Info */
+.studentInfoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.98rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Grades Header */
+.gradesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.gradesHeader .left {
+  font-size: 1.05rem;
+  color: #222;
+  line-height: 1.6;
+}
+
+.gradesHeader .right {
+  text-align: right;
+  font-size: 1.05rem;
+  color: #222;
+  line-height: 1.6;
+}
+
+/* Grades Flex Row */
+.gradesFlexRow {
+  display: flex;
+  gap: 2.5rem;
+  align-items: flex-start;
+  margin-top: 1.2rem;
+  margin-bottom: 1.2rem;
+}
+
+.gradesTableContainer {
+  flex: 2 1 0;
+  min-width: 340px;
+  overflow-x: auto;
+}
+
+.gradesTableContainer table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 1.02rem;
+  background: #fff;
+}
+
+.gradesTableContainer th {
+  background: var(--primary-green, #4c7a67);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 1.05rem;
+  border-bottom: 2px solid var(--hover-green, #5c8a77);
+}
+
+.gradesTableContainer th:last-child {
+  text-align: center;
+}
+
+.gradesTableContainer td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.gradesTableContainer td:last-child {
+  text-align: center;
+}
+
+.gradesTableContainer tr:last-child td {
+  font-weight: 600;
+  background: var(--bg-green, #e6f0ea);
+  border-bottom: none;
+}
+
+.remarks {
+  font-weight: 500;
+  color: var(--primary-green, #4c7a67);
+  text-align: center;
+}
+
+/* Grading System */
+.simpleGradingSystem {
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 320px;
+  background: #f8fafb;
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(44, 62, 80, 0.06);
+  overflow: hidden;
+}
+
+.gradingSystemTitle {
+  background: var(--light-green, #a1c8b8);
+  color: var(--primary-green, #4c7a67);
+  font-weight: 700;
+  text-align: center;
+  padding: 0.75rem 0;
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--primary-green, #4c7a67);
+}
+
+.gradingSystemTableSimple {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.gradingSystemTableSimple td {
+  padding: 0.6rem 0.8rem;
+  line-height: 1.4;
+}
+
+.gradingSystemTableSimple td:first-child {
+  font-weight: 600;
+  color: var(--primary-green, #4c7a67);
+  width: 40%;
+  text-align: right;
+  padding-right: 1rem;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.gradingSystemTableSimple td:last-child {
+  padding-left: 1rem;
+  color: #2d3748;
+}
+
+.gradingSystemTableSimple tr:not(:last-child) td {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.gradingSystemTableSimple tr:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .gradesCard {
+    max-width: 100%;
+  }
+
+  .gradesTableContainer {
+    min-width: 0;
+  }
+
+  .simpleGradingSystem {
+    min-width: 0;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 900px) {
+  .gradesFlexRow {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .gradesTableContainer,
+  .simpleGradingSystem {
+    min-width: 0;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .studentInfoRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .gradesHeader {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .gradesHeader .right {
+    text-align: left;
+  }
+
+  .mainContent {
+    padding: 1rem;
+  }
+
+  .gradesCard {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .gradesPage {
+    margin-left: 0;
+  }
+
+  .mainContent {
+    padding: 1rem 0.5rem;
+  }
+
+  .gradesTableContainer table {
+    font-size: 0.9rem;
+  }
+
+  .gradesTableContainer th,
+  .gradesTableContainer td {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .gradingSystemTableSimple {
+    font-size: 0.85rem;
+  }
+
+  .gradingSystemTableSimple td {
+    padding: 0.5rem 0.6rem;
+  }
+}
+

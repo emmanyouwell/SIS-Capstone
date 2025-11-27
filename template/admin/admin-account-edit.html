@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Edit Faculty Accounts - Sto. Niño National High School</title>
+  <link rel="stylesheet" href="css/admin-accounts.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="sidebar">
+    <div class="logo-container">
+      <img src="../images/logo.jpg" alt="School Logo">
+    </div>
+    <ul>
+      <li>
+        <a href="admin-main.html">
+          <span class="icon">
+            <!-- Dashboard icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </span>
+          Dashboard
+        </a>
+      </li>
+      <li>
+        <a href="admin-dashboard.html">
+          <span class="icon">
+            <!-- Info icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          </span>
+          Announcements
+        </a>
+      </li>
+      <li class="active">
+        <a href="admin-accounts.html">
+          <span class="icon">
+            <!-- User icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 8-4 8-4s8 0 8 4"/></svg>
+          </span>
+          Accounts
+        </a>
+      </li>
+      <li>
+        <a href="admin-grades.html">
+          <span class="icon">
+            <!-- Bar chart icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </span>
+          Grades
+        </a>
+      </li>
+      <li>
+        <a href="admin-subject.html">
+          <span class="icon">
+            <!-- Book icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 19.5A2.5 2.5 0 0 1 4.5 17H20"/><path d="M2 6.5A2.5 2.5 0 0 1 4.5 4H20v16H4.5A2.5 2.5 0 0 1 2 17.5z"/></svg>
+          </span>
+          Subject
+        </a>
+      </li>
+      <li>
+        <a href="admin-schedule.html">
+          <span class="icon">
+            <!-- Calendar icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </span>
+          Schedule
+        </a>
+      </li>
+      <li>
+        <a href="admin-enrollment.html">
+          <span class="icon">
+            <!-- Open book icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M2 7v13a2 2 0 0 0 2 2h14"/><path d="M22 7v13a2 2 0 0 1-2 2H6"/><path d="M2 7a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2"/><path d="M12 5v16"/></svg>
+          </span>
+          Enrollment
+        </a>
+      </li>
+      <li>
+        <a href="admin-masterlist.html">
+          <span class="icon">
+            <!-- List icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><circle cx="3" cy="6" r="1"/><circle cx="3" cy="12" r="1"/><circle cx="3" cy="18" r="1"/></svg>
+          </span>
+          Masterlist
+        </a>
+      </li>
+      <li>
+        <a href="admin-notification.html">
+          <span class="icon">
+            <!-- Bell icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          </span>
+          Notifications
+        </a>
+      </li>
+      <li>
+        <a href="admin-message.html">
+          <span class="icon">
+            <!-- Mail icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/></svg>
+          </span>
+          Messages
+        </a>
+      </li>
+      <li>
+        <a href="admin-profile.html">
+          <span class="icon">
+            <!-- Home icon -->
+            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7"/><path d="M9 22V12h6v10"/></svg>
+          </span>
+          Profile
+        </a>
+      </li>
+    </ul>
+  </div>
+  <div class="top-header">
+    <div class="school-name">
+      Sto. Niño National High School
+    </div>
+    <div class="header-controls">
+      <div class="notifications">
+        <img src="https://cdn-icons-png.flaticon.com/128/3602/3602145.png" alt="Notifications" class="icon">
+        <span class="badge">3</span>
+      </div>
+      <div class="user-controls">
+        <div class="user-info">
+          <div class="user-name">Erwin Acorda</div>
+          <div class="user-role">Administrator</div>
+        </div>
+        <div class="user-avatar">
+          <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar">
+        </div>
+        <button class="logout-btn btn-smart-animate">
+          <span>Logout</span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <div class="main-content" style="padding:2.5rem;">
+    <h2 style="font-size:1.4rem;font-weight:700;margin-bottom:1.5rem;">Faculty Table</h2>
+    <div class="faculty-table-toolbar">
+      <div class="faculty-search">
+        <input type="text" placeholder="Search">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <button class="add-user-btn" id="add-user-btn">
+        <svg width="20" height="20" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        Add new user
+      </button>
+    </div>
+    <table class="faculty-table">
+      <thead>
+        <tr>
+          <th><input type="checkbox"></th>
+          <th>User Name</th>
+          <th>Email</th>
+          <th>Username</th>
+          <th>Total Logins</th>
+          <th>Role</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Maria Dela Cruz</a></td>
+          <td>m.d@gmail.com</td>
+          <td>Maria_DelaCruz</td>
+          <td>37</td>
+          <td><span class="role-badge teacher">Teacher</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Richard Lorenz</a></td>
+          <td>rich_lorenz@gmail.com</td>
+          <td>Richard_Lorenz</td>
+          <td>45</td>
+          <td><span class="role-badge admin">Admin</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Michael Reyes</a></td>
+          <td>m.reyes@gmail.com</td>
+          <td>Mich_Reyes</td>
+          <td>41</td>
+          <td><span class="role-badge admin">Admin</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Shaira Nendez</a></td>
+          <td>shairanendez@gmail.com</td>
+          <td>Shai_Nendez</td>
+          <td>33</td>
+          <td><span class="role-badge teacher">Teacher</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">James Mendoza</a></td>
+          <td>jamesmendoza@gmail.com</td>
+          <td>James_Mendoza</td>
+          <td>41</td>
+          <td><span class="role-badge teacher">Teacher</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Lyka Manon</a></td>
+          <td>lykamanoon@gmail.com</td>
+          <td>Lyka_Manon</td>
+          <td>33</td>
+          <td><span class="role-badge teacher">Teacher</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td><input type="checkbox"></td>
+          <td><a href="#">Bea Sarah Coles</a></td>
+          <td>beasarah.c@gmail.com</td>
+          <td>BeaSarah_Coles</td>
+          <td>41</td>
+          <td><span class="role-badge teacher">Teacher</span></td>
+          <td>
+            <div style="position: relative;">
+              <button class="dots-btn" title="Actions"><svg width="22" height="22" fill="none" stroke="#222" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg></button>
+              <div class="dropdown-menu" style="display: none; position: absolute; right: 0; top: 2rem; background: #fff; border-radius: 6px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); z-index: 1000; min-width: 120px;">
+                <button type="button" class="dropdown-item" data-action="view">View</button>
+                <button type="button" class="dropdown-item" data-action="edit">Edit</button>
+                <button type="button" class="dropdown-item" data-action="delete">Delete</button>
+              </div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button class="fab-btn" title="Back" onclick="window.location.href='admin-accounts.html'">
+      <svg width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- Add New Teacher/Admin Modal -->
+  <div id="add-user-modal" class="modal" style="display:none; align-items: center; justify-content: center; position: fixed; z-index: 9999; left: 0; top: 0; width: 100vw; height: 100vh; background: rgba(44,62,80,0.18);">
+    <div class="modal-content" style="background: #fff; border-radius: 14px; max-width: 900px; width: 95vw; padding: 2rem 1.5rem 1.5rem 1.5rem; position: relative; box-shadow: 0 8px 32px rgba(44,62,80,0.18); max-height: 90vh; overflow-y: auto;">
+      <button id="close-add-user-modal" class="modal-close" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: #184d27; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background 0.2s;" onclick="document.getElementById('add-user-modal').style.display='none'">&times;</button>
+      <h3 style="margin-bottom: 1.5rem; color: #184d27; font-size: 1.3rem; font-weight: 700; text-align: center;">Add New User</h3>
+      <form id="add-user-form">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="role">Role</label>
+            <select id="role" name="role" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+              <option value="">Select Role</option>
+              <option value="Teacher">Teacher</option>
+              <option value="Admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="employee_id">Employee ID</label>
+            <input type="text" id="employee_id" name="employee_id" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: none; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;" id="id-row">
+          <div class="form-group" id="teacher-id-group" style="display: none;">
+            <label for="teacher_id">Teacher ID</label>
+            <input type="text" id="teacher_id" name="teacher_id" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group" id="admin-id-group" style="display: none;">
+            <label for="admin_id">Admin ID</label>
+            <input type="text" id="admin_id" name="admin_id" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" name="first_name" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group">
+            <label for="middle_name">Middle Name</label>
+            <input type="text" id="middle_name" name="middle_name" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" name="last_name" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group" id="full-name-group" style="display: none;">
+            <label for="full_name">Full Name (Admin)</label>
+            <input type="text" id="full_name" name="full_name" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group">
+            <label for="date_of_birth">Date of Birth</label>
+            <input type="date" id="date_of_birth" name="date_of_birth" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="contact_number">Contact Number</label>
+            <input type="tel" id="contact_number" name="contact_number" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group" id="employee-number-group" style="display: none;">
+            <label for="employee_number">Employee Number</label>
+            <input type="text" id="employee_number" name="employee_number" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom: 1.2rem;">
+          <label for="address">Address</label>
+          <textarea id="address" name="address" rows="2" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem; resize: vertical;"></textarea>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group" id="department-group">
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group">
+            <label for="position">Position</label>
+            <input type="text" id="position" name="position" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: none; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;" id="role-specific-row">
+          <div class="form-group" id="teaching-load-group" style="display: none;">
+            <label for="teaching_load">Teaching Load</label>
+            <input type="text" id="teaching_load" name="teaching_load" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group" id="assigned-office-group" style="display: none;">
+            <label for="assigned_office">Assigned Office</label>
+            <input type="text" id="assigned_office" name="assigned_office" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;">
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" required style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+          </div>
+        </div>
+        <div style="display: none; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-bottom: 1.2rem;" id="guardian-row">
+          <div class="form-group" id="guardian-name-group" style="display: none;">
+            <label for="guardian_name">Guardian Name</label>
+            <input type="text" id="guardian_name" name="guardian_name" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+          <div class="form-group" id="guardian-contact-group" style="display: none;">
+            <label for="guardian_contact">Guardian Contact</label>
+            <input type="tel" id="guardian_contact" name="guardian_contact" style="width:100%; padding: 0.7rem; border: 1px solid #e0e0e0; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
+        <div class="modal-buttons" style="display: flex; gap: 1rem; justify-content: flex-end;">
+          <button type="button" class="btn-secondary" id="cancel-add-user" style="padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; cursor: pointer; background-color: #e2e8f0; color: #4a5568; border: none;">Cancel</button>
+          <button type="submit" class="btn-primary" style="padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 500; cursor: pointer; background-color: #39916f; color: white; border: none;">Add User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <script>
+    // Add User Modal functionality
+    const addUserBtn = document.getElementById('add-user-btn');
+    const addUserModal = document.getElementById('add-user-modal');
+    const closeModalBtn = document.getElementById('close-add-user-modal');
+    const cancelBtn = document.getElementById('cancel-add-user');
+    const addUserForm = document.getElementById('add-user-form');
+    const roleSelect = document.getElementById('role');
+
+    addUserBtn.addEventListener('click', function() {
+      addUserModal.style.display = 'flex';
+    });
+
+    closeModalBtn.addEventListener('click', function() {
+      addUserModal.style.display = 'none';
+      addUserForm.reset();
+      resetFormFields();
+    });
+
+    cancelBtn.addEventListener('click', function() {
+      addUserModal.style.display = 'none';
+      addUserForm.reset();
+      resetFormFields();
+    });
+
+    addUserModal.addEventListener('click', function(e) {
+      if (e.target === addUserModal) {
+        addUserModal.style.display = 'none';
+        addUserForm.reset();
+        resetFormFields();
+      }
+    });
+
+    // Show/hide fields based on role selection
+    roleSelect.addEventListener('change', function() {
+      const role = this.value;
+      resetFormFields();
+      
+      const idRow = document.getElementById('id-row');
+      const roleSpecificRow = document.getElementById('role-specific-row');
+      const guardianRow = document.getElementById('guardian-row');
+      
+      if (role === 'Teacher') {
+        document.getElementById('teacher-id-group').style.display = 'block';
+        idRow.style.display = 'grid';
+        document.getElementById('teaching-load-group').style.display = 'block';
+        roleSpecificRow.style.display = 'grid';
+        document.getElementById('guardian-name-group').style.display = 'block';
+        document.getElementById('guardian-contact-group').style.display = 'block';
+        guardianRow.style.display = 'grid';
+        document.getElementById('department-group').style.display = 'block';
+      } else if (role === 'Admin') {
+        document.getElementById('admin-id-group').style.display = 'block';
+        idRow.style.display = 'grid';
+        document.getElementById('assigned-office-group').style.display = 'block';
+        roleSpecificRow.style.display = 'grid';
+        document.getElementById('employee-number-group').style.display = 'block';
+        document.getElementById('full-name-group').style.display = 'block';
+        document.getElementById('department-group').style.display = 'block';
+        guardianRow.style.display = 'none';
+      } else {
+        idRow.style.display = 'none';
+        roleSpecificRow.style.display = 'none';
+        guardianRow.style.display = 'none';
+      }
+    });
+
+    function resetFormFields() {
+      document.getElementById('teacher-id-group').style.display = 'none';
+      document.getElementById('admin-id-group').style.display = 'none';
+      document.getElementById('teaching-load-group').style.display = 'none';
+      document.getElementById('assigned-office-group').style.display = 'none';
+      document.getElementById('employee-number-group').style.display = 'none';
+      document.getElementById('guardian-name-group').style.display = 'none';
+      document.getElementById('guardian-contact-group').style.display = 'none';
+      document.getElementById('full-name-group').style.display = 'none';
+      document.getElementById('id-row').style.display = 'none';
+      document.getElementById('role-specific-row').style.display = 'none';
+      document.getElementById('guardian-row').style.display = 'none';
+    }
+
+    addUserForm.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Get form data
+      const formData = new FormData(addUserForm);
+      const userData = {
+        role: formData.get('role'),
+        teacher_id: formData.get('teacher_id'),
+        admin_id: formData.get('admin_id'),
+        employee_id: formData.get('employee_id'),
+        employee_number: formData.get('employee_number'),
+        first_name: formData.get('first_name'),
+        middle_name: formData.get('middle_name'),
+        last_name: formData.get('last_name'),
+        full_name: formData.get('full_name'),
+        email: formData.get('email'),
+        date_of_birth: formData.get('date_of_birth'),
+        contact_number: formData.get('contact_number'),
+        address: formData.get('address'),
+        department: formData.get('department'),
+        position: formData.get('position'),
+        teaching_load: formData.get('teaching_load'),
+        assigned_office: formData.get('assigned_office'),
+        guardian_name: formData.get('guardian_name'),
+        guardian_contact: formData.get('guardian_contact'),
+        password: formData.get('password'),
+        status: formData.get('status')
+      };
+
+      // Here you would typically send this data to your backend
+      console.log('User Data:', userData);
+
+      // Show success message
+      alert('User added successfully!');
+      
+      // Close modal and reset form
+      addUserModal.style.display = 'none';
+      addUserForm.reset();
+      resetFormFields();
+    });
+
+    // Dropdown menu functionality for Actions
+    document.querySelectorAll('.dots-btn').forEach((btn) => {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const menu = this.nextElementSibling;
+        // Close all other dropdowns
+        document.querySelectorAll('.dropdown-menu').forEach(m => {
+          if (m !== menu) m.style.display = 'none';
+        });
+        // Toggle current dropdown
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+      });
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.dots-btn') && !e.target.closest('.dropdown-menu')) {
+        document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+      }
+    });
+
+    // Handle dropdown item clicks
+    document.querySelectorAll('.dropdown-item').forEach((item) => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const action = this.getAttribute('data-action');
+        const row = this.closest('tr');
+        const userName = row.querySelector('td:nth-child(2) a').textContent;
+        const userEmail = row.querySelector('td:nth-child(3)').textContent;
+        const userRole = row.querySelector('td:nth-child(6) span').textContent;
+        
+        // Close dropdown
+        this.closest('.dropdown-menu').style.display = 'none';
+
+        switch(action) {
+          case 'view':
+            // View user details
+            alert(`View details for: ${userName}\nEmail: ${userEmail}\nRole: ${userRole}`);
+            // You can implement a view modal here
+            break;
+          case 'edit':
+            // Edit user
+            alert(`Edit user: ${userName}`);
+            // You can implement an edit modal here
+            break;
+          case 'delete':
+            // Delete user
+            if (confirm(`Are you sure you want to delete ${userName}?`)) {
+              // Remove row from table
+              row.remove();
+              alert(`${userName} has been deleted.`);
+            }
+            break;
+        }
+      });
+    });
+
+    // Logout functionality with animation
+    document.querySelector('.logout-btn').addEventListener('click', function(e) {
+      const btn = e.currentTarget;
+      const btnText = btn.querySelector('span');
+      
+      // Add loading animation
+      btn.classList.add('btn-loading');
+      btnText.textContent = 'Logging out...';
+      
+      // Simulate logout process
+      setTimeout(() => {
+        btn.classList.remove('btn-loading');
+        btn.classList.add('btn-success', 'animate');
+        btnText.textContent = 'Goodbye!';
+        
+        // Redirect after success animation
+        setTimeout(() => {
+          window.location.href = '../index.html';
+        }, 1000);
+      }, 1500);
+    });
+  </script>
+  <style>
+    .dropdown-menu {
+      padding: 0.5rem 0;
+    }
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 0.6rem 1rem;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #222;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .dropdown-item:hover {
+      background: #f0f0f0;
+    }
+    .dropdown-item:first-child {
+      border-radius: 6px 6px 0 0;
+    }
+    .dropdown-item:last-child {
+      border-radius: 0 0 6px 6px;
+    }
+    .dropdown-item[data-action="delete"] {
+      color: #e53e3e;
+    }
+    .dropdown-item[data-action="delete"]:hover {
+      background: #fee;
+      color: #c53030;
+    }
+    .modal-close:hover {
+      background: #f0f0f0 !important;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .form-group label {
+      font-weight: 500;
+      color: #4a5568;
+      font-size: 0.9rem;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #39916f !important;
+      box-shadow: 0 0 0 3px rgba(57,145,111,0.15);
+    }
+    .btn-primary:hover {
+      background-color: #276749 !important;
+    }
+    .btn-secondary:hover {
+      background-color: #cbd5e0 !important;
+    }
+  </style>
+</body>
+</html>

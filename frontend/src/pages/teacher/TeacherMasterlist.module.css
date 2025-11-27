@@ -1,0 +1,281 @@
+/* Main Content */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  margin-top: var(--header-height);
+  padding: 1.5rem;
+  min-height: calc(100vh - var(--header-height));
+}
+
+.header {
+  margin-bottom: 1.5rem;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #276749;
+  margin: 0;
+}
+
+/* Info Cards */
+.infoCards {
+  display: flex;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  flex-wrap: wrap;
+}
+
+/* Masterlist container */
+.masterlistContainer {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-top: 1.5rem;
+}
+
+.masterlistCard {
+  padding: 1.25rem;
+  background: linear-gradient(120deg, var(--bg-green) 60%, #e6fffa 100%);
+  border-radius: 10px;
+}
+
+/* Section select */
+.sectionSelect {
+  margin-bottom: 1.25rem;
+}
+
+.sectionSelect select {
+  width: 100%;
+  max-width: 300px;
+  padding: 0.75rem;
+  border: 1px solid var(--light-green);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--primary-green);
+  background-color: white;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.sectionSelect select:hover {
+  border-color: var(--primary-green);
+  box-shadow: 0 2px 4px rgba(76, 122, 103, 0.1);
+}
+
+.sectionSelect select:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.1);
+}
+
+/* Table styles */
+.masterlistTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.masterlistTable th {
+  background-color: var(--primary-green);
+  color: #ffffff;
+  font-weight: 600;
+  padding: 1rem;
+  text-align: left;
+  font-size: 1rem;
+}
+
+.masterlistTable td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--bg-green);
+  font-size: 0.95rem;
+  color: #2d3748;
+}
+
+.masterlistTable tr:last-child td {
+  border-bottom: none;
+}
+
+.masterlistTable tr:hover {
+  background-color: var(--bg-green);
+  transition: background-color 0.2s ease;
+}
+
+/* Grade edit modal */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 10px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.modalContent h3 {
+  color: var(--primary-green);
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.modalContent label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: #4a5568;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.modalContent input,
+.modalContent textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--light-green);
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.3s ease;
+}
+
+.modalContent input:focus,
+.modalContent textarea:focus {
+  outline: none;
+  border-color: var(--primary-green);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.1);
+}
+
+.modalContent textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.btnSecondary {
+  background: var(--bg-green);
+  color: var(--primary-green);
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btnSecondary:hover {
+  background: var(--light-green);
+}
+
+.btnPrimary {
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btnPrimary:hover {
+  background: var(--hover-green);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(76, 122, 103, 0.2);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .infoCards {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem 0.75rem;
+  }
+
+  .infoCards {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .infoCards > * {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .masterlistContainer {
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .masterlistCard {
+    padding: 1rem;
+  }
+  
+  .sectionSelect select {
+    font-size: 0.9rem;
+    padding: 0.6rem 0.8rem;
+    max-width: 100%;
+  }
+
+  .masterlistTable {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .masterlistTable th,
+  .masterlistTable td {
+    padding: 0.75rem 0.5rem;
+    font-size: 0.85rem;
+  }
+  
+  .modalContent {
+    margin: 1rem;
+    padding: 1rem;
+    max-width: calc(100% - 2rem);
+  }
+}
+
+@media (max-width: 480px) {
+  .mainContent {
+    padding: 0.75rem 0.5rem;
+  }
+
+  .masterlistTable th,
+  .masterlistTable td {
+    padding: 0.6rem 0.4rem;
+    font-size: 0.8rem;
+  }
+
+  .sectionSelect select {
+    font-size: 0.85rem;
+    padding: 0.5rem 0.6rem;
+  }
+}
+

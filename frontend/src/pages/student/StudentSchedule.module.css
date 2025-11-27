@@ -1,0 +1,268 @@
+/* Main content styles */
+.mainContent {
+  margin-left: var(--sidebar-width);
+  padding: 2rem;
+  padding-top: calc(var(--header-height, 60px) + 2rem);
+}
+
+.scheduleLayout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.scheduleTableCard {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  padding: 2rem 2rem 1.5rem 2rem;
+  margin: 0 auto 2rem auto;
+  max-width: 900px;
+  flex: 1;
+  min-width: 0;
+}
+
+.scheduleTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.scheduleTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2f855a;
+}
+
+.scheduleTable {
+  width: 100%;
+  border-collapse: collapse;
+  background: none;
+  font-size: 1rem;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.scheduleTable th,
+.scheduleTable td:first-child {
+  background: #fff;
+  color: #222;
+  border-radius: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  padding: 0.75rem;
+}
+
+.scheduleTable td {
+  background: none;
+  color: #222;
+  font-weight: 500;
+  border: 1px solid #e0e0e0;
+  text-align: center;
+  font-size: 1rem;
+  padding: 0.75rem;
+}
+
+.scheduleTable th {
+  background: #4c7a67;
+  color: #fff;
+  font-weight: 600;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  position: relative;
+}
+
+.scheduleTable th:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 25%;
+  height: 50%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.scheduleTable tr:nth-child(even) {
+  background-color: #e6f0ea;
+}
+
+.scheduleTable td:first-child {
+  font-weight: 600;
+  color: #4c7a67;
+  background: rgba(76, 122, 103, 0.05);
+}
+
+.scheduleTable tr:nth-child(even) td {
+  background: none;
+}
+
+.breakRow {
+  background: none;
+  color: #4c7a67;
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.breakLabel {
+  background: none;
+}
+
+.classPill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  border-radius: 25px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #222;
+  background: #f3f3f3;
+  box-shadow: none;
+  min-width: 120px;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.scheduleSidePanel {
+  min-width: 270px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.calendarBox {
+  background: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.realCalendarInput {
+  opacity: 0;
+  height: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+/* Flatpickr calendar styles */
+:global(.flatpickr-calendar) {
+  background: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-family: 'Inter', sans-serif;
+  min-width: 260px;
+  max-width: 320px;
+  margin: 0 auto;
+}
+
+:global(.flatpickr-months),
+:global(.flatpickr-weekdays) {
+  background: none !important;
+  color: #222 !important;
+  border-radius: 0 !important;
+  border: none !important;
+}
+
+:global(.flatpickr-current-month),
+:global(.flatpickr-weekday) {
+  color: #222 !important;
+  font-weight: 600;
+  background: none !important;
+}
+
+:global(.flatpickr-day) {
+  color: #222 !important;
+  background: none !important;
+  border-radius: 50% !important;
+  border: none !important;
+  font-weight: 500;
+  transition: background 0.2s, color 0.2s;
+}
+
+:global(.flatpickr-day.selected),
+:global(.flatpickr-day.today) {
+  background: #27ae60 !important;
+  color: #fff !important;
+  border-radius: 50% !important;
+}
+
+:global(.flatpickr-day:hover) {
+  background: #e6f0ea !important;
+  color: #184d27 !important;
+}
+
+:global(.flatpickr-day.disabled),
+:global(.flatpickr-day.prevMonthDay),
+:global(.flatpickr-day.nextMonthDay) {
+  color: #bbb !important;
+  background: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 1100px) {
+  .scheduleSidePanel {
+    max-width: 100%;
+    min-width: 0;
+    flex-direction: row;
+    gap: 2rem;
+  }
+  .calendarBox {
+    flex: 1;
+  }
+}
+
+@media (max-width: 1024px) {
+  .scheduleTable th,
+  .scheduleTable td {
+    padding: 0.75rem 0.5rem;
+  }
+  .classPill {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+    min-width: 100px;
+  }
+}
+
+@media (max-width: 900px) {
+  .scheduleTableCard {
+    padding: 1rem 0.3rem;
+  }
+  .scheduleTable th,
+  .scheduleTable td {
+    font-size: 0.92rem;
+    padding: 0.5rem 0.2rem;
+  }
+  .scheduleTitle {
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 700px) {
+  .calendarBox {
+    padding: 0.5rem 0.2rem 0.7rem 0.2rem;
+  }
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem;
+    padding-top: calc(var(--header-height, 60px) + 1rem);
+  }
+}
+
