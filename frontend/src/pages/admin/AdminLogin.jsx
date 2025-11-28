@@ -1,37 +1,49 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/slices/authSlice';
 import styles from './AdminLogin.module.css';
 
 function AdminLogin() {
-  const [adminId, setAdminId] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState(false);
+  const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [showProgress, setShowProgress] = useState(false);
   const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
+  const dispatch = useDispatch();
+  const authError = useSelector((state) => state.auth.error);
+  const [isSuccess,setIsSuccess] =useState(false);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const validUsername = 'admin';
-    const validPassword = '12345';
+    setError('');
+    setIsLoading(true);
+    setShowProgress(true);
 
-    if (adminId.trim() === validUsername && password.trim() === validPassword) {
-      setError(false);
-      setIsLoading(true);
-      setShowProgress(true);
-      
-      setTimeout(() => {
+    try {
+      const result = await dispatch(login({ email, password }));
+      if (login.fulfilled.match(result)) {
+        // Check if user is Admin
+        if (result.payload.user.role === 'Admin') {
+          setTimeout(() => {
+            setIsLoading(false);
+            setIsSuccess(true);
+            navigate('/admin/dashboard');
+          }, 500);
+        } else {
+          setError('Access denied. Admin account required.');
+          setIsLoading(false);
+          setShowProgress(false);
+        }
+      } else {
+        setError(result.payload || 'Login failed');
         setIsLoading(false);
-        setIsSuccess(true);
-        
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 1000);
-      }, 1500);
-    } else {
-      setError(true);
+        setShowProgress(false);
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
+      setShowProgress(false);
     }
   };
 
@@ -52,29 +64,29 @@ function AdminLogin() {
                 <h2 className={styles.welcomeText}>Welcome back, Admin!</h2>
                 <p className={styles.textGray}>Access your admin portal</p>
               </div>
-              {error && (
+              {(error || authError) && (
                 <div className={`alert alert-danger ${styles.alert}`} role="alert">
                   <i className="fas fa-exclamation-circle me-2"></i>
-                  Invalid Employee ID or Password.
+                  {error || authError || 'Invalid credentials'}
                 </div>
               )}
               <form onSubmit={handleSubmit} className={`${styles.loginForm} needs-validation`} noValidate>
                 <div className="form-floating mb-3">
                   <input
-                    type="text"
+                    type="email"
                     className="form-control"
-                    id="admin-id"
-                    placeholder="Enter EID"
-                    value={adminId}
-                    onChange={(e) => setAdminId(e.target.value)}
+                    id="admin-email"
+                    placeholder="Enter email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
-                  <label htmlFor="admin-id">
-                    <i className="fas fa-id-card me-2"></i>
-                    Employee Number
+                  <label htmlFor="admin-email">
+                    <i className="fas fa-envelope me-2"></i>
+                    Email Address
                   </label>
                   <div className="invalid-feedback">
-                    Please enter your Employee Number.
+                    Please enter your email address.
                   </div>
                 </div>
                 <div className="form-floating mb-3">

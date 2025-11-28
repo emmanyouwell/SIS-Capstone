@@ -1,10 +1,13 @@
 import { useNavigate } from 'react-router-dom';
 import styles from './Header.module.css';
+import { useDispatch } from 'react-redux';
+import { logout } from '../store/slices/authSlice';
 
 function Header({ userName, userRole, notificationCount = 3 }) {
   const navigate = useNavigate();
-
-  const handleLogout = () => {
+  const dispatch = useDispatch();
+  const handleLogout = async () => {
+    
     const btn = document.querySelector(`.${styles.logoutBtn}`);
     const btnText = btn?.querySelector('span');
     const progressBar = document.querySelector(`.${styles.logoutProgress}`);
@@ -13,7 +16,7 @@ function Header({ userName, userRole, notificationCount = 3 }) {
       btn.classList.add(styles.btnLoading);
       btnText.textContent = 'Logging out...';
       progressBar.classList.add(styles.start);
-      
+      await dispatch(logout());
       setTimeout(() => {
         btn.classList.remove(styles.btnLoading);
         btn.classList.add(styles.btnSuccess, styles.animate);

@@ -45,6 +45,7 @@ import TeacherProfile from './pages/teacher/TeacherProfile';
 import StudentHelp from './pages/student/StudentHelp';
 import TeacherHelp from './pages/teacher/TeacherHelp';
 import './App.css';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -55,7 +56,7 @@ function App() {
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
         <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDashboard /></ProtectedRoute>} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="accounts" element={<AdminAccounts />} />
           <Route path="accounts/view/:accountType" element={<AdminAccountView />} />
