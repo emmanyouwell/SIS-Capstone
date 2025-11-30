@@ -73,7 +73,7 @@ function App() {
           <Route path="subjects" element={<AdminSubjects />} />
           <Route path="subjects/:grade/view" element={<AdminSubjectView />} />
           <Route path="subjects/:grade/edit" element={<AdminSubjectEdit />} />
-          <Route path="subjects/:grade/materials" element={<AdminSubjectView />} />
+          <Route path="subjects/:grade/materials" element={<AdminSubjectEdit />} />
           <Route path="schedule" element={<AdminSchedule />} />
           <Route path="enrollment" element={<AdminEnrollment />} />
           <Route path="enrollment/pending" element={<AdminEnrollmentPending />} />

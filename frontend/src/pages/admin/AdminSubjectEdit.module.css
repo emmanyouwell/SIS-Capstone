@@ -1,9 +1,10 @@
 .mainContent {
-  margin-left: var(--sidebar-width, 220px);
-  margin-top: var(--header-height, 60px);
-  padding: 1.5rem;
-  min-height: calc(100vh - var(--header-height, 60px));
-  background: #f5f5f5;
+  margin-left: var(--sidebar-width, 250px);
+  padding: 0 20px;
+  background-color: #f5f5f5;
+  min-height: 100vh;
+  padding-top: 0 !important;
+  margin-top: 90px;
 }
 
 .pageTitle {
@@ -13,27 +14,35 @@
   font-family: 'Inter', sans-serif;
   letter-spacing: 0.5px;
   margin-bottom: 1.2rem;
+  text-align: left !important;
+  display: block !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
 }
 
 .loading {
   text-align: center;
   padding: 2rem;
   color: #666;
+  font-size: 1.1rem;
 }
 
 .contentLayout {
   display: flex;
-  gap: 2rem;
+  flex-direction: row;
+  gap: 32px;
   align-items: flex-start;
+  width: 100%;
 }
 
-.subjectsListCard {
+.sectionsListCard {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 18px 0;
+  padding: 18px 0 18px 0;
   min-width: 220px;
   max-width: 220px;
+  margin: 0;
 }
 
 .listTitle {
@@ -43,49 +52,44 @@
   padding: 0 20px 12px 20px;
 }
 
-.subjectsList {
+.sectionsList {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 0 0 0;
 }
 
-.subjectsList li {
+.sectionsList li {
   padding: 12px 20px;
   border-bottom: 1px solid #f0f0f0;
   color: #2d3748;
   font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
 }
 
-.subjectsList li:last-child {
+.sectionsList li:last-child {
   border-bottom: none;
 }
 
-.editSubjectsBtn {
-  background: #4c7a67;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 1rem;
-  font-weight: 600;
-  margin: 18px 0 0 20px;
-  cursor: pointer;
-  transition: background 0.2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.sectionsList li:hover,
+.sectionsList li.active {
+  background: #e6f0ea;
+  color: #184d27;
 }
 
-.editSubjectsBtn:hover {
-  background: #357a5b;
+.emptyState {
+  color: #888;
+  font-style: italic;
+  padding: 1rem;
+  text-align: center;
 }
 
 .tableCard {
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-  padding: 24px 18px;
+  padding: 24px 18px 24px 18px;
+  margin: 0;
   flex: 1;
   max-width: 900px;
 }
@@ -93,7 +97,7 @@
 .subjectsTable {
   width: 100%;
   border-collapse: separate;
-  border-spacing: 0 18px;
+  border-spacing: 0;
   font-size: 1.1rem;
 }
 
@@ -120,11 +124,10 @@
 }
 
 .subjectsTable td {
-  background: #f8f9fa;
+  background: #fff;
   padding: 16px 0;
   text-align: center;
-  border: none;
-  border-radius: 6px;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .subjectsTable tr:last-child td {
@@ -147,21 +150,30 @@
   font-weight: 500;
   cursor: default;
   margin: 0 2px;
+  box-shadow: none;
+  outline: none;
 }
 
-.editBtn {
+.noTeachers {
+  color: #888;
+  font-style: italic;
+  font-size: 0.95rem;
+}
+
+.visitBtn {
   background: #4c7a67;
   color: #fff;
   border: none;
-  border-radius: 6px;
-  padding: 7px 10px;
+  border-radius: 8px;
+  padding: 8px 28px;
+  font-size: 1.1rem;
+  font-weight: 600;
   cursor: pointer;
-  display: flex;
-  align-items: center;
   transition: background 0.2s;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
-.editBtn:hover {
+.visitBtn:hover {
   background: #357a5b;
 }
 
@@ -189,225 +201,388 @@
   box-shadow: 0 8px 24px rgba(44, 62, 80, 0.18);
 }
 
-/* Modal Styles */
-.modalOverlay {
+/* Material Modal Styles */
+.materialModalOverlay {
   position: fixed;
   top: 0;
   left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.18);
+  width: 100vw;
+  height: 100vh;
+  background: rgba(44, 62, 80, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2000;
 }
 
-.modalContent {
+.materialModalContent {
   background: #fff;
   border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
-  padding: 32px;
-  min-width: 420px;
-  max-width: 90vw;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.13);
+  width: 950px;
+  max-width: 99vw;
+  padding: 0 0 2.5rem 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   max-height: 90vh;
   overflow-y: auto;
+}
+
+.modalFlexRow {
+  display: flex;
+  flex-direction: row;
+  gap: 2.2rem;
+  width: 100%;
+  padding: 2.2rem 2.5rem 2.2rem 2.5rem;
+  box-sizing: border-box;
+}
+
+.modalFeed {
+  flex: 1.2;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 1.2rem;
 }
 
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #184d27;
-  margin-bottom: 8px;
-}
-
-.modalClose {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  color: #888;
-  cursor: pointer;
-  margin-left: 18px;
-  transition: color 0.2s;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.modalClose:hover {
-  color: #e53935;
-}
-
-.modalBody {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-height: 60px;
-}
-
-.addSubjectSection,
-.addTeacherSection {
-  margin-bottom: 1rem;
-}
-
-.addSubjectSection label,
-.addTeacherSection label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.addSubjectInput,
-.addTeacherInput {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.addSubjectInput input,
-.addTeacherInput select {
-  flex: 1;
-  padding: 0.75rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 8px;
-  font-size: 1rem;
-}
-
-.addSubjectInput button,
-.addTeacherInput button {
-  padding: 0.75rem 1.5rem;
-  background: #4c7a67;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-.addSubjectInput button:hover,
-.addTeacherInput button:hover {
-  background: #357a5b;
-}
-
-.subjectsListSection,
-.teachersListSection {
-  margin-top: 1rem;
-}
-
-.subjectsListSection label,
-.teachersListSection label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-}
-
-.subjectsListContainer {
-  max-height: 400px;
+.modalMaterials {
+  height: 60vh;
   overflow-y: auto;
 }
+.modalWelcome {
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: #fff;
+  padding: 1.1rem 1.2rem 0.7rem 1.2rem;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border-left: 8px solid #388e5c;
+  color: #184d27;
+}
 
-.subjectItem {
+.modalResourceCard {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  padding: 1.1rem 1.2rem 1.1rem 1.2rem;
+  margin-bottom: 0.7rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.modalResourceMeta {
+  color: #888;
+  font-size: 0.98rem;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+}
+
+.modalResourceTitle {
+  font-size: 1.13rem;
+  font-weight: 700;
+  color: #222;
+  margin-bottom: 0.5rem;
+}
+
+.modalResourceFileRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem;
-  margin-bottom: 0.5rem;
-  background: #f5f5f5;
-  border-radius: 8px;
-  gap: 0.5rem;
+  gap: 1.2rem;
 }
 
-.subjectInput {
-  flex: 1;
-  padding: 0.5rem;
-  border: 2px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-.removeBtn {
-  padding: 0.5rem 1rem;
-  background: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.removeBtn:hover {
-  background: #c82333;
-}
-
-.teachersPillsContainer {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  min-height: 100px;
-}
-
-.teacherPillEdit {
-  background: #f5f5f5;
-  border-radius: 14px;
-  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.08);
-  padding: 10px 18px;
-  font-size: 1.1rem;
-  color: #222;
+.modalResourceFileInfo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 0.7rem;
+  flex: 1;
 }
 
-.removeTeacherBtn {
-  background: #fff;
-  border: 2px solid #e53935;
-  color: #e53935;
-  border-radius: 6px;
-  font-size: 1.1rem;
-  width: 28px;
-  height: 28px;
+.modalResourceFileIcon {
+  font-size: 1.2rem;
+  color: #184d27;
+}
+
+.modalResourceFileName {
+  font-size: 1.05rem;
+  color: #184d27;
+  font-weight: 600;
+}
+
+.modalResourceFileSize,
+.modalResourceFileSource {
+  font-size: 0.95rem;
+  color: #888;
+  margin-left: 0.5rem;
+}
+
+.modalResourceDownloadBtn,
+.modalResourceLinkBtn {
+  background: #ededed;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: background 0.18s;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  margin-left: 8px;
-  transition: background 0.2s, color 0.2s, border 0.2s;
 }
 
-.removeTeacherBtn:hover {
-  background: #e53935;
+.modalResourceDownloadBtn:hover,
+.modalResourceLinkBtn:hover {
+  background: #d6f9e2;
+}
+
+.modalAdminPanel {
+  flex: 1.5;
+  background: #276749;
+  border-radius: 18px;
+  padding: 2.2rem 2.5rem 1.7rem 2.5rem;
   color: #fff;
-  border: 2px solid #e53935;
-}
-
-.modalFooter {
   display: flex;
-  justify-content: flex-end;
-  margin-top: 12px;
+  flex-direction: column;
+  gap: 1.2rem;
+  min-width: 400px;
+  max-width: 500px;
+  box-sizing: border-box;
+  align-items: stretch;
 }
 
-.saveBtn {
-  background: #4c7a67;
+.modalAdmins {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.modalAdminsLabel {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.modalAdminsList {
+  display: flex;
+  gap: 0.7rem;
+}
+
+.modalAdminPill {
+  background: none;
   color: #fff;
   border: none;
-  border-radius: 8px;
-  padding: 12px 28px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition: background 0.2s;
+  border-radius: 0;
+  padding: 0;
+  font-size: 1.13rem;
+  font-weight: 600;
+  box-shadow: none;
+  margin: 0 0.7rem 0 0;
+  cursor: default;
 }
 
-.saveBtn:hover {
-  background: #357a5b;
+.modalManage {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+}
+
+.modalManageLabel {
+  font-size: 1.08rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 0.3rem;
+}
+
+.modalManageBtn {
+  background: none;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  padding: 0.7rem 1.5rem 0.7rem 0;
+  font-size: 1.13rem;
+  font-weight: 700;
+  margin-right: 1.2rem;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+  transition: color 0.18s;
+  box-shadow: none;
+  outline: none;
+}
+
+.modalManageBtn.active,
+.modalManageBtn:focus {
+  color: #fff;
+  text-decoration: underline;
+  background: none;
+  box-shadow: none;
+}
+
+.modalAddCard {
+  background: #f8f8f8;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  margin-top: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+.modalAddTitleLabel {
+  font-size: 1.18rem;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 0.2rem;
+}
+
+.modalAddTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-bottom: 2px solid #388e5c;
+  background: transparent;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+  outline: none;
+  color: #184d27;
+  font-family: inherit;
+}
+
+.modalAddTitle::placeholder {
+  color: #999;
+}
+
+.modalAddDesc {
+  font-size: 1rem;
+  border: none;
+  border-bottom: 1.5px solid #bdbdbd;
+  background: transparent;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+  outline: none;
+  color: #888;
+  font-family: inherit;
+}
+
+.modalAddDesc::placeholder {
+  color: #bbb;
+}
+
+.modalAttachLabel {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #276749;
+  margin-bottom: 0.3rem;
+}
+
+.modalAttachBtn {
+  background: #ededed;
+  color: #276749;
+  border: none;
+  border-radius: 12px;
+  padding: 0.5rem 0;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+  width: 100%;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  outline: none;
+  display: block;
+}
+
+.modalAttachBtn:hover {
+  background: #d6f9e2;
+}
+
+.uploadPreview {
+  font-size: 0.9rem;
+  color: #276749;
+  padding: 0.5rem;
+  background: #e6f0ea;
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  word-break: break-all;
+}
+
+.modalUploadBtn {
+  background: #388e5c;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.9rem 2.2rem;
+  font-size: 1.13rem;
+  font-weight: 700;
+  margin-top: 0.7rem;
+  cursor: pointer;
+  transition: background 0.18s;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
+  align-self: flex-end;
+  outline: none;
+}
+
+.modalUploadBtn:hover:not(:disabled) {
+  background: #276749;
+}
+
+.modalUploadBtn:disabled {
+  background: #bdbdbd;
+  cursor: not-allowed;
+}
+
+.modalCloseBtn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 2rem;
+  font-weight: 700;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.18s;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.modalCloseBtn:hover {
+  color: #e53e3e;
+}
+
+.successMessage {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: #4c7a67;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  font-weight: 500;
+}
+
+.errorMessage {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background: #e53935;
+  color: white;
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10000;
+  font-weight: 500;
 }
 
 /* Responsive Design */
@@ -417,13 +592,23 @@
     gap: 24px;
   }
 
-  .subjectsListCard {
+  .sectionsListCard {
     width: 100%;
     max-width: 100%;
+    min-width: 0;
   }
 
   .tableCard {
     width: 100%;
+    max-width: 100%;
+  }
+
+  .modalFlexRow {
+    flex-direction: column;
+  }
+
+  .modalAdminPanel {
+    min-width: 100%;
     max-width: 100%;
   }
 }
@@ -432,10 +617,20 @@
   .mainContent {
     margin-left: 0;
     padding: 1rem;
+    margin-top: 60px;
   }
 
-  .modalContent {
-    min-width: 90vw;
+  .pageTitle {
+    text-align: center;
+    margin-top: 0;
+  }
+
+  .materialModalContent {
+    width: 95vw;
+    padding: 0 0 1.5rem 0;
+  }
+
+  .modalFlexRow {
     padding: 1.5rem;
   }
 
@@ -445,5 +640,13 @@
     width: 48px;
     height: 48px;
   }
-}
 
+  .successMessage,
+  .errorMessage {
+    top: 60px;
+    right: 10px;
+    left: 10px;
+    padding: 0.75rem 1rem;
+    font-size: 0.9rem;
+  }
+}

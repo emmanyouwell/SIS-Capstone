@@ -34,10 +34,6 @@ const subjectSchema = new mongoose.Schema(
         },
       },
     ],
-    description: {
-      type: String,
-      trim: true,
-    },
   },
   {
     timestamps: true,

@@ -1,41 +1,57 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/slices/authSlice';
 import styles from './TeacherLogin.module.css';
 
 function TeacherLogin() {
-  const [teacherId, setTeacherId] = useState('');
+
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const authError = useSelector((state) => state.auth.error);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const validUsername = 'admin';
-    const validPassword = '12345';
+    setError('');
+    setIsLoading(true);
+    setShowProgress(true);
 
-    if (teacherId.trim() === validUsername && password.trim() === validPassword) {
-      setError(false);
-      setIsLoading(true);
-      
-      setTimeout(() => {
+    try {
+      const result = await dispatch(login({ email, password }));
+      if (login.fulfilled.match(result)) {
+        // Check if user is Admin
+        if (result.payload.user.role === 'Teacher') {
+          setTimeout(() => {
+            setIsLoading(false);
+            setIsSuccess(true);
+            navigate('/teacher/dashboard');
+          }, 500);
+        } else {
+          setError('Access denied. Admin account required.');
+          setIsLoading(false);
+          setShowProgress(false);
+        }
+      } else {
+        setError(result.payload || 'Login failed');
         setIsLoading(false);
-        setIsSuccess(true);
-        
-        setTimeout(() => {
-          navigate('/teacher/dashboard');
-        }, 1000);
-      }, 1500);
-    } else {
-      setError(true);
+        setShowProgress(false);
+      }
+    } catch (err) {
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
+      setShowProgress(false);
     }
   };
 
   return (
     <>
-      <div className={styles.loginProgress}></div>
+      <div className={`${styles.loginProgress} ${showProgress ? styles.start : ''}`}></div>
       <div className="container-fluid vh-100 p-0">
         <div className="row g-0 h-100">
           <div className={`col-lg-8 ${styles.rectangle1}`}>
@@ -50,10 +66,10 @@ function TeacherLogin() {
                 <h2 className={styles.welcomeText}>Welcome back, Teacher!</h2>
                 <p className={styles.textGray}>Access your teacher portal</p>
               </div>
-              {error && (
+              {error || authError && (
                 <div className={`alert alert-danger ${styles.alert}`} role="alert">
                   <i className="fas fa-exclamation-circle me-2"></i>
-                  Invalid Employee ID or Password.
+                  {error || authError || 'Invalid credentials'}
                 </div>
               )}
               <form onSubmit={handleSubmit} className={`${styles.loginForm} needs-validation`} noValidate>
@@ -63,16 +79,16 @@ function TeacherLogin() {
                     className="form-control"
                     id="teacher-id"
                     placeholder="Enter EID"
-                    value={teacherId}
-                    onChange={(e) => setTeacherId(e.target.value)}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                   <label htmlFor="teacher-id">
                     <i className="fas fa-id-card me-2"></i>
-                    Employee Number
+                    Email Address
                   </label>
                   <div className="invalid-feedback">
-                    Please enter your Employee Number.
+                    Please enter your email address.
                   </div>
                 </div>
                 <div className="form-floating mb-3">

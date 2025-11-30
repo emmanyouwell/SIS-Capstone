@@ -85,12 +85,49 @@ export const updateSubject = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this subject' });
     }
 
-    subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
-      .populate('teachers', 'firstName lastName email')
-      .populate('materials.uploadedBy', 'firstName lastName');
+    // If materials array is being updated, check if we should append or replace
+    // If the request has a single new material object (no _id), append it using $push
+    if (req.body.materials && Array.isArray(req.body.materials)) {
+      const material = req.body.materials[0];
+      // Check if this is a single new material being added (has name, url/cloudinaryId, but no _id)
+      const isNewMaterial = req.body.materials.length === 1 && 
+        material && 
+        material.name && 
+        (material.url || material.cloudinaryId) &&
+        !material._id; // No _id means it's a new material, not an existing one
+      
+      if (isNewMaterial) {
+        // Append the new material using $push (atomic operation)
+        const newMaterial = {
+          ...material,
+          uploadedAt: new Date(),
+        };
+        
+        subject = await Subject.findByIdAndUpdate(
+          req.params.id,
+          { $push: { materials: newMaterial } },
+          { new: true, runValidators: true }
+        )
+          .populate('teachers', 'firstName lastName email')
+          .populate('materials.uploadedBy', 'firstName lastName');
+      } else {
+        // Replace entire materials array (for bulk updates or edits)
+        subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
+          new: true,
+          runValidators: true,
+        })
+          .populate('teachers', 'firstName lastName email')
+          .populate('materials.uploadedBy', 'firstName lastName');
+      }
+    } else {
+      // Update other fields normally
+      subject = await Subject.findByIdAndUpdate(req.params.id, req.body, {
+        new: true,
+        runValidators: true,
+      })
+        .populate('teachers', 'firstName lastName email')
+        .populate('materials.uploadedBy', 'firstName lastName');
+    }
 
     res.json({
       success: true,
