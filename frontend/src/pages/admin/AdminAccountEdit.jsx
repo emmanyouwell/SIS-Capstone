@@ -1,38 +1,52 @@
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
+import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
+import { register } from '../../store/slices/authSlice';
 
 function AdminAccountEdit() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { accountType } = useParams(); // 'teacher' or 'student'
-  const [accounts, setAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { users, loading, error } = useSelector((state) => state.users);
+  const { loading: registerLoading } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [formError, setFormError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [formData, setFormData] = useState({
-    role: '',
-    employee_id: '',
-    teacher_id: '',
-    admin_id: '',
-    employee_number: '',
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    full_name: '',
+    firstName: '',
+    lastName: '',
+    middleName: '',
     email: '',
-    date_of_birth: '',
-    contact_number: '',
-    address: '',
-    department: '',
-    position: '',
-    teaching_load: '',
-    assigned_office: '',
-    guardian_name: '',
-    guardian_contact: '',
     password: '',
-    status: 'Active'
+    role: '',
+    status: 'Active',
+    learnerReferenceNo: '',
+    grade: '',
+    section: '',
+    birthdate: '',
+    sex: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
+  const [editingUser, setEditingUser] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  // Fetch users filtered by role
+  useEffect(() => {
+    const role = accountType === 'teacher' ? 'Teacher' : 'Student';
+    dispatch(fetchAllUsers({ role }));
+  }, [dispatch, accountType]);
+
+  // Clear success message after 3 seconds
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -48,31 +62,24 @@ function AdminAccountEdit() {
     }
   }, [activeDropdown]);
 
-  // Mock data - replace with API call
-  useEffect(() => {
-    setTimeout(() => {
-      const mockAccounts = accountType === 'teacher'
-        ? [
-            { id: 1, name: 'Maria Dela Cruz', email: 'm.d@gmail.com', username: 'Maria_DelaCruz', totalLogins: 37, role: 'Teacher' },
-            { id: 2, name: 'Richard Lorenz', email: 'rich_lorenz@gmail.com', username: 'Richard_Lorenz', totalLogins: 45, role: 'Admin' },
-            { id: 3, name: 'Michael Reyes', email: 'm.reyes@gmail.com', username: 'Mich_Reyes', totalLogins: 41, role: 'Admin' },
-            { id: 4, name: 'Shaira Nendez', email: 'shairanendez@gmail.com', username: 'Shai_Nendez', totalLogins: 33, role: 'Teacher' },
-            { id: 5, name: 'James Mendoza', email: 'jamesmendoza@gmail.com', username: 'James_Mendoza', totalLogins: 41, role: 'Teacher' },
-            { id: 6, name: 'Lyka Manon', email: 'lykamanoon@gmail.com', username: 'Lyka_Manon', totalLogins: 33, role: 'Teacher' },
-            { id: 7, name: 'Bea Sarah Coles', email: 'beasarah.c@gmail.com', username: 'BeaSarah_Coles', totalLogins: 41, role: 'Teacher' },
-          ]
-        : [
-            { id: 1, name: 'John Doe', email: 'john.doe@student.com', username: 'John_Doe', totalLogins: 25, role: 'Student' },
-            { id: 2, name: 'Jane Smith', email: 'jane.smith@student.com', username: 'Jane_Smith', totalLogins: 30, role: 'Student' },
-          ];
-      setAccounts(mockAccounts);
-      setLoading(false);
-    }, 500);
-  }, [accountType]);
-
   const handleBack = () => {
     navigate('/admin/accounts');
   };
+
+  // Format accounts for display
+  const roleFilter = accountType === 'teacher' ? 'Teacher' : 'Student';
+  const accounts = users
+    .filter(user => user.role === roleFilter)
+    .map(user => ({
+      id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      username: user.email.split('@')[0], // Generate username from email
+      totalLogins: 0, // This field doesn't exist in the User model
+      role: user.role,
+      _id: user._id,
+      ...user
+    }));
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -88,60 +95,183 @@ function AdminAccountEdit() {
     setActiveDropdown(activeDropdown === id ? null : id);
   };
 
-  const handleDropdownAction = (action, account) => {
+  const handleDropdownAction = async (action, account) => {
     setActiveDropdown(null);
+    setFormError(null);
+    setSuccessMessage(null);
+
     switch (action) {
       case 'view':
         // Navigate to view page or show details
         console.log('View:', account);
         break;
       case 'edit':
-        // Open edit modal or navigate
-        console.log('Edit:', account);
+        // Populate form with user data for editing
+        setEditingUser(account);
+        setFormData({
+          firstName: account.firstName || '',
+          lastName: account.lastName || '',
+          middleName: account.middleName || '',
+          email: account.email || '',
+          password: '', // Don't pre-fill password
+          role: account.role || '',
+          status: account.status || 'Active',
+          learnerReferenceNo: account.learnerReferenceNo || '',
+          grade: account.grade || '',
+          section: account.section || '',
+          birthdate: account.birthdate ? new Date(account.birthdate).toISOString().split('T')[0] : '',
+          sex: account.sex || ''
+        });
+        setShowAddModal(true);
         break;
       case 'delete':
-        if (window.confirm(`Are you sure you want to delete ${account.name}?`)) {
-          setAccounts(accounts.filter(a => a.id !== account.id));
-        }
+        setUserToDelete(account);
+        setShowDeleteModal(true);
         break;
       default:
         break;
     }
   };
 
-  const handleAddUser = (e) => {
+  const handleAddUser = async (e) => {
     e.preventDefault();
-    // TODO: Implement API call to add user
-    console.log('Adding user:', formData);
-    setFormData({
-      role: '',
-      employee_id: '',
-      teacher_id: '',
-      admin_id: '',
-      employee_number: '',
-      first_name: '',
-      middle_name: '',
-      last_name: '',
-      full_name: '',
-      email: '',
-      date_of_birth: '',
-      contact_number: '',
-      address: '',
-      department: '',
-      position: '',
-      teaching_load: '',
-      assigned_office: '',
-      guardian_name: '',
-      guardian_contact: '',
-      password: '',
-      status: 'Active'
-    });
-    setShowAddModal(false);
+    setFormError(null);
+    setSuccessMessage(null);
+
+    try {
+      if (editingUser) {
+        // Update existing user
+        const updateData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          middleName: formData.middleName,
+          email: formData.email,
+          role: formData.role,
+          status: formData.status,
+          ...(formData.role === 'Student' && {
+            learnerReferenceNo: formData.learnerReferenceNo,
+            grade: formData.grade ? parseInt(formData.grade) : undefined,
+            section: formData.section,
+            birthdate: formData.birthdate || undefined,
+            sex: formData.sex || undefined
+          })
+        };
+
+        // Only include password if it was provided
+        if (formData.password) {
+          updateData.password = formData.password;
+        }
+
+        const result = await dispatch(updateUser({ id: editingUser._id, data: updateData }));
+
+        if (updateUser.fulfilled.match(result)) {
+          setSuccessMessage('User updated successfully!');
+          setShowAddModal(false);
+          setEditingUser(null);
+          dispatch(fetchAllUsers({ role: roleFilter }));
+        } else {
+          setFormError(result.payload || 'Failed to update user');
+        }
+      } else {
+        // Create new user
+        const registerData = {
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          middleName: formData.middleName,
+          email: formData.email,
+          password: formData.password,
+          role: formData.role,
+          status: formData.status,
+          ...(formData.role === 'Student' && {
+            learnerReferenceNo: formData.learnerReferenceNo,
+            grade: formData.grade ? parseInt(formData.grade) : undefined,
+            section: formData.section,
+            birthdate: formData.birthdate || undefined,
+            sex: formData.sex || undefined
+          })
+        };
+
+        const result = await dispatch(register(registerData));
+
+        if (register.fulfilled.match(result)) {
+          setSuccessMessage('User created successfully!');
+          setShowAddModal(false);
+          dispatch(fetchAllUsers({ role: roleFilter }));
+        } else {
+          setFormError(result.payload || 'Failed to create user');
+        }
+      }
+
+      // Reset form
+      setFormData({
+        firstName: '',
+        lastName: '',
+        middleName: '',
+        email: '',
+        password: '',
+        role: '',
+        status: 'Active',
+        learnerReferenceNo: '',
+        grade: '',
+        section: '',
+        birthdate: '',
+        sex: ''
+      });
+    } catch (err) {
+      setFormError('An unexpected error occurred');
+    }
   };
 
   const handleRoleChange = (e) => {
     const role = e.target.value;
     setFormData({ ...formData, role });
+  };
+
+  const handleCloseModal = () => {
+    setShowAddModal(false);
+    setEditingUser(null);
+    setFormError(null);
+    setFormData({
+      firstName: '',
+      lastName: '',
+      middleName: '',
+      email: '',
+      password: '',
+      role: '',
+      status: 'Active',
+      learnerReferenceNo: '',
+      grade: '',
+      section: '',
+      birthdate: '',
+      sex: ''
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const result = await dispatch(deleteUser(userToDelete._id));
+      if (deleteUser.fulfilled.match(result)) {
+        setSuccessMessage('User deleted successfully!');
+        setShowDeleteModal(false);
+        setUserToDelete(null);
+        dispatch(fetchAllUsers({ role: roleFilter }));
+      } else {
+        setFormError(result.payload || 'Failed to delete user');
+        setShowDeleteModal(false);
+        setUserToDelete(null);
+      }
+    } catch (err) {
+      setFormError('An unexpected error occurred');
+      setShowDeleteModal(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setUserToDelete(null);
   };
 
   const title = accountType === 'teacher' ? 'Faculty Table' : 'Student Table';
@@ -151,6 +281,20 @@ function AdminAccountEdit() {
       <div className={styles.header}>
         <h2>{title}</h2>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
+          {error}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {successMessage && (
+        <div style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#efe', color: '#3c3', borderRadius: '4px' }}>
+          {successMessage}
+        </div>
+      )}
 
       <div className={styles.toolbar}>
         <div className={styles.search}>
@@ -258,14 +402,19 @@ function AdminAccountEdit() {
         </div>
       )}
 
-      {/* Add User Modal */}
+      {/* Add/Edit User Modal */}
       {showAddModal && (
-        <div className={styles.modal} onClick={() => setShowAddModal(false)}>
+        <div className={styles.modal} onClick={handleCloseModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setShowAddModal(false)}>
+            <button className={styles.modalClose} onClick={handleCloseModal}>
               &times;
             </button>
-            <h3>Add New User</h3>
+            <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
+            {formError && (
+              <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px', fontSize: '14px' }}>
+                {formError}
+              </div>
+            )}
             <form onSubmit={handleAddUser}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
@@ -276,100 +425,79 @@ function AdminAccountEdit() {
                     value={formData.role}
                     onChange={handleRoleChange}
                     required
+                    disabled={!!editingUser} // Don't allow role change when editing
                   >
                     <option value="">Select Role</option>
                     <option value="Teacher">Teacher</option>
                     <option value="Admin">Admin</option>
+                    <option value="Student">Student</option>
                   </select>
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="employee_id">Employee ID</label>
-                  <input
-                    type="text"
-                    id="employee_id"
-                    name="employee_id"
-                    value={formData.employee_id}
-                    onChange={(e) => setFormData({ ...formData, employee_id: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              {formData.role && (
-                <div className={styles.formRow}>
-                  {formData.role === 'Teacher' && (
-                    <div className={styles.formGroup}>
-                      <label htmlFor="teacher_id">Teacher ID</label>
-                      <input
-                        type="text"
-                        id="teacher_id"
-                        name="teacher_id"
-                        value={formData.teacher_id}
-                        onChange={(e) => setFormData({ ...formData, teacher_id: e.target.value })}
-                      />
-                    </div>
-                  )}
-                  {formData.role === 'Admin' && (
-                    <div className={styles.formGroup}>
-                      <label htmlFor="admin_id">Admin ID</label>
-                      <input
-                        type="text"
-                        id="admin_id"
-                        name="admin_id"
-                        value={formData.admin_id}
-                        onChange={(e) => setFormData({ ...formData, admin_id: e.target.value })}
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="first_name">First Name</label>
-                  <input
-                    type="text"
-                    id="first_name"
-                    name="first_name"
-                    value={formData.first_name}
-                    onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="middle_name">Middle Name</label>
-                  <input
-                    type="text"
-                    id="middle_name"
-                    name="middle_name"
-                    value={formData.middle_name}
-                    onChange={(e) => setFormData({ ...formData, middle_name: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="last_name">Last Name</label>
-                  <input
-                    type="text"
-                    id="last_name"
-                    name="last_name"
-                    value={formData.last_name}
-                    onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                    required
-                  />
-                </div>
-                {formData.role === 'Admin' && (
+                {formData.role === 'Student' && (
                   <div className={styles.formGroup}>
-                    <label htmlFor="full_name">Full Name (Admin)</label>
+                    <label htmlFor="learnerReferenceNo">Learner Reference No (LRN)</label>
                     <input
                       type="text"
-                      id="full_name"
-                      name="full_name"
-                      value={formData.full_name}
-                      onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                      id="learnerReferenceNo"
+                      name="learnerReferenceNo"
+                      value={formData.learnerReferenceNo}
+                      onChange={(e) => setFormData({ ...formData, learnerReferenceNo: e.target.value })}
                     />
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="firstName">First Name</label>
+                  <input
+                    type="text"
+                    id="firstName"
+                    name="firstName"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="middleName">Middle Name</label>
+                  <input
+                    type="text"
+                    id="middleName"
+                    name="middleName"
+                    value={formData.middleName}
+                    onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="lastName">Last Name</label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    required
+                  />
+                </div>
+                {formData.role === 'Student' && (
+                  <div className={styles.formGroup}>
+                    <label htmlFor="grade">Grade</label>
+                    <select
+                      id="grade"
+                      name="grade"
+                      value={formData.grade}
+                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                    >
+                      <option value="">Select Grade</option>
+                      <option value="7">7</option>
+                      <option value="8">8</option>
+                      <option value="9">9</option>
+                      <option value="10">10</option>
+                    </select>
                   </div>
                 )}
               </div>
@@ -386,122 +514,59 @@ function AdminAccountEdit() {
                     required
                   />
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="date_of_birth">Date of Birth</label>
-                  <input
-                    type="date"
-                    id="date_of_birth"
-                    name="date_of_birth"
-                    value={formData.date_of_birth}
-                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="contact_number">Contact Number</label>
-                  <input
-                    type="tel"
-                    id="contact_number"
-                    name="contact_number"
-                    value={formData.contact_number}
-                    onChange={(e) => setFormData({ ...formData, contact_number: e.target.value })}
-                    required
-                  />
-                </div>
-                {formData.role === 'Admin' && (
+                {formData.role === 'Student' && (
                   <div className={styles.formGroup}>
-                    <label htmlFor="employee_number">Employee Number</label>
+                    <label htmlFor="section">Section</label>
                     <input
                       type="text"
-                      id="employee_number"
-                      name="employee_number"
-                      value={formData.employee_number}
-                      onChange={(e) => setFormData({ ...formData, employee_number: e.target.value })}
+                      id="section"
+                      name="section"
+                      value={formData.section}
+                      onChange={(e) => setFormData({ ...formData, section: e.target.value })}
                     />
                   </div>
                 )}
               </div>
 
-              <div className={styles.formGroup}>
-                <label htmlFor="address">Address</label>
-                <textarea
-                  id="address"
-                  name="address"
-                  rows="2"
-                  value={formData.address}
-                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                  required
-                />
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="department">Department</label>
-                  <input
-                    type="text"
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    required
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="position">Position</label>
-                  <input
-                    type="text"
-                    id="position"
-                    name="position"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-
-              {formData.role === 'Teacher' && (
+              {formData.role === 'Student' && (
                 <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="teaching_load">Teaching Load</label>
+                    <label htmlFor="birthdate">Date of Birth</label>
                     <input
-                      type="text"
-                      id="teaching_load"
-                      name="teaching_load"
-                      value={formData.teaching_load}
-                      onChange={(e) => setFormData({ ...formData, teaching_load: e.target.value })}
+                      type="date"
+                      id="birthdate"
+                      name="birthdate"
+                      value={formData.birthdate}
+                      onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
                     />
                   </div>
-                </div>
-              )}
-
-              {formData.role === 'Admin' && (
-                <div className={styles.formRow}>
                   <div className={styles.formGroup}>
-                    <label htmlFor="assigned_office">Assigned Office</label>
-                    <input
-                      type="text"
-                      id="assigned_office"
-                      name="assigned_office"
-                      value={formData.assigned_office}
-                      onChange={(e) => setFormData({ ...formData, assigned_office: e.target.value })}
-                    />
+                    <label htmlFor="sex">Sex</label>
+                    <select
+                      id="sex"
+                      name="sex"
+                      value={formData.sex}
+                      onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
+                    >
+                      <option value="">Select</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
                   </div>
                 </div>
               )}
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="password">Password</label>
+                  <label htmlFor="password">Password {editingUser && '(leave blank to keep current)'}</label>
                   <input
                     type="password"
                     id="password"
                     name="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required
+                    required={!editingUser}
+                    minLength="6"
                   />
                 </div>
                 <div className={styles.formGroup}>
@@ -523,15 +588,56 @@ function AdminAccountEdit() {
                 <button
                   type="button"
                   className={styles.btnSecondary}
-                  onClick={() => setShowAddModal(false)}
+                  onClick={handleCloseModal}
+                  disabled={registerLoading || loading}
                 >
                   Cancel
                 </button>
-                <button type="submit" className={styles.btnPrimary}>
-                  Add User
+                <button 
+                  type="submit" 
+                  className={styles.btnPrimary}
+                  disabled={registerLoading || loading}
+                >
+                  {registerLoading || loading 
+                    ? (editingUser ? 'Updating...' : 'Creating...') 
+                    : (editingUser ? 'Update User' : 'Add User')
+                  }
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && userToDelete && (
+        <div className={styles.modal} onClick={handleCancelDelete}>
+          <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
+            <h3>Confirm Delete</h3>
+            <p>
+              Are you sure you want to delete <strong>{userToDelete.name}</strong>?
+            </p>
+            <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+              This action cannot be undone.
+            </p>
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={handleCancelDelete}
+                disabled={loading}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.btnDanger}
+                onClick={handleConfirmDelete}
+                disabled={loading}
+              >
+                {loading ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,32 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountView.module.css';
+import { fetchAllUsers } from '../../store/slices/userSlice';
 
 function AdminAccountView() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const { accountType } = useParams(); // 'teacher' or 'student'
-  const [accounts, setAccounts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { users, loading, error } = useSelector((state) => state.users);
 
-  // Mock data - replace with API call
+  // Fetch users filtered by role
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockAccounts = accountType === 'teacher' 
-        ? [
-            { id: 1, name: 'Maria Dela Cruz', role: 'Teacher', email: 'm.d@gmail.com', totalLogins: 37, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-            { id: 2, name: 'Richard Lorenz', role: 'Admin', email: 'rich_lorenz@gmail.com', totalLogins: 45, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-            { id: 3, name: 'Michael Reyes', role: 'Admin', email: 'm.reyes@gmail.com', totalLogins: 41, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-            { id: 4, name: 'Shaira Nendez', role: 'Teacher', email: 'shairanendez@gmail.com', totalLogins: 33, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-          ]
-        : [
-            { id: 1, name: 'John Doe', role: 'Student', email: 'john.doe@student.com', totalLogins: 25, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-            { id: 2, name: 'Jane Smith', role: 'Student', email: 'jane.smith@student.com', totalLogins: 30, avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png' },
-          ];
-      setAccounts(mockAccounts);
-      setLoading(false);
-    }, 500);
-  }, [accountType]);
+    const role = accountType === 'teacher' ? 'Teacher' : 'Student';
+    dispatch(fetchAllUsers({ role, status: 'Active' }));
+  }, [dispatch, accountType]);
+
+  // Filter and format accounts for display
+  const roleFilter = accountType === 'teacher' ? 'Teacher' : 'Student';
+  const accounts = users
+    .filter(user => user.role === roleFilter && user.status === 'Active')
+    .map(user => ({
+      id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      role: user.role,
+      email: user.email,
+      totalLogins: 0, // This field doesn't exist in the User model - keeping for UI compatibility
+      avatar: user.profileImage?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+    }));
 
   const handleBack = () => {
     navigate('/admin/accounts');
@@ -39,6 +40,13 @@ function AdminAccountView() {
       <div className={styles.header}>
         <h2>{title}</h2>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
+          {error}
+        </div>
+      )}
 
       {loading ? (
         <div className={styles.loading}>Loading...</div>

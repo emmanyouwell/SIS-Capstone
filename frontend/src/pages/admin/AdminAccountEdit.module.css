@@ -71,6 +71,7 @@
   overflow: visible;
   margin-bottom: 2rem;
   position: relative;
+  z-index: 1;
 }
 
 .facultyTable {
@@ -119,6 +120,7 @@
   position: relative;
 }
 
+
 .facultyTable tr:last-child td {
   border-bottom: none;
 }
@@ -165,8 +167,6 @@
 
 .actionCell {
   position: relative;
-  overflow: visible;
-  z-index: 10;
 }
 
 .dotsBtn {
@@ -181,22 +181,20 @@
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s, border 0.2s;
-  
 }
 
 .dotsBtn:hover {
   background: #e6f0ea;
   border: 1px solid #39916f;
 }
-
 .dropdownMenu {
   position: absolute;
   right: 0;
-  top: 2rem;
+  top: calc(100% + 0.5rem);
   background: #fff;
   border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
   min-width: 120px;
   padding: 0.5rem 0;
   overflow: visible;
@@ -394,6 +392,56 @@
 
 .btnPrimary:hover {
   background: #276749;
+}
+
+.btnDanger {
+  background: #e53e3e;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #ffffff;
+  transition: all 0.3s ease;
+}
+
+.btnDanger:hover {
+  background: #c53030;
+}
+
+.btnDanger:disabled {
+  background: #fc8181;
+  cursor: not-allowed;
+}
+
+.deleteModalContent {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 500px;
+  width: 90vw;
+  padding: 2rem 1.5rem;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  text-align: center;
+}
+
+.deleteModalContent h3 {
+  margin-bottom: 1rem;
+  color: #e53e3e;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.deleteModalContent p {
+  margin: 0.5rem 0;
+  color: #222;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.deleteModalContent strong {
+  color: #e53e3e;
+  font-weight: 600;
 }
 
 .loading {
