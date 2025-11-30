@@ -55,8 +55,15 @@ function App() {
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/student/login" element={<StudentLogin />} />
         <Route path="/teacher/login" element={<TeacherLogin />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route path="dashboard" element={<ProtectedRoute allowedRoles={['Admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={['Admin']}>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="accounts" element={<AdminAccounts />} />
           <Route path="accounts/view/:accountType" element={<AdminAccountView />} />
@@ -79,7 +86,14 @@ function App() {
           <Route path="messages" element={<AdminMessages />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
-        <Route path="/student" element={<StudentLayout />}>
+        <Route
+          path="/student"
+          element={
+            <ProtectedRoute allowedRoles={['Student']}>
+              <StudentLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="subjects" element={<StudentSubjects />} />
           <Route path="grades" element={<StudentGrades />} />
@@ -90,7 +104,14 @@ function App() {
           <Route path="profile" element={<StudentProfile />} />
           <Route path="help" element={<StudentHelp />} />
         </Route>
-        <Route path="/teacher" element={<TeacherLayout />}>
+        <Route
+          path="/teacher"
+          element={
+            <ProtectedRoute allowedRoles={['Teacher']}>
+              <TeacherLayout />
+            </ProtectedRoute>
+          }
+        >
           <Route path="dashboard" element={<TeacherDashboard />} />
           <Route path="classes" element={<TeacherClasses />} />
           <Route path="grades" element={<TeacherGrades />} />
