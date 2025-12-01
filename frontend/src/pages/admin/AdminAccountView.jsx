@@ -7,17 +7,17 @@ import { fetchAllUsers } from '../../store/slices/userSlice';
 function AdminAccountView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { accountType } = useParams(); // 'teacher' or 'student'
+
   const { users, loading, error } = useSelector((state) => state.users);
 
   // Fetch users filtered by role
   useEffect(() => {
-    const role = accountType === 'teacher' ? 'Teacher' : 'Student';
-    dispatch(fetchAllUsers({ role, status: 'Active' }));
-  }, [dispatch, accountType]);
+
+    dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
+  }, [dispatch]);
 
   // Filter and format accounts for display
-  const roleFilter = accountType === 'teacher' ? 'Teacher' : 'Student';
+  const roleFilter = 'Teacher';
   const accounts = users
     .filter(user => user.role === roleFilter && user.status === 'Active')
     .map(user => ({
@@ -33,7 +33,7 @@ function AdminAccountView() {
     navigate('/admin/accounts');
   };
 
-  const title = accountType === 'teacher' ? 'Faculty Accounts' : 'Student Accounts';
+  const title = 'Faculty Accounts';
 
   return (
     <div className={styles.mainContent}>
@@ -55,7 +55,7 @@ function AdminAccountView() {
           <div className={styles.summaryRow}>
             <div className={styles.summaryCard}>
               <div className={styles.summaryHeader}>
-                Active {accountType === 'teacher' ? 'Faculty' : 'Student'} Accounts:
+                Active Faculty Accounts:
               </div>
               <div className={styles.summaryCount}>{accounts.length}</div>
             </div>
@@ -68,7 +68,7 @@ function AdminAccountView() {
           </div>
 
           <h2 className={styles.tableTitle}>
-            {accountType === 'teacher' ? 'Faculty' : 'Student'} Table
+            Faculty Table
           </h2>
           <table className={styles.facultyTable}>
             <thead>
@@ -83,10 +83,10 @@ function AdminAccountView() {
               {accounts.map((account) => (
                 <tr key={account.id}>
                   <td className={styles.facultyNameCell}>
-                    <img 
-                      className={styles.facultyAvatar} 
-                      src={account.avatar} 
-                      alt="Avatar" 
+                    <img
+                      className={styles.facultyAvatar}
+                      src={account.avatar}
+                      alt="Avatar"
                     />
                     {account.name}
                   </td>
@@ -102,7 +102,7 @@ function AdminAccountView() {
 
       <button className={styles.fabBtn} title="Back" onClick={handleBack}>
         <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6"/>
+          <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
     </div>

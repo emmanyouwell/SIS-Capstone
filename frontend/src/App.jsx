@@ -11,6 +11,8 @@ import AdminAnnouncements from './pages/admin/AdminAnnouncements';
 import AdminAccounts from './pages/admin/AdminAccounts';
 import AdminAccountView from './pages/admin/AdminAccountView';
 import AdminAccountEdit from './pages/admin/AdminAccountEdit';
+import AdminAccountStudView from './pages/admin/AdminAccountStudView';
+import AdminAccountStudEdit from './pages/admin/AdminAccountStudEdit';
 import AdminGrades from './pages/admin/AdminGrades';
 import AdminGradeView from './pages/admin/AdminGradeView';
 import AdminSubjects from './pages/admin/AdminSubjects';
@@ -66,8 +68,10 @@ function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="announcements" element={<AdminAnnouncements />} />
           <Route path="accounts" element={<AdminAccounts />} />
-          <Route path="accounts/view/:accountType" element={<AdminAccountView />} />
-          <Route path="accounts/edit/:accountType" element={<AdminAccountEdit />} />
+          <Route path="accounts/teacher/view" element={<AdminAccountView />} />
+          <Route path="accounts/teacher/edit" element={<AdminAccountEdit />} />
+          <Route path="accounts/student/view" element={<AdminAccountStudView />} />
+          <Route path="accounts/student/edit" element={<AdminAccountStudEdit />} />
           <Route path="grades" element={<AdminGrades />} />
           <Route path="grades/:grade" element={<AdminGradeView />} />
           <Route path="subjects" element={<AdminSubjects />} />

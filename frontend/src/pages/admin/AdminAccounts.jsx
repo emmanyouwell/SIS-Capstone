@@ -80,19 +80,19 @@ function AdminAccounts() {
   };
 
   const handleViewTeachers = () => {
-    navigate('/admin/accounts/view/teacher');
+    navigate('/admin/accounts/teacher/view');
   };
 
   const handleEditTeachers = () => {
-    navigate('/admin/accounts/edit/teacher');
+    navigate('/admin/accounts/teacher/edit');
   };
 
   const handleViewStudents = () => {
-    navigate('/admin/accounts/view/student');
+    navigate('/admin/accounts/student/view');
   };
 
   const handleEditStudents = () => {
-    navigate('/admin/accounts/edit/student');
+    navigate('/admin/accounts/student/edit');
   };
 
   if (loading) {

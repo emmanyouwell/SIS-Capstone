@@ -8,7 +8,7 @@ import { register } from '../../store/slices/authSlice';
 function AdminAccountEdit() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { accountType } = useParams(); // 'teacher' or 'student'
+  
   const { users, loading, error } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
   const [searchTerm, setSearchTerm] = useState('');
@@ -36,9 +36,9 @@ function AdminAccountEdit() {
 
   // Fetch users filtered by role
   useEffect(() => {
-    const role = accountType === 'teacher' ? 'Teacher' : 'Student';
-    dispatch(fetchAllUsers({ role }));
-  }, [dispatch, accountType]);
+    
+    dispatch(fetchAllUsers({ role: 'Teacher' }));
+  }, [dispatch]);
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -67,7 +67,7 @@ function AdminAccountEdit() {
   };
 
   // Format accounts for display
-  const roleFilter = accountType === 'teacher' ? 'Teacher' : 'Student';
+  const roleFilter = 'Teacher';
   const accounts = users
     .filter(user => user.role === roleFilter)
     .map(user => ({
@@ -274,7 +274,7 @@ function AdminAccountEdit() {
     setUserToDelete(null);
   };
 
-  const title = accountType === 'teacher' ? 'Faculty Table' : 'Student Table';
+  const title = 'Faculty Table';
 
   return (
     <div className={styles.mainContent}>
