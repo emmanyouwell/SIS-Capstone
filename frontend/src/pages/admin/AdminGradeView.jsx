@@ -1,86 +1,87 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchGrades, updateGrade, createGrade } from '../../store/slices/gradeSlice';
 import styles from './AdminGradeView.module.css';
-
-// Sample data - in production, this would come from an API
-const sampleStudents = {
-  grade7: [
-    { id: 1, name: 'Kiana Mae Alvarez', status: 'completed', lrn: '00000000', finalGrade: 92, grade: 7 },
-    { id: 2, name: 'Jerica May Galve', status: 'completed', lrn: '00000000', finalGrade: 93, grade: 7 },
-    { id: 3, name: 'Haven Joy DAyola', status: 'incomplete', lrn: '00000000', finalGrade: null, grade: 7 },
-    { id: 4, name: 'Khaleed James Forteza', status: 'completed', lrn: '00000000', finalGrade: 88, grade: 7 },
-    { id: 5, name: 'Jandel Grower', status: 'failed', lrn: '00000000', finalGrade: 74, grade: 7 },
-  ],
-  grade8: [
-    { id: 1, name: 'Maria Cristina Bautista', status: 'completed', lrn: '100000001', finalGrade: 90, grade: 8 },
-    { id: 2, name: 'John Michael Cruz', status: 'completed', lrn: '100000002', finalGrade: 89, grade: 8 },
-    { id: 3, name: 'Sarah Jane Dela Rosa', status: 'incomplete', lrn: '100000003', finalGrade: null, grade: 8 },
-    { id: 4, name: 'Mark Anthony Fernandez', status: 'completed', lrn: '100000004', finalGrade: 87, grade: 8 },
-    { id: 5, name: 'Patricia Ann Garcia', status: 'failed', lrn: '100000005', finalGrade: 73, grade: 8 },
-  ],
-  grade9: [
-    { id: 1, name: 'Anna Marie Santos', status: 'completed', lrn: '200000001', finalGrade: 91, grade: 9 },
-    { id: 2, name: 'Robert James Torres', status: 'completed', lrn: '200000002', finalGrade: 88, grade: 9 },
-    { id: 3, name: 'Jennifer Lynn Villanueva', status: 'incomplete', lrn: '200000003', finalGrade: null, grade: 9 },
-    { id: 4, name: 'Michael Angelo Reyes', status: 'completed', lrn: '200000004', finalGrade: 85, grade: 9 },
-    { id: 5, name: 'Catherine Rose Mendoza', status: 'failed', lrn: '200000005', finalGrade: 72, grade: 9 },
-  ],
-  grade10: [
-    { id: 1, name: 'Daniel Paul Aquino', status: 'completed', lrn: '300000001', finalGrade: 94, grade: 10 },
-    { id: 2, name: 'Maria Isabel Ramos', status: 'completed', lrn: '300000002', finalGrade: 90, grade: 10 },
-    { id: 3, name: 'Christian Mark Lopez', status: 'incomplete', lrn: '300000003', finalGrade: null, grade: 10 },
-    { id: 4, name: 'Angela Grace Morales', status: 'completed', lrn: '300000004', finalGrade: 86, grade: 10 },
-    { id: 5, name: 'Kevin John Rivera', status: 'failed', lrn: '300000005', finalGrade: 71, grade: 10 },
-  ],
-};
-
-// Sample subject grades for each student
-const sampleSubjectGrades = {
-  1: [
-    { subject: 'Mathematics', q1: 88, q2: 88, q3: 88, q4: 88 },
-    { subject: 'Science', q1: 91, q2: 91, q3: 91, q4: 91 },
-    { subject: 'English', q1: 95, q2: 95, q3: 95, q4: 95 },
-    { subject: 'Filipino', q1: 93, q2: 93, q3: 93, q4: 93 },
-    { subject: 'Araling Panlipunan', q1: 91, q2: 91, q3: 91, q4: 91 },
-    { subject: 'MAPEH', q1: 91, q2: 91, q3: 91, q4: 91 },
-    { subject: 'TLE', q1: 93, q2: 93, q3: 93, q4: 93 },
-  ],
-};
+import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 
 const ADMIN_PASSWORD = '12345';
 
 function AdminGradeView() {
-  const { grade } = useParams();
+  const { grade } = useParams(); // here, :grade is a grade level slug e.g. "grade7"
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { grades, loading, error } = useSelector((state) => state.grades);
+  const { subjects: subjectList } = useSelector((state) => state.subjects);
+  const [availableSubjects, setAvailableSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState('students');
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  // selectedGrade will hold one entry from the grades array: { student, gradeRecord }
+  const [selectedGrade, setSelectedGrade] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [password, setPassword] = useState('');
   const [passwordError, setPasswordError] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(null);
+  const [editingSubjectIndex, setEditingSubjectIndex] = useState(null);
   const [editGrades, setEditGrades] = useState({ q1: '', q2: '', q3: '', q4: '' });
   const [editError, setEditError] = useState('');
 
-  // Handle both "grade7" and "7" formats
-  const gradeKey = grade.startsWith('grade') ? grade : `grade${grade}`;
-  const students = sampleStudents[gradeKey] || [];
-  const gradeNumber = parseInt(grade.replace('grade', ''));
+  const gradeNumber = parseInt(grade.replace('grade', ''), 10);
 
-  // Filter students based on active tab and search term
+  useEffect(() => {
+    if (!Number.isNaN(gradeNumber)) {
+      // Backend getGrades now returns an array of { student, gradeRecord }
+      dispatch(fetchGrades({ gradeLevel: gradeNumber }));
+      dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }))
+    }
+  }, [dispatch, gradeNumber]);
+
+  useEffect(() => {
+    if (subjectList) {
+      setAvailableSubjects(subjectList);
+    }
+  }, [subjectList])
+ 
+  // Build per-student rows from the { student, gradeRecord } response
+  const students = useMemo(() => {
+    return grades.map((entry) => {
+      const { student, gradeRecord } = entry;
+
+      const name = student
+        ? `${student.firstName} ${student.lastName}`.trim()
+        : 'Unknown Student';
+
+      const finalGrade =
+        gradeRecord && typeof gradeRecord.finalGrade === 'number'
+          ? Math.round(gradeRecord.finalGrade)
+          : null;
+
+      const status = gradeRecord?.status || 'incomplete';
+      const gradeLevelValue = gradeRecord?.gradeLevel || student?.grade || gradeNumber;
+
+      return {
+        id: student?._id || gradeRecord?._id,
+        name,
+        lrn: student?.learnerReferenceNo || '-',
+        grade: gradeLevelValue,
+        status,
+        finalGrade,
+        student,
+        gradeRecord,
+      };
+    });
+  }, [grades, gradeNumber]);
+
   const filteredStudents = useMemo(() => {
-    let filtered = students;
+    let list = students;
 
-    // Filter by tab
     if (activeTab !== 'students') {
-      filtered = filtered.filter(student => student.status === activeTab);
+      list = list.filter((student) => student.status === activeTab);
     }
 
-    // Filter by search term
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(student =>
+      list = list.filter((student) =>
         student.name.toLowerCase().includes(term) ||
         student.lrn.toLowerCase().includes(term) ||
         (student.finalGrade !== null && student.finalGrade.toString().includes(term)) ||
@@ -88,24 +89,60 @@ function AdminGradeView() {
       );
     }
 
-    return filtered;
+    return list;
   }, [students, activeTab, searchTerm]);
 
-  const handleViewStudent = (student) => {
-    setSelectedStudent(student);
+  const handleViewStudent = (studentRow) => {
+    setSelectedGrade({
+      student: studentRow.student,
+      gradeRecord: studentRow.gradeRecord || null,
+    });
   };
+  const subjects = useMemo(() => {
+    // Extract existing grade entries (if any)
+    const existingGrades = selectedGrade?.gradeRecord?.grades?.subjects || [];
 
-  const handleCloseViewModal = () => {
-    setSelectedStudent(null);
-  };
+    // Build a lookup for quick matching by subject _id
+    const gradeMap = new Map(
+      existingGrades.map((g) => [g.subject?._id?.toString(), g])
+    );
 
-  const handleEditGrade = (subjectGrade) => {
-    setEditingSubject(subjectGrade);
+    // Always return ALL available subjects
+    return availableSubjects.map((subj) => {
+      const id = subj._id?.toString();
+
+      // If this subject already has a grade entry, merge it
+      if (gradeMap.has(id)) {
+        const record = gradeMap.get(id);
+        return {
+          subject: subj, // replace subject with the updated subject doc
+          q1: record.q1 ?? 0,
+          q2: record.q2 ?? 0,
+          q3: record.q3 ?? 0,
+          q4: record.q4 ?? 0,
+        };
+      }
+
+      // Otherwise return a placeholder row for new subjects
+      return {
+        subject: subj,
+        q1: 0,
+        q2: 0,
+        q3: 0,
+        q4: 0,
+      };
+    });
+  }, [selectedGrade, availableSubjects]);
+
+
+  const handleEditSubject = (index) => {
+    const subjectGrade = subjects[index];
+    setEditingSubjectIndex(index);
     setEditGrades({
-      q1: subjectGrade.q1 || '',
-      q2: subjectGrade.q2 || '',
-      q3: subjectGrade.q3 || '',
-      q4: subjectGrade.q4 || '',
+      q1: subjectGrade?.q1 ?? '',
+      q2: subjectGrade?.q2 ?? '',
+      q3: subjectGrade?.q3 ?? '',
+      q4: subjectGrade?.q4 ?? '',
     });
     setShowPasswordModal(true);
     setPassword('');
@@ -124,73 +161,113 @@ function AdminGradeView() {
     }
   };
 
-  const handleSaveGrade = () => {
-    const q1 = parseInt(editGrades.q1);
-    const q2 = parseInt(editGrades.q2);
-    const q3 = parseInt(editGrades.q3);
-    const q4 = parseInt(editGrades.q4);
+  const handleSave = () => {
+    const q1 = parseInt(editGrades.q1, 10);
+    const q2 = parseInt(editGrades.q2, 10);
+    const q3 = parseInt(editGrades.q3, 10);
+    const q4 = parseInt(editGrades.q4, 10);
 
-    // Validation
-    if (isNaN(q1) || isNaN(q2) || isNaN(q3) || isNaN(q4)) {
+    if ([q1, q2, q3, q4].some((q) => Number.isNaN(q))) {
       setEditError('Please enter valid numbers for all quarters.');
       return;
     }
 
-    if (q1 < 0 || q1 > 100 || q2 < 0 || q2 > 100 || q3 < 0 || q3 > 100 || q4 < 0 || q4 > 100) {
+    if (
+      q1 < 0 || q1 > 100 ||
+      q2 < 0 || q2 > 100 ||
+      q3 < 0 || q3 > 100 ||
+      q4 < 0 || q4 > 100
+    ) {
       setEditError('Grades must be between 0 and 100.');
       return;
     }
 
-    // Calculate final grade
-    const finalGrade = Math.round((q1 + q2 + q3 + q4) / 4);
-
-    // Update the subject grade (in production, this would be an API call)
-    if (editingSubject && selectedStudent) {
-      const subjectIndex = sampleSubjectGrades[selectedStudent.id]?.findIndex(
-        s => s.subject === editingSubject.subject
-      );
-      if (subjectIndex !== undefined && subjectIndex !== -1) {
-        sampleSubjectGrades[selectedStudent.id][subjectIndex] = {
-          ...editingSubject,
-          q1,
-          q2,
-          q3,
-          q4,
-          final: finalGrade,
-        };
-      }
+    if (editingSubjectIndex === null || !selectedGrade) {
+      setEditError('No subject selected to update.');
+      return;
     }
 
-    // Recalculate GWA and final grade
-    if (selectedStudent) {
-      const studentGrades = sampleSubjectGrades[selectedStudent.id] || [];
-      const totalFinal = studentGrades.reduce((sum, sg) => sum + (sg.final || Math.round((sg.q1 + sg.q2 + sg.q3 + sg.q4) / 4)), 0);
-      const gwa = studentGrades.length > 0 ? Math.round(totalFinal / studentGrades.length) : 0;
-      
-      // Update student's final grade
-      const studentIndex = students.findIndex(s => s.id === selectedStudent.id);
-      if (studentIndex !== -1) {
-        students[studentIndex].finalGrade = gwa;
-      }
+    const updatedSubjects = subjects.map((s, idx) =>
+      idx === editingSubjectIndex
+        ? { ...s, q1, q2, q3, q4 }
+        : s
+    );
+
+    // Normalize subjects for payload: subject must be an ObjectId, not full doc
+    const subjectsPayload = updatedSubjects.map((s) => ({
+      subject: s.subject?._id || s.subject,
+      q1: s.q1,
+      q2: s.q2,
+      q3: s.q3,
+      q4: s.q4,
+    }));
+
+    // If there is already a gradeRecord, update it; otherwise create a new one
+    if (selectedGrade.gradeRecord) {
+      dispatch(
+        updateGrade({
+          id: selectedGrade.gradeRecord._id,
+          data: {
+            grades: {
+              subjects: subjectsPayload,
+            },
+          },
+        })
+      );
+    } else {
+      // Derive a simple schoolYear, e.g. "2024-2025" based on current date
+      const now = new Date();
+      const year = now.getFullYear();
+      const schoolYear = `${year}-${year + 1}`;
+
+      dispatch(
+        createGrade({
+          student: selectedGrade.student._id,
+          gradeLevel: gradeNumber,
+          schoolYear,
+          grades: {
+            subjects: subjectsPayload,
+          },
+        })
+      );
     }
 
     setShowEditModal(false);
-    setEditingSubject(null);
+    setEditingSubjectIndex(null);
     setEditError('');
-    alert('Grades updated successfully!');
+    if (!Number.isNaN(gradeNumber)) {
+      // Backend getGrades now returns an array of { student, gradeRecord }
+      dispatch(fetchGrades({ gradeLevel: gradeNumber }));
+      dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }))
+    }
   };
 
-  const getStudentSubjectGrades = (studentId) => {
-    return sampleSubjectGrades[studentId] || sampleSubjectGrades[1] || [];
+  const calculateSubjectFinal = (subjectGrade) => {
+    const values = [subjectGrade.q1, subjectGrade.q2, subjectGrade.q3, subjectGrade.q4].filter(
+      (v) => typeof v === 'number'
+    );
+    if (values.length === 0) return null;
+    const sum = values.reduce((acc, v) => acc + v, 0);
+    return Math.round(sum / values.length);
   };
 
-  const calculateGWA = (subjectGrades) => {
-    if (!subjectGrades || subjectGrades.length === 0) return 0;
-    const total = subjectGrades.reduce((sum, sg) => {
-      const final = sg.final || Math.round((sg.q1 + sg.q2 + sg.q3 + sg.q4) / 4);
-      return sum + final;
-    }, 0);
-    return (total / subjectGrades.length).toFixed(2);
+  const calculateOverallFinal = () => {
+    if (!selectedGrade || !selectedGrade.gradeRecord) return null;
+    if (typeof selectedGrade.gradeRecord.finalGrade === 'number') {
+      return Math.round(selectedGrade.gradeRecord.finalGrade);
+    }
+    const finals = subjects
+      .map((s) => calculateSubjectFinal(s))
+      .filter((v) => typeof v === 'number');
+    if (finals.length === 0) return null;
+    const sum = finals.reduce((acc, v) => acc + v, 0);
+    return Math.round(sum / finals.length);
+  };
+
+  const calculateGWA = () => {
+    const overall = calculateOverallFinal();
+    if (overall === null) return '-';
+    return overall.toFixed(2);
   };
 
   const getStatusClass = (status) => {
@@ -210,6 +287,8 @@ function AdminGradeView() {
     <div className={styles.mainContent}>
       <h2 className={styles.pageTitle}>Grades - Grade {gradeNumber}</h2>
 
+      {loading && <div className={styles.statusMessage}>Loading grade...</div>}
+      {error && <div className={styles.errorMessage}>{error}</div>}
       <div className={styles.gradeCard}>
         <div className={styles.tabs}>
           <button
@@ -237,9 +316,18 @@ function AdminGradeView() {
             Failed
           </button>
           <div className={styles.search}>
-            <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="8"/>
-              <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            <svg
+              width="20"
+              height="20"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
             <input
               type="text"
@@ -264,7 +352,7 @@ function AdminGradeView() {
           <tbody>
             {filteredStudents.map((student) => (
               <tr key={student.id} data-status={student.status}>
-                <td style={{ textAlign: 'center' }}>{gradeNumber}</td>
+                <td style={{ textAlign: 'center' }}>{student.grade}</td>
                 <td>{student.name}</td>
                 <td className={getStatusClass(student.status)}>
                   {student.status.toUpperCase()}
@@ -276,9 +364,18 @@ function AdminGradeView() {
                     className={styles.viewBtn}
                     onClick={() => handleViewStudent(student)}
                   >
-                    <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="10"/>
-                      <circle cx="12" cy="12" r="4"/>
+                    <svg
+                      width="16"
+                      height="16"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <circle cx="12" cy="12" r="4" />
                     </svg>
                     view
                   </button>
@@ -289,16 +386,30 @@ function AdminGradeView() {
         </table>
       </div>
 
-      {/* View Grade Modal */}
-      {selectedStudent && (
-        <div className={styles.modalOverlay} onClick={handleCloseViewModal}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={handleCloseViewModal}>
+      {selectedGrade && (
+        <div
+          className={styles.modalOverlay}
+          onClick={() => setSelectedGrade(null)}
+        >
+          <div
+            className={styles.modalContent}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className={styles.modalClose}
+              onClick={() => setSelectedGrade(null)}
+            >
               &times;
             </button>
             <div className={styles.modalHeader}>
-              <div className={styles.modalName}>{selectedStudent.name}</div>
-              <div className={styles.modalLrn}>{selectedStudent.lrn}</div>
+              <div className={styles.modalName}>
+                {selectedGrade.student
+                  ? `${selectedGrade.student.firstName} ${selectedGrade.student.lastName}`.trim()
+                  : 'Unknown Student'}
+              </div>
+              <div className={styles.modalLrn}>
+                {selectedGrade.student?.learnerReferenceNo || '-'}
+              </div>
             </div>
             <table className={styles.modalTable}>
               <thead>
@@ -313,20 +424,20 @@ function AdminGradeView() {
                 </tr>
               </thead>
               <tbody>
-                {getStudentSubjectGrades(selectedStudent.id).map((subjectGrade, index) => {
-                  const final = subjectGrade.final || Math.round((subjectGrade.q1 + subjectGrade.q2 + subjectGrade.q3 + subjectGrade.q4) / 4);
+                {subjects.map((s, index) => {
+                  const final = calculateSubjectFinal(s);
                   return (
-                    <tr key={index}>
-                      <td>{subjectGrade.subject}</td>
-                      <td>{subjectGrade.q1}</td>
-                      <td>{subjectGrade.q2}</td>
-                      <td>{subjectGrade.q3}</td>
-                      <td>{subjectGrade.q4}</td>
-                      <td>{final.toFixed(2)}</td>
+                    <tr key={s._id || index}>
+                      <td>{s.subject?.name || 'N/A'}</td>
+                      <td>{s.q1 ?? '-'}</td>
+                      <td>{s.q2 ?? '-'}</td>
+                      <td>{s.q3 ?? '-'}</td>
+                      <td>{s.q4 ?? '-'}</td>
+                      <td>{final !== null ? final : '-'}</td>
                       <td>
                         <button
                           className={styles.modalEditBtn}
-                          onClick={() => handleEditGrade(subjectGrade)}
+                          onClick={() => handleEditSubject(index)}
                         >
                           Edit
                         </button>
@@ -334,10 +445,17 @@ function AdminGradeView() {
                     </tr>
                   );
                 })}
+                {subjects.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className={styles.emptyMessage}>
+                      No subject grades available.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
             <div className={styles.modalGWA}>
-              GWA: <span>{calculateGWA(getStudentSubjectGrades(selectedStudent.id))}</span>
+              GWA: <span>{calculateGWA()}</span>
             </div>
             <div className={styles.modalBottom}>
               <div className={styles.modalNotify}>
@@ -352,12 +470,19 @@ function AdminGradeView() {
               </div>
               <div className={styles.modalSummary}>
                 <div>
-                  FINAL GRADE: <span className={styles.finalGrade}>{selectedStudent.finalGrade || '-'}</span>
+                  FINAL GRADE:{' '}
+                  <span className={styles.finalGrade}>
+                    {calculateOverallFinal() ?? '-'}
+                  </span>
                 </div>
                 <div>
                   STATUS:{' '}
                   <span className={styles.statusPassed}>
-                    {selectedStudent.status === 'failed' ? 'FAILED' : selectedStudent.status === 'completed' ? 'PASSED' : 'PENDING'}
+                    {selectedGrade.status === 'failed'
+                      ? 'FAILED'
+                      : selectedGrade.status === 'completed'
+                        ? 'PASSED'
+                        : 'PENDING'}
                   </span>
                 </div>
                 <div>
@@ -370,110 +495,140 @@ function AdminGradeView() {
         </div>
       )}
 
-      {/* Password Modal */}
-      {showPasswordModal && (
-        <div className={styles.passwordModalOverlay} onClick={() => setShowPasswordModal(false)}>
-          <div className={styles.passwordModalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.passwordModalClose} onClick={() => setShowPasswordModal(false)}>
-              &times;
-            </button>
-            <h3>Admin Authentication Required</h3>
-            <p>Please enter your admin password to edit grades:</p>
-            <input
-              type="password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setPasswordError(false);
-              }}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') {
-                  handlePasswordSubmit();
-                }
-              }}
-            />
-            {passwordError && (
-              <div className={styles.passwordError}>Incorrect password. Please try again.</div>
-            )}
-            <div className={styles.passwordModalButtons}>
-              <button onClick={() => setShowPasswordModal(false)}>Cancel</button>
-              <button onClick={handlePasswordSubmit}>Submit</button>
+      {
+        showPasswordModal && (
+          <div className={styles.passwordModalOverlay} onClick={() => setShowPasswordModal(false)}>
+            <div className={styles.passwordModalContent} onClick={(e) => e.stopPropagation()}>
+              <button
+                className={styles.passwordModalClose}
+                onClick={() => setShowPasswordModal(false)}
+              >
+                &times;
+              </button>
+              <h3>Admin Authentication Required</h3>
+              <p>Please enter your admin password to edit grades:</p>
+              <input
+                type="password"
+                placeholder="Enter password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setPasswordError(false);
+                }}
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    handlePasswordSubmit();
+                  }
+                }}
+              />
+              {passwordError && (
+                <div className={styles.passwordError}>
+                  Incorrect password. Please try again.
+                </div>
+              )}
+              <div className={styles.passwordModalButtons}>
+                <button onClick={() => setShowPasswordModal(false)}>Cancel</button>
+                <button onClick={handlePasswordSubmit}>Submit</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {/* Edit Grade Modal */}
-      {showEditModal && editingSubject && (
-        <div className={styles.editModalOverlay} onClick={() => setShowEditModal(false)}>
-          <div className={styles.editModalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.editModalClose} onClick={() => setShowEditModal(false)}>
-              &times;
-            </button>
-            <h3>Edit Grades - {editingSubject.subject}</h3>
-            <div className={styles.editForm}>
-              <div className={styles.editField}>
-                <label>1st Quarter</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={editGrades.q1}
-                  onChange={(e) => setEditGrades({ ...editGrades, q1: e.target.value })}
-                />
+      {
+        showEditModal && editingSubjectIndex !== null && (
+          <div className={styles.editModalOverlay} onClick={() => setShowEditModal(false)}>
+            <div className={styles.editModalContent} onClick={(e) => e.stopPropagation()}>
+              <button
+                className={styles.editModalClose}
+                onClick={() => setShowEditModal(false)}
+              >
+                &times;
+              </button>
+              <h3>Edit Subject Grades</h3>
+              <div className={styles.editForm}>
+                <div className={styles.editField}>
+                  <label>1st Quarter</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={editGrades.q1}
+                    onChange={(e) =>
+                      setEditGrades({ ...editGrades, q1: e.target.value })
+                    }
+                  />
+                </div>
+                <div className={styles.editField}>
+                  <label>2nd Quarter</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={editGrades.q2}
+                    onChange={(e) =>
+                      setEditGrades({ ...editGrades, q2: e.target.value })
+                    }
+                  />
+                </div>
+                <div className={styles.editField}>
+                  <label>3rd Quarter</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={editGrades.q3}
+                    onChange={(e) =>
+                      setEditGrades({ ...editGrades, q3: e.target.value })
+                    }
+                  />
+                </div>
+                <div className={styles.editField}>
+                  <label>4th Quarter</label>
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="1"
+                    value={editGrades.q4}
+                    onChange={(e) =>
+                      setEditGrades({ ...editGrades, q4: e.target.value })
+                    }
+                  />
+                </div>
               </div>
-              <div className={styles.editField}>
-                <label>2nd Quarter</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={editGrades.q2}
-                  onChange={(e) => setEditGrades({ ...editGrades, q2: e.target.value })}
-                />
+              {editError && <div className={styles.editError}>{editError}</div>}
+              <div className={styles.editModalButtons}>
+                <button onClick={() => setShowEditModal(false)}>Cancel</button>
+                <button onClick={handleSave}>Save</button>
               </div>
-              <div className={styles.editField}>
-                <label>3rd Quarter</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={editGrades.q3}
-                  onChange={(e) => setEditGrades({ ...editGrades, q3: e.target.value })}
-                />
-              </div>
-              <div className={styles.editField}>
-                <label>4th Quarter</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="1"
-                  value={editGrades.q4}
-                  onChange={(e) => setEditGrades({ ...editGrades, q4: e.target.value })}
-                />
-              </div>
-            </div>
-            {editError && <div className={styles.editError}>{editError}</div>}
-            <div className={styles.editModalButtons}>
-              <button onClick={() => setShowEditModal(false)}>Cancel</button>
-              <button onClick={handleSaveGrade}>Save</button>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
-      {/* Back Button */}
-      <button className={styles.backBtn} onClick={() => navigate('/admin/grades')} title="Back">
-        <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6"/>
+      <button
+        className={styles.backBtn}
+        onClick={() => navigate('/admin/grades')}
+        title="Back"
+      >
+        <svg
+          width="32"
+          height="32"
+          fill="none"
+          stroke="#fff"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          viewBox="0 0 24 24"
+        >
+          <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
-    </div>
+    </div >
   );
 }
 

@@ -4,6 +4,7 @@ import announcementReducer from './slices/announcementSlice';
 import userReducer from './slices/userSlice';
 import subjectReducer from './slices/subjectSlice';
 import scheduleReducer from './slices/scheduleSlice';
+import gradeReducer from './slices/gradeSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     users: userReducer,
     subjects: subjectReducer,
     schedules: scheduleReducer,
+    grades: gradeReducer,
   },
 });
 

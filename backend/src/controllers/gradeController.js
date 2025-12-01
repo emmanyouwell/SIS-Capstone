@@ -1,44 +1,65 @@
 import Grade from '../models/Grade.js';
-
+import User from '../models/User.js';
 // @desc    Get all grades
 // @route   GET /api/v1/grades
 // @access  Private
 export const getGrades = async (req, res) => {
   try {
-    const { student, subject, gradeLevel, schoolYear } = req.query;
-    const filter = {};
+    const { gradeLevel, schoolYear } = req.query;
 
-    // Students can only see their own grades
-    if (req.user.role === 'Student') {
-      filter.student = req.user.id;
-    } else if (student) {
-      filter.student = student;
+    if (!gradeLevel) {
+      return res.status(400).json({ message: "gradeLevel is required" });
     }
 
-    if (subject) filter.subject = subject;
-    if (gradeLevel) filter.gradeLevel = parseInt(gradeLevel);
-    if (schoolYear) filter.schoolYear = schoolYear;
+    // 1. Fetch all students for this grade level
+    const students = await User.find({
+      role: "Student",
+      grade: parseInt(gradeLevel),
+      status: "Active",
+    }).select("firstName lastName learnerReferenceNo grade section");
 
-    // Teachers can only see grades for their subjects
-    if (req.user.role === 'Teacher') {
-      const userSubjects = req.user.subjects || [];
-      filter.subject = { $in: userSubjects };
+    // If teacher: filter only students they teach
+    let allowedSubjects = [];
+    if (req.user.role === "Teacher") {
+      allowedSubjects = req.user.subjects; // array of ObjectIds
     }
 
-    const grades = await Grade.find(filter)
-      .populate('student', 'firstName lastName learnerReferenceNo grade section')
-      .populate('subject', 'name gradeLevel')
-      .sort({ createdAt: -1 });
+    // 2. Fetch all grades for students in this grade level
+    const grades = await Grade.find({
+      gradeLevel: parseInt(gradeLevel),
+      ...(schoolYear && { schoolYear }),
+      ...(req.user.role === "Teacher" && {
+        "grades.subjects.subject": { $in: allowedSubjects },
+      }),
+    })
+      .populate("student", "firstName lastName learnerReferenceNo grade section")
+      .populate("grades.subjects.subject", "name gradeLevel");
+
+    // Convert to a Map for fast lookup
+    const gradeMap = new Map();
+    grades.forEach((g) => gradeMap.set(g.student._id.toString(), g));
+
+    // 3. Build final response: all students + optional grade record
+    const result = students.map((student) => {
+      const gradeRecord = gradeMap.get(student._id.toString()) || null;
+
+      return {
+        student,
+        gradeRecord,
+      };
+    });
 
     res.json({
       success: true,
-      count: grades.length,
-      data: grades,
+      count: result.length,
+      data: result,
     });
   } catch (error) {
+    console.error("Error fetching grades:", error);
     res.status(500).json({ message: error.message });
   }
 };
+
 
 // @desc    Get single grade
 // @route   GET /api/v1/grades/:id
@@ -47,7 +68,7 @@ export const getGrade = async (req, res) => {
   try {
     const grade = await Grade.findById(req.params.id)
       .populate('student', 'firstName lastName learnerReferenceNo grade section')
-      .populate('subject', 'name gradeLevel');
+      .populate('grades.subjects.subject', 'name gradeLevel');
 
     if (!grade) {
       return res.status(404).json({ message: 'Grade not found' });
@@ -73,8 +94,8 @@ export const getGrade = async (req, res) => {
 export const createGrade = async (req, res) => {
   try {
     const grade = await Grade.create(req.body);
-    await grade.populate('student', 'firstName lastName learnerReferenceNo');
-    await grade.populate('subject', 'name gradeLevel');
+    await grade.populate('student', 'firstName lastName learnerReferenceNo grade section');
+    await grade.populate('grades.subjects.subject', 'name gradeLevel');
 
     res.status(201).json({
       success: true,
@@ -96,10 +117,14 @@ export const updateGrade = async (req, res) => {
       return res.status(404).json({ message: 'Grade not found' });
     }
 
-    // Teachers can only update grades for their subjects
+    // Teachers can only update grades that include at least one of their subjects
     if (req.user.role === 'Teacher') {
       const userSubjects = req.user.subjects || [];
-      if (!userSubjects.includes(grade.subject)) {
+      const hasAuthorizedSubject = (grade.grades?.subjects || []).some((s) =>
+        userSubjects.some((subId) => s.subject?.toString() === subId.toString())
+      );
+
+      if (!hasAuthorizedSubject) {
         return res.status(403).json({ message: 'Not authorized to update this grade' });
       }
     }
@@ -108,8 +133,8 @@ export const updateGrade = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate('student', 'firstName lastName learnerReferenceNo')
-      .populate('subject', 'name gradeLevel');
+      .populate('student', 'firstName lastName learnerReferenceNo grade section')
+      .populate('grades.subjects.subject', 'name gradeLevel');
 
     res.json({
       success: true,
@@ -131,10 +156,14 @@ export const deleteGrade = async (req, res) => {
       return res.status(404).json({ message: 'Grade not found' });
     }
 
-    // Teachers can only delete grades for their subjects
+    // Teachers can only delete grades that include at least one of their subjects
     if (req.user.role === 'Teacher') {
       const userSubjects = req.user.subjects || [];
-      if (!userSubjects.includes(grade.subject)) {
+      const hasAuthorizedSubject = (grade.grades?.subjects || []).some((s) =>
+        userSubjects.some((subId) => s.subject?.toString() === subId.toString())
+      );
+
+      if (!hasAuthorizedSubject) {
         return res.status(403).json({ message: 'Not authorized to delete this grade' });
       }
     }
