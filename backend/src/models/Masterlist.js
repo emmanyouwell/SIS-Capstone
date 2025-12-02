@@ -26,6 +26,20 @@ const masterlistSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    subjectTeachers: [
+      {
+        subject: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'Subject',
+          required: true,
+        },
+        teacher: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User',
+          required: false,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

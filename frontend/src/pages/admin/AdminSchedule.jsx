@@ -10,6 +10,7 @@ import {
 } from '../../store/slices/scheduleSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminSchedule() {
   const dispatch = useDispatch();
@@ -18,13 +19,14 @@ function AdminSchedule() {
   const { schedules: allSchedules, loading, error } = useSelector((state) => state.schedules);
   const { subjects } = useSelector((state) => state.subjects);
   const { users } = useSelector((state) => state.users);
+  const sections = useSelector((state) => state.section.data);
 
-  // Grade sections mapping (static - part of system structure)
+  // Group sections by grade
   const gradeSections = {
-    7: ['Dahlia', 'Rose', 'Lilac', 'Foxglove', 'Lily'],
-    8: ['Sunflower', 'Tulip', 'Orchid', 'Peony', 'Daisy'],
-    9: ['Jasmine', 'Magnolia', 'Azalea', 'Camellia', 'Begonia'],
-    10: ['Iris', 'Poppy', 'Violet', 'Marigold', 'Petunia'],
+    7: sections.filter((s) => s.grade === 7).map((s) => s.name).sort(),
+    8: sections.filter((s) => s.grade === 8).map((s) => s.name).sort(),
+    9: sections.filter((s) => s.grade === 9).map((s) => s.name).sort(),
+    10: sections.filter((s) => s.grade === 10).map((s) => s.name).sort(),
   };
 
   const times = [
@@ -118,6 +120,7 @@ function AdminSchedule() {
     dispatch(fetchAllSchedules({ grade: currentGrade, section: currentSection, schoolYear }));
     dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
     dispatch(fetchAllUsers());
+    dispatch(getAllSections({ grade: currentGrade }));
   }, [dispatch, currentGrade, currentSection, schoolYear]);
 
   // Transform schedules to UI structure when schedules or filters change

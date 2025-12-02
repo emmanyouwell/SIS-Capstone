@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudEdit.module.css';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminAccountStudEdit() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function AdminAccountStudEdit() {
   const { id } = useParams();
   const { users, loading, error } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
+  const sections = useSelector((state) => state.section.data);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
@@ -37,7 +39,16 @@ function AdminAccountStudEdit() {
 
   useEffect(() => {
     dispatch(fetchAllUsers({ role: 'Student' }));
+    dispatch(getAllSections());
   }, [dispatch]);
+
+  // Get sections for selected grade
+  const gradeSections = formData.grade
+    ? sections
+        .filter((s) => s.grade === parseInt(formData.grade))
+        .map((s) => s.name)
+        .sort()
+    : [];
 
   useEffect(() => {
     if (!id || !users.length) return;
@@ -602,15 +613,22 @@ function AdminAccountStudEdit() {
                 </div>
                 <div className={styles.formGroup}>
                   <label htmlFor="section">Section</label>
-                  <input
-                    type="text"
+                  <select
                     id="section"
                     name="section"
                     value={formData.section}
                     onChange={(e) =>
                       setFormData({ ...formData, section: e.target.value })
                     }
-                  />
+                    disabled={!formData.grade}
+                  >
+                    <option value="">Select Section</option>
+                    {gradeSections.map((section) => (
+                      <option key={section} value={section}>
+                        {section}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

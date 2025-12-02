@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminAccountEdit() {
   const navigate = useNavigate();
@@ -11,6 +12,7 @@ function AdminAccountEdit() {
   
   const { users, loading, error } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
+  const sections = useSelector((state) => state.section.data);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [formError, setFormError] = useState(null);
@@ -34,11 +36,19 @@ function AdminAccountEdit() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // Fetch users filtered by role
+  // Fetch users filtered by role and sections
   useEffect(() => {
-    
     dispatch(fetchAllUsers({ role: 'Teacher' }));
+    dispatch(getAllSections());
   }, [dispatch]);
+
+  // Get sections for selected grade
+  const gradeSections = formData.grade
+    ? sections
+        .filter((s) => s.grade === parseInt(formData.grade))
+        .map((s) => s.name)
+        .sort()
+    : [];
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -517,13 +527,20 @@ function AdminAccountEdit() {
                 {formData.role === 'Student' && (
                   <div className={styles.formGroup}>
                     <label htmlFor="section">Section</label>
-                    <input
-                      type="text"
+                    <select
                       id="section"
                       name="section"
                       value={formData.section}
                       onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                    />
+                      disabled={!formData.grade}
+                    >
+                      <option value="">Select Section</option>
+                      {gradeSections.map((section) => (
+                        <option key={section} value={section}>
+                          {section}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>

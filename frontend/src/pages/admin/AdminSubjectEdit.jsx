@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminSubjectEdit.module.css';
 import { fetchAllSubjects, updateSubject, fetchSubjectById } from '../../store/slices/subjectSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 import api from '../../utils/api';
 
 function AdminSubjectEdit() {
@@ -13,6 +14,7 @@ function AdminSubjectEdit() {
   const { subjects, loading: subjectsLoading, error: subjectsError } = useSelector((state) => state.subjects);
   const { users: allUsers, loading: usersLoading } = useSelector((state) => state.users);
   const { user } = useSelector((state) => state.auth);
+  const sectionsData = useSelector((state) => state.section.data);
 
   const [selectedSection, setSelectedSection] = useState('');
   const [showMaterialModal, setShowMaterialModal] = useState(false);
@@ -31,15 +33,11 @@ function AdminSubjectEdit() {
   // Get grade level number from grade param (e.g., "grade7" -> 7)
   const gradeLevel = grade ? parseInt(grade.replace(/\D/g, '')) : null;
 
-  // Grade sections mapping (matching template)
-  const gradeSections = {
-    7: ['Dahlia', 'Rose', 'Lilac', 'Foxglove', 'Lily'],
-    8: ['Sunflower', 'Tulip', 'Orchid', 'Peony', 'Daisy'],
-    9: ['Jasmine', 'Magnolia', 'Azalea', 'Camellia', 'Begonia'],
-    10: ['Iris', 'Poppy', 'Violet', 'Marigold', 'Petunia'],
-  };
-
-  const sections = gradeSections[gradeLevel] || [];
+  // Get sections from API data
+  const sections = sectionsData
+    .filter((s) => s.grade === gradeLevel)
+    .map((s) => s.name)
+    .sort();
 
   // Filter subjects by grade level
   const gradeSubjects = subjects.filter(subject => subject.gradeLevel === gradeLevel);
@@ -53,16 +51,21 @@ function AdminSubjectEdit() {
       fullName: `${user.firstName} ${user.lastName}`
     }));
 
-  // Fetch subjects and teachers on mount
+  // Fetch subjects, teachers, and sections on mount
   useEffect(() => {
     if (gradeLevel) {
       dispatch(fetchAllSubjects({ gradeLevel }));
+      dispatch(getAllSections({ grade: gradeLevel }));
     }
     dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
-    if (sections.length > 0) {
+  }, [dispatch, gradeLevel]);
+
+  // Initialize selected section when sections are loaded
+  useEffect(() => {
+    if (sections.length > 0 && !selectedSection) {
       setSelectedSection(sections[0]);
     }
-  }, [dispatch, gradeLevel]);
+  }, [sections, selectedSection]);
 
   // Fetch full subject data when modal opens
   useEffect(() => {

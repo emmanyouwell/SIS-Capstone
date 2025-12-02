@@ -1,70 +1,81 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMasterlistAssignStudent.module.css';
+import { fetchMasterlists, updateMasterlist, clearError } from '../../store/slices/masterlistSlice';
+import { fetchAllUsers } from '../../store/slices/userSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminMasterlistAssignStudent() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const dropdownRef = useRef(null);
   const [selectedSection, setSelectedSection] = useState(null);
   const [activeTab, setActiveTab] = useState('Students');
   const [searchTerm, setSearchTerm] = useState('');
-  const [enrolledStudents, setEnrolledStudents] = useState(new Set());
   const [checkedStudents, setCheckedStudents] = useState(new Set());
   const [showDropdown, setShowDropdown] = useState(false);
   const [currentGrade, setCurrentGrade] = useState(7);
+  const [saving, setSaving] = useState(false);
+  const [genderFilter, setGenderFilter] = useState('All');
 
-  const gradeSections = {
-    7: ['Dahlia', 'Rose', 'Lilac', 'Foxglove', 'Lily'],
-    8: ['Sunflower', 'Tulip', 'Orchid', 'Peony', 'Daisy'],
-    9: ['Jasmine', 'Magnolia', 'Azalea', 'Camellia', 'Begonia'],
-    10: ['Iris', 'Poppy', 'Violet', 'Marigold', 'Petunia'],
+  const { masterlists, loading: masterlistLoading, error } = useSelector(
+    (state) => state.masterlists
+  );
+  const { users, loading: usersLoading } = useSelector((state) => state.users);
+  const sections = useSelector((state) => state.section.data);
+
+  // Fetch masterlists, students, and sections for current grade
+  useEffect(() => {
+    dispatch(fetchMasterlists({ grade: currentGrade }));
+    dispatch(fetchAllUsers({ role: 'Student', grade: currentGrade }));
+    dispatch(getAllSections({ grade: currentGrade }));
+  }, [currentGrade, dispatch]);
+
+  const gradeMasterlists = masterlists.filter((m) => m.grade === currentGrade);
+  // Derive sections from API data
+  const gradeSections = sections
+    .filter((s) => s.grade === currentGrade)
+    .map((s) => s.name)
+    .sort();
+
+  // Initialize selected section
+  useEffect(() => {
+    if (gradeSections.length > 0 && !selectedSection) {
+      setSelectedSection(gradeSections[0]);
+    }
+  }, [gradeSections, selectedSection]);
+
+  const currentMasterlist = gradeMasterlists.find((m) => m.section === selectedSection) || null;
+  const enrolledIds = new Set(
+    (currentMasterlist?.students || []).map((s) => (typeof s === 'object' ? s._id : s))
+  );
+
+  const allStudents = users.filter((u) => u.role === 'Student' && u.grade === currentGrade);
+
+  // Format student name helper
+  const formatStudentName = (student) => {
+    if (!student) return '';
+    const middleInitial = student.middleName ? ` ${student.middleName.charAt(0)}.` : '';
+    return `${student.lastName}, ${student.firstName}${middleInitial}`;
   };
 
-  const sectionAdvisers = {
-    Dahlia: 'Santos, Maria L.',
-    Rose: 'Garcia, John P.',
-    Lilac: 'Reyes, Anna M.',
-    Foxglove: 'Cruz, Mark D.',
-    Lily: 'Torres, Sophia G.',
-    Sunflower: 'Flores, Mariah J.',
-    Tulip: 'Santos, Ana M.',
-    Orchid: 'Reyes, John P.',
-    Peony: 'Garcia, Liza S.',
-    Daisy: 'Torres, Mark D.',
-    Jasmine: 'Dela Cruz, Maria F.',
-    Magnolia: 'Sison, Paul G.',
-    Azalea: 'Chua, Linda V.',
-    Camellia: 'Go, Steven H.',
-    Begonia: 'Yu, Anna K.',
-    Iris: 'Reyes, Carla M.',
-    Poppy: 'Santos, John D.',
-    Violet: 'Lim, Sarah P.',
-    Marigold: 'Tan, Michael S.',
-    Petunia: 'Uy, Lisa C.',
+  // Format gender helper
+  const formatGender = (student) => {
+    if (!student?.sex) return '';
+    if (student.sex === 'Male') return 'M';
+    if (student.sex === 'Female') return 'F';
+    return student.sex;
   };
 
-  // Sample student data
-  const sampleStudents = [
-    { id: 1, name: 'Aquino, Trisha Nicole B.', lrn: '000000001', gender: 'F' },
-    { id: 2, name: 'Cruz, Alyssa Marie T.', lrn: '000000002', gender: 'F' },
-    { id: 3, name: 'Domingo, Lea Catherine R.', lrn: '000000003', gender: 'F' },
-    { id: 4, name: 'Flores, Ana Beatrix C.', lrn: '000000004', gender: 'F' },
-    { id: 5, name: 'Francisco, Danica Rose H.', lrn: '000000005', gender: 'F' },
-    { id: 6, name: 'Gomez, Kristina Mae L.', lrn: '000000006', gender: 'F' },
-    { id: 7, name: 'Herrera, Joanna Faith P.', lrn: '000000007', gender: 'F' },
-    { id: 8, name: 'Morales, Maria Angelica V.', lrn: '000000008', gender: 'F' },
-    { id: 9, name: 'Alonzo, Nathaniel James F.', lrn: '000000009', gender: 'M' },
-    { id: 10, name: 'Baustista, Gabriel Luis C.', lrn: '000000010', gender: 'M' },
-    { id: 11, name: 'Dela Cruz, John Carlo M.', lrn: '000000011', gender: 'M' },
-    { id: 12, name: 'Navarro, Elijah Rey B.', lrn: '000000012', gender: 'M' },
-    { id: 13, name: 'Ramirez, Miguel Angelo S.', lrn: '000000013', gender: 'M' },
-    { id: 14, name: 'Santos, Fei Veston E.', lrn: '000000014', gender: 'M' },
-    { id: 15, name: 'Torres, Arvin John L.', lrn: '000000015', gender: 'M' },
-    { id: 16, name: 'Villanueva, Carlo Emmanuel D.', lrn: '000000016', gender: 'M' },
-  ];
-
-  const girls = sampleStudents.filter((s) => s.gender === 'F');
-  const boys = sampleStudents.filter((s) => s.gender === 'M');
+  // Sort students: girls first, then boys
+  const sortedStudents = [...allStudents].sort((a, b) => {
+    // First sort by gender (Female first)
+    if (a.sex === 'Female' && b.sex !== 'Female') return -1;
+    if (a.sex !== 'Female' && b.sex === 'Female') return 1;
+    // Then sort by last name
+    return (a.lastName || '').localeCompare(b.lastName || '');
+  });
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -81,23 +92,46 @@ function AdminMasterlistAssignStudent() {
 
   const handleSectionSelect = (section) => {
     setSelectedSection(section);
+    setCheckedStudents(new Set());
     setShowDropdown(false);
   };
 
-  const handleAddStudents = () => {
+  const handleAddStudents = async () => {
     if (!selectedSection || checkedStudents.size === 0) {
       alert('Please select at least one student and a section.');
       return;
     }
 
-    setEnrolledStudents((prev) => {
-      const newSet = new Set(prev);
-      checkedStudents.forEach((id) => newSet.add(id));
-      return newSet;
-    });
+    // Find or create masterlist for this section
+    let masterlistToUpdate = currentMasterlist;
+    
+    // If no masterlist exists, we need to create one or handle it
+    if (!masterlistToUpdate) {
+      alert('Masterlist not found for this section. Please ensure the section exists.');
+      return;
+    }
 
-    setCheckedStudents(new Set());
-    alert(`Students successfully added to ${selectedSection}!`);
+    const existingIds = masterlistToUpdate.students.map((s) =>
+      typeof s === 'object' ? s._id : s
+    );
+    const toAdd = Array.from(checkedStudents);
+    const mergedIds = Array.from(new Set([...existingIds, ...toAdd]));
+
+    try {
+      setSaving(true);
+      await dispatch(
+        updateMasterlist({
+          id: masterlistToUpdate._id,
+          data: { students: mergedIds },
+        })
+      ).unwrap();
+      setCheckedStudents(new Set());
+      alert(`Students successfully added to ${selectedSection}!`);
+    } catch (err) {
+      alert(err || 'Failed to add students');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCheckboxChange = (studentId) => {
@@ -112,54 +146,49 @@ function AdminMasterlistAssignStudent() {
     });
   };
 
-  const filterStudents = (students) => {
-    return students.filter((student) => {
-      const isEnrolled = enrolledStudents.has(student.id);
-      if (activeTab === 'Enrolled' && !isEnrolled) return false;
-      if (activeTab === 'Not Enrolled' && isEnrolled) return false;
+  // Filter students based on active tab, search term, and gender filter
+  const filteredStudents = sortedStudents.filter((student) => {
+    const isEnrolled = enrolledIds.has(student._id);
+    if (activeTab === 'Enrolled' && !isEnrolled) return false;
+    if (activeTab === 'Not Enrolled' && isEnrolled) return false;
 
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        return (
-          student.name.toLowerCase().includes(term) ||
-          student.lrn.toLowerCase().includes(term)
-        );
-      }
+    // Apply gender filter
+    if (genderFilter !== 'All') {
+      if (genderFilter === 'Female' && student.sex !== 'Female') return false;
+      if (genderFilter === 'Male' && student.sex !== 'Male') return false;
+    }
 
-      return true;
-    });
-  };
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      const fullName = formatStudentName(student).toLowerCase();
+      return (
+        fullName.includes(term) ||
+        (student.learnerReferenceNo || '').toLowerCase().includes(term)
+      );
+    }
 
-  const filteredGirls = filterStudents(girls);
-  const filteredBoys = filterStudents(boys);
+    return true;
+  });
 
-  const maxRows = Math.max(filteredGirls.length, filteredBoys.length);
-  const tableRows = [];
-  for (let i = 0; i < maxRows; i++) {
-    tableRows.push({
-      girl: filteredGirls[i] || null,
-      boy: filteredBoys[i] || null,
-    });
-  }
-
-  const currentSections = gradeSections[currentGrade] || [];
-  const currentAdviser = selectedSection ? sectionAdvisers[selectedSection] : 'N/A';
+  const currentSections = gradeSections || [];
+  const currentAdviser = currentMasterlist?.adviser
+    ? `${currentMasterlist.adviser.lastName}, ${currentMasterlist.adviser.firstName}`
+    : 'N/A';
 
   const handleShare = async () => {
-    const shareText = `Masterlist - Grade ${currentGrade}\n\n${tableRows
-      .map((row) => {
-        const girlName = row.girl ? row.girl.name : '';
-        const girlLRN = row.girl ? row.girl.lrn : '';
-        const boyName = row.boy ? row.boy.name : '';
-        const boyLRN = row.boy ? row.boy.lrn : '';
-        return `${girlName}\t${girlLRN}\t${boyName}\t${boyLRN}`;
+    const shareText = `Masterlist - Grade ${currentGrade} - Section ${selectedSection}\n\nName\tLRN\tGender\n${filteredStudents
+      .map((student) => {
+        const name = formatStudentName(student);
+        const lrn = student.learnerReferenceNo || '';
+        const gender = formatGender(student);
+        return `${name}\t${lrn}\t${gender}`;
       })
       .join('\n')}`;
 
     if (navigator.share) {
       try {
         await navigator.share({
-          title: `Masterlist - Grade ${currentGrade}`,
+          title: `Masterlist - Grade ${currentGrade} - Section ${selectedSection}`,
           text: shareText,
         });
       } catch (err) {
@@ -172,13 +201,12 @@ function AdminMasterlistAssignStudent() {
   };
 
   const handleDownload = () => {
-    const csvContent = `Girls,LRN,Boys,LRN\n${tableRows
-      .map((row) => {
-        const girlName = row.girl ? `"${row.girl.name.replace(/"/g, '""')}"` : '';
-        const girlLRN = row.girl ? row.girl.lrn : '';
-        const boyName = row.boy ? `"${row.boy.name.replace(/"/g, '""')}"` : '';
-        const boyLRN = row.boy ? row.boy.lrn : '';
-        return `${girlName},${girlLRN},${boyName},${boyLRN}`;
+    const csvContent = `Name,LRN,Gender\n${filteredStudents
+      .map((student) => {
+        const name = `"${formatStudentName(student).replace(/"/g, '""')}"`;
+        const lrn = student.learnerReferenceNo || '';
+        const gender = formatGender(student);
+        return `${name},${lrn},${gender}`;
       })
       .join('\n')}`;
 
@@ -187,7 +215,7 @@ function AdminMasterlistAssignStudent() {
     const url = URL.createObjectURL(blob);
 
     link.setAttribute('href', url);
-    link.setAttribute('download', `masterlist-grade${currentGrade}.csv`);
+    link.setAttribute('download', `masterlist-grade${currentGrade}-section${selectedSection}.csv`);
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
@@ -207,8 +235,8 @@ function AdminMasterlistAssignStudent() {
     <div className={styles.mainContent}>
       <div className={styles.headerBar}>
         <div className={styles.addStudentContainer} ref={dropdownRef}>
-          <button className={styles.addStudentMain} onClick={handleAddStudents}>
-            Add Student
+          <button className={styles.addStudentMain} onClick={handleAddStudents} disabled={saving}>
+            {saving ? 'Saving...' : 'Add Student'}
           </button>
           <button
             className={styles.addStudentArrow}
@@ -268,6 +296,26 @@ function AdminMasterlistAssignStudent() {
         >
           Not Enrolled
         </button>
+        <div className={styles.genderFilter}>
+          <button
+            className={`${styles.genderFilterBtn} ${genderFilter === 'All' ? styles.active : ''}`}
+            onClick={() => setGenderFilter('All')}
+          >
+            All
+          </button>
+          <button
+            className={`${styles.genderFilterBtn} ${genderFilter === 'Female' ? styles.active : ''}`}
+            onClick={() => setGenderFilter('Female')}
+          >
+            Female
+          </button>
+          <button
+            className={`${styles.genderFilterBtn} ${genderFilter === 'Male' ? styles.active : ''}`}
+            onClick={() => setGenderFilter('Male')}
+          >
+            Male
+          </button>
+        </div>
         <div className={styles.searchContainer}>
           <input
             type="text"
@@ -284,68 +332,47 @@ function AdminMasterlistAssignStudent() {
           <thead>
             <tr>
               <th></th>
-              <th>Girls</th>
+              <th>Name</th>
               <th>LRN</th>
-              <th></th>
-              <th>Boys</th>
-              <th>LRN</th>
+              <th>Gender</th>
             </tr>
           </thead>
           <tbody>
-            {tableRows.map((row, index) => (
-              <tr key={index}>
-                <td>
-                  {row.girl && (
-                    <input
-                      type="checkbox"
-                      className={styles.checkbox}
-                      checked={checkedStudents.has(row.girl.id)}
-                      onChange={() => handleCheckboxChange(row.girl.id)}
-                      disabled={enrolledStudents.has(row.girl.id)}
-                    />
-                  )}
-                </td>
-                <td
-                  className={`${styles.studentName} ${
-                    row.girl && enrolledStudents.has(row.girl.id) ? styles.greyedOut : ''
-                  }`}
-                >
-                  {row.girl ? row.girl.name : ''}
-                </td>
-                <td
-                  className={
-                    row.girl && enrolledStudents.has(row.girl.id) ? styles.greyedOut : ''
-                  }
-                >
-                  {row.girl ? row.girl.lrn : ''}
-                </td>
-                <td>
-                  {row.boy && (
-                    <input
-                      type="checkbox"
-                      className={styles.checkbox}
-                      checked={checkedStudents.has(row.boy.id)}
-                      onChange={() => handleCheckboxChange(row.boy.id)}
-                      disabled={enrolledStudents.has(row.boy.id)}
-                    />
-                  )}
-                </td>
-                <td
-                  className={`${styles.studentName} ${
-                    row.boy && enrolledStudents.has(row.boy.id) ? styles.greyedOut : ''
-                  }`}
-                >
-                  {row.boy ? row.boy.name : ''}
-                </td>
-                <td
-                  className={
-                    row.boy && enrolledStudents.has(row.boy.id) ? styles.greyedOut : ''
-                  }
-                >
-                  {row.boy ? row.boy.lrn : ''}
+            {filteredStudents.length === 0 ? (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>
+                  No students found.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filteredStudents.map((student) => {
+                const isEnrolled = enrolledIds.has(student._id);
+                return (
+                  <tr key={student._id}>
+                    <td>
+                      <input
+                        type="checkbox"
+                        className={styles.checkbox}
+                        checked={checkedStudents.has(student._id)}
+                        onChange={() => handleCheckboxChange(student._id)}
+                        disabled={isEnrolled}
+                      />
+                    </td>
+                    <td
+                      className={`${styles.studentName} ${isEnrolled ? styles.greyedOut : ''}`}
+                    >
+                      {formatStudentName(student)}
+                    </td>
+                    <td className={isEnrolled ? styles.greyedOut : ''}>
+                      {student.learnerReferenceNo || ''}
+                    </td>
+                    <td className={isEnrolled ? styles.greyedOut : ''}>
+                      {formatGender(student)}
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>

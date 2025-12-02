@@ -1,93 +1,202 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMasterlistAssignTeacher.module.css';
+import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from '../../store/slices/masterlistSlice';
+import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllSubjects } from '../../store/slices/subjectSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminMasterlistAssignTeacher() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [currentGrade, setCurrentGrade] = useState(7);
   const [selectedSection, setSelectedSection] = useState('');
-  const [adviser, setAdviser] = useState('');
+  const [adviserId, setAdviserId] = useState('');
   const [subjectTeachers, setSubjectTeachers] = useState({});
   const [alertMessage, setAlertMessage] = useState('');
   const [alertType, setAlertType] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  const gradeSections = {
-    7: ['Dahlia', 'Rose', 'Lilac', 'Foxglove', 'Lily'],
-    8: ['Sunflower', 'Tulip', 'Orchid', 'Peony', 'Daisy'],
-    9: ['Jasmine', 'Magnolia', 'Azalea', 'Camellia', 'Begonia'],
-    10: ['Iris', 'Poppy', 'Violet', 'Marigold', 'Petunia'],
-  };
+  const { masterlists, loading: masterlistLoading, error } = useSelector(
+    (state) => state.masterlists
+  );
+  const { users, loading: usersLoading } = useSelector((state) => state.users);
+  const { subjects: allSubjects, loading: subjectsLoading } = useSelector(
+    (state) => state.subjects
+  );
+  const sections = useSelector((state) => state.section.data);
 
-  const subjects = [
-    'Mathematics',
-    'Science',
-    'English',
-    'MAPEH',
-    'Filipino',
-    'Araling Panlipunan',
-    'Values Education',
-  ];
+  // Derive sections from API data
+  const gradeSections = sections
+    .filter((s) => s.grade === currentGrade)
+    .map((s) => s.name)
+    .sort();
 
-  const teachers = [
-    'Maria Santos',
-    'John Garcia',
-    'Anna Reyes',
-    'Mark Cruz',
-    'Lisa Tan',
-    'Paul Lim',
-    'Sarah Uy',
-  ];
-
+    const currentMasterlist = masterlists.find(
+      (m) => m.grade === currentGrade && m.section === selectedSection
+    );
+  // Get subjects for current grade level from database
+  // Merge with subjects from masterlist.subjectTeachers to ensure all subjects appear
+  const masterlistSubjectIds = new Set(
+    (currentMasterlist?.subjectTeachers || [])
+      .map((st) => st.subject?._id || st.subject)
+      .filter(Boolean)
+  );
+  const subjectsFromDB = allSubjects
+    .filter((s) => s.gradeLevel === currentGrade)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  
+  // Merge: subjects from DB + subjects in masterlist that might not be in DB
+  const allSubjectIds = new Set([
+    ...subjectsFromDB.map((s) => s._id),
+    ...Array.from(masterlistSubjectIds),
+  ]);
+  
+  const subjects = Array.from(allSubjectIds)
+    .map((id) => {
+      const fromDB = subjectsFromDB.find((s) => s._id === id);
+      if (fromDB) return fromDB;
+      // If subject is in masterlist but not in DB, create a minimal object
+      const fromMasterlist = currentMasterlist?.subjectTeachers?.find(
+        (st) => (st.subject?._id || st.subject) === id
+      );
+      if (fromMasterlist) {
+        return {
+          _id: id,
+          name: fromMasterlist.subject?.name || 'Unknown Subject',
+          gradeLevel: currentGrade,
+        };
+      }
+      return null;
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
+  const allTeachers = users
+    .filter((u) => u.role === 'Teacher' && u.status === 'Active')
+    .map((u) => ({ id: u._id, name: `${u.firstName} ${u.lastName}` }));
+  // Fetch masterlists, teachers, subjects, and sections for current grade
   useEffect(() => {
-    if (gradeSections[currentGrade] && gradeSections[currentGrade].length > 0) {
-      setSelectedSection(gradeSections[currentGrade][0]);
+    dispatch(fetchMasterlists({ grade: currentGrade }));
+    dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
+    dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
+    dispatch(getAllSections({ grade: currentGrade }));
+  }, [currentGrade, dispatch]);
+
+  // Initialize selected section
+  useEffect(() => {
+    if (gradeSections.length > 0 && !selectedSection) {
+      setSelectedSection(gradeSections[0]);
     }
-  }, [currentGrade]);
+  }, [gradeSections, selectedSection]);
+
+
+  // Sync adviser and subjectTeachers from current masterlist
+  useEffect(() => {
+    if (currentMasterlist?.adviser) {
+      setAdviserId(currentMasterlist.adviser._id || '');
+    } else {
+      setAdviserId('');
+    }
+
+    // Sync subjectTeachers from masterlist
+    if (currentMasterlist?.subjectTeachers && Array.isArray(currentMasterlist.subjectTeachers)) {
+      const subjectTeacherMap = {};
+      currentMasterlist.subjectTeachers.forEach((st) => {
+        if (st.subject && st.teacher) {
+          subjectTeacherMap[st.subject._id || st.subject] = st.teacher._id || st.teacher;
+        }
+      });
+      setSubjectTeachers(subjectTeacherMap);
+    } else {
+      setSubjectTeachers({});
+    }
+  }, [currentMasterlist]);
 
   const handleGradeChange = (grade) => {
     setCurrentGrade(grade);
-    setAdviser('');
+    setSelectedSection('');
     setSubjectTeachers({});
   };
 
   const handleSectionChange = (e) => {
     setSelectedSection(e.target.value);
-    setAdviser('');
     setSubjectTeachers({});
   };
 
   const handleAdviserChange = (e) => {
-    setAdviser(e.target.value);
+    setAdviserId(e.target.value);
   };
 
-  const handleSubjectTeacherChange = (subject, teacher) => {
+  const handleSubjectTeacherChange = (subjectId, teacherId) => {
     setSubjectTeachers((prev) => ({
       ...prev,
-      [subject]: teacher,
+      [subjectId]: teacherId,
     }));
   };
 
-  const handleSave = () => {
-    if (!adviser || adviser === 'Assign Teacher') {
-      showAlert('Please assign an adviser and all subject teachers before saving.', 'error');
+  const handleSave = async () => {
+    if (!selectedSection) {
+      showAlert('Please select a section.', 'error');
       return;
     }
 
-    const allSubjectsAssigned = subjects.every(
-      (subject) => subjectTeachers[subject] && subjectTeachers[subject] !== 'Assign Teacher'
-    );
-
-    if (!allSubjectsAssigned) {
-      showAlert('Please assign an adviser and all subject teachers before saving.', 'error');
+    if (!adviserId || adviserId === 'Assign Teacher') {
+      showAlert('Please assign an adviser before saving.', 'error');
       return;
     }
 
-    // TODO: Add API call here to save assignments
-    showAlert('Teachers assigned successfully!', 'success');
+    try {
+      setSaving(true);
+
+      // Build subjectTeachers array from state
+      const subjectTeachersArray = Object.entries(subjectTeachers)
+        .filter(([subjectId, teacherId]) => subjectId && teacherId && teacherId !== 'Assign Teacher')
+        .map(([subjectId, teacherId]) => ({
+          subject: subjectId,
+          teacher: teacherId,
+        }));
+
+      // Get current school year (default to current year format)
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      const schoolYear = `${currentYear}-${nextYear}`;
+
+      if (!currentMasterlist) {
+        // Create new masterlist
+        const newMasterlist = await dispatch(
+          createMasterlist({
+            grade: currentGrade,
+            section: selectedSection,
+            adviser: adviserId,
+            subjectTeachers: subjectTeachersArray,
+            schoolYear,
+            students: [],
+          })
+        ).unwrap();
+        showAlert('Masterlist created and teachers assigned successfully!', 'success');
+      } else {
+        // Update existing masterlist
+        await dispatch(
+          updateMasterlist({
+            id: currentMasterlist._id,
+            data: {
+              adviser: adviserId,
+              subjectTeachers: subjectTeachersArray,
+            },
+          })
+        ).unwrap();
+        showAlert('Adviser and subject teachers updated successfully!', 'success');
+      }
+    } catch (err) {
+      showAlert(err || 'Failed to save changes.', 'error');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleUndo = () => {
-    setAdviser('');
+    setAdviserId('');
     setSubjectTeachers({});
     showAlert('All selections have been reset.', 'info');
   };
@@ -101,7 +210,7 @@ function AdminMasterlistAssignTeacher() {
     }, 2000);
   };
 
-  const currentSections = gradeSections[currentGrade] || [];
+  const currentSections = gradeSections || [];
 
   return (
     <div className={styles.mainContent}>
@@ -148,47 +257,85 @@ function AdminMasterlistAssignTeacher() {
             <select
               id="adviser-select"
               className={styles.select}
-              value={adviser}
+              value={adviserId || ''}
               onChange={handleAdviserChange}
             >
-              <option>Assign Teacher</option>
-              {teachers.map((teacher) => (
-                <option key={teacher} value={teacher}>
-                  {teacher}
+              <option value="">Assign Teacher</option>
+              {allTeachers.map((teacher) => (
+                <option key={teacher.id} value={teacher.id}>
+                  {teacher.name}
                 </option>
               ))}
-          </select>
+            </select>
           </div>
 
           <div className={styles.buttonRow}>
             <button className={styles.undoBtn} onClick={handleUndo}>
               Undo
             </button>
-            <button className={styles.saveBtn} onClick={handleSave}>
-              Save Changes
+            <button className={styles.saveBtn} onClick={handleSave} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </div>
 
         <div className={styles.subjectsCard}>
           <div className={styles.subjectsTitle}>SUBJECT TEACHERS</div>
-          {subjects.map((subject) => (
-            <div key={subject} className={styles.subjectRow}>
-              <span>{subject}</span>
-              <select
-                className={styles.select}
-                value={subjectTeachers[subject] || 'Assign Teacher'}
-                onChange={(e) => handleSubjectTeacherChange(subject, e.target.value)}
-              >
-                <option>Assign Teacher</option>
-                {teachers.map((teacher) => (
-                  <option key={teacher} value={teacher}>
-                    {teacher}
-                  </option>
-                ))}
-              </select>
+          {subjectsLoading ? (
+            <div style={{ padding: '1rem', textAlign: 'center' }}>Loading subjects...</div>
+          ) : subjects.length === 0 ? (
+            <div style={{ padding: '1rem', textAlign: 'center' }}>
+              No subjects found for Grade {currentGrade}
             </div>
-          ))}
+          ) : (
+            subjects.map((subject) => {
+              // Get teachers assigned to this subject (backend populates with firstName, lastName)
+              const subjectTeachersList =
+                subject.teachers && Array.isArray(subject.teachers)
+                  ? subject.teachers
+                    .filter((teacher) => teacher != null)
+                    .map((teacher) => {
+                      // Handle populated teacher object or ObjectId
+                      if (typeof teacher === 'object' && teacher._id) {
+                        return {
+                          id: teacher._id,
+                          name: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || 'Unknown Teacher',
+                        };
+                      }
+                      // If it's just an ObjectId, try to find in users list
+                      const foundUser = users.find((u) => u._id === teacher);
+                      return {
+                        id: typeof teacher === 'object' ? teacher._id : teacher,
+                        name: foundUser
+                          ? `${foundUser.firstName} ${foundUser.lastName}`
+                          : 'Unknown Teacher',
+                      };
+                    })
+                  : [];
+
+              return (
+                <div key={subject._id} className={styles.subjectRow}>
+                  <span>{subject.name}</span>
+                  <select
+                    className={styles.select}
+                    value={subjectTeachers[subject._id] || ''}
+                    onChange={(e) => handleSubjectTeacherChange(subject._id, e.target.value)}
+                  >
+                    <option value="">Assign Teacher</option>
+                    {subjectTeachersList.length === 0 ? (
+                      <option disabled>No teachers assigned to this subject</option>
+                    ) : (
+                      subjectTeachersList.map((teacher) => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacher.name}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 

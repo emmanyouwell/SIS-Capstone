@@ -178,6 +178,35 @@
   margin-left: 1.5rem;
 }
 
+.genderFilter {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  align-items: center;
+}
+
+.genderFilterBtn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transition: all 0.2s;
+}
+
+.genderFilterBtn:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.genderFilterBtn.active {
+  background: #fff;
+  color: #19b6c9;
+  font-weight: 600;
+}
+
 .tableContainer {
   background: #fff;
   border-radius: 0 0 16px 16px;

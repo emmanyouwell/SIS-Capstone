@@ -5,6 +5,8 @@ import userReducer from './slices/userSlice';
 import subjectReducer from './slices/subjectSlice';
 import scheduleReducer from './slices/scheduleSlice';
 import gradeReducer from './slices/gradeSlice';
+import masterlistReducer from './slices/masterlistSlice';
+import sectionReducer from './slices/sectionSlice';
 
 export const store = configureStore({
   reducer: {
@@ -14,6 +16,8 @@ export const store = configureStore({
     subjects: subjectReducer,
     schedules: scheduleReducer,
     grades: gradeReducer,
+    masterlists: masterlistReducer,
+    section: sectionReducer,
   },
 });
 
