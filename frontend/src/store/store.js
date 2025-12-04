@@ -7,6 +7,7 @@ import scheduleReducer from './slices/scheduleSlice';
 import gradeReducer from './slices/gradeSlice';
 import masterlistReducer from './slices/masterlistSlice';
 import sectionReducer from './slices/sectionSlice';
+import enrollmentReducer from './slices/enrollmentSlice';
 
 export const store = configureStore({
   reducer: {
@@ -18,6 +19,7 @@ export const store = configureStore({
     grades: gradeReducer,
     masterlists: masterlistReducer,
     section: sectionReducer,
+    enrollments: enrollmentReducer,
   },
 });
 

@@ -116,6 +116,21 @@
   box-shadow: 0 4px 16px 0 rgba(44, 62, 80, 0.18);
 }
 
+.chartContainer {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.08);
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.chartTitle {
+  color: #184d27;
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
 .dashboardRight {
   flex: 1;
   min-width: 340px;
