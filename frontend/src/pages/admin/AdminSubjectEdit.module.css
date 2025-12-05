@@ -585,6 +585,103 @@
   font-weight: 500;
 }
 
+/* Link Modal Styles */
+.linkModalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(44, 62, 80, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3000;
+}
+
+.linkModalContent {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.13);
+  width: 480px;
+  max-width: 90vw;
+  padding: 2rem;
+  position: relative;
+}
+
+.linkModalTitle {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #184d27;
+  margin-bottom: 1.5rem;
+}
+
+.linkModalInput {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.05rem;
+  border: 2px solid #e0e0e0;
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 0.18s;
+  color: #2d3748;
+  font-family: inherit;
+}
+
+.linkModalInput:focus {
+  border-color: #388e5c;
+}
+
+.linkModalInputError {
+  border-color: #e53935;
+}
+
+.linkModalError {
+  color: #e53935;
+  font-size: 0.9rem;
+  margin-top: 0.5rem;
+  min-height: 1.2rem;
+}
+
+.linkModalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.linkModalCancelBtn {
+  background: #ededed;
+  color: #2d3748;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.linkModalCancelBtn:hover {
+  background: #d6d6d6;
+}
+
+.linkModalSubmitBtn {
+  background: #388e5c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+
+.linkModalSubmitBtn:hover {
+  background: #276749;
+}
+
 /* Responsive Design */
 @media (max-width: 1100px) {
   .contentLayout {

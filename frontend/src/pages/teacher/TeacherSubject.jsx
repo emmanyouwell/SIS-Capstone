@@ -1,8 +1,17 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './TeacherSubject.module.css';
+import { fetchAllSubjects } from '../../store/slices/subjectSlice';
+import { fetchAllMaterials, createMaterial } from '../../store/slices/materialsSlice';
+import api from '../../utils/api';
 
 function TeacherSubject() {
-  const [selectedSection, setSelectedSection] = useState('g8-lilac');
+  const dispatch = useDispatch();
+  const { subjects, loading: subjectsLoading } = useSelector((state) => state.subjects);
+  const { materials, loading: materialsLoading } = useSelector((state) => state.materials);
+  const { user } = useSelector((state) => state.auth);
+
+  const [selectedSubject, setSelectedSubject] = useState(null);
   const [uploadType, setUploadType] = useState(null); // 'file' or 'link'
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadLink, setUploadLink] = useState('');
@@ -10,149 +19,51 @@ function TeacherSubject() {
     title: '',
     description: ''
   });
+  const [uploading, setUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const fileInputRef = useRef(null);
 
-  // Section materials data
-  const [sectionMaterials, setSectionMaterials] = useState({
-    'g8-lilac': [
-      {
-        id: 1,
-        meta: 'PDF Resource',
-        title: 'Algebra: Solving Linear Equations',
-        type: 'pdf',
-        url: '#',
-        duration: '1 hour, 10 minutes',
-        thumbnail: '',
-      },
-      {
-        id: 2,
-        meta: 'Class File',
-        title: 'Math Worksheet - Fractions',
-        type: 'file',
-        url: '#',
-        duration: '30 minutes',
-        thumbnail: '',
-      },
-      {
-        id: 3,
-        meta: 'Math Website',
-        title: 'Khan Academy: Geometry',
-        type: 'website',
-        url: 'https://www.khanacademy.org/math/geometry',
-        duration: 'Self-paced',
-        thumbnail: 'https://cdn.kastatic.org/images/lohp/ka-logo-2017.png',
-      },
-      {
-        id: 4,
-        meta: 'YouTube Video',
-        title: 'The Infinite Hotel Paradox',
-        type: 'youtube',
-        url: 'https://www.youtube.com/watch?v=Uj3_KqkI9Zo',
-        duration: '7 minutes',
-        thumbnail: 'https://img.youtube.com/vi/Uj3_KqkI9Zo/hqdefault.jpg',
-      },
-      {
-        id: 5,
-        meta: 'YouTube Video',
-        title: 'Why do prime numbers matter?',
-        type: 'youtube',
-        url: 'https://www.youtube.com/watch?v=EK32jo7i5LQ',
-        duration: '10 minutes',
-        thumbnail: 'https://img.youtube.com/vi/EK32jo7i5LQ/hqdefault.jpg',
-      },
-      {
-        id: 6,
-        meta: 'PDF Resource',
-        title: 'Geometry: Area and Perimeter',
-        type: 'pdf',
-        url: '#',
-        duration: '50 minutes',
-        thumbnail: '',
-      },
-    ],
-    'g8-tulip': [
-      {
-        id: 7,
-        meta: 'PDF Resource',
-        title: 'Quadratic Equations Practice',
-        type: 'pdf',
-        url: '#',
-        duration: '1 hour',
-        thumbnail: '',
-      },
-      {
-        id: 8,
-        meta: 'Class File',
-        title: 'Math Worksheet - Decimals',
-        type: 'file',
-        url: '#',
-        duration: '25 minutes',
-        thumbnail: '',
-      },
-      {
-        id: 9,
-        meta: 'Math Website',
-        title: 'Desmos Graphing Calculator',
-        type: 'website',
-        url: 'https://www.desmos.com/calculator',
-        duration: 'Self-paced',
-        thumbnail: 'https://www.desmos.com/assets/img/logos/og-image.png',
-      },
-      {
-        id: 10,
-        meta: 'YouTube Video',
-        title: 'What is a function?',
-        type: 'youtube',
-        url: 'https://www.youtube.com/watch?v=ke5MjeK2E2A',
-        duration: '8 minutes',
-        thumbnail: 'https://img.youtube.com/vi/ke5MjeK2E2A/hqdefault.jpg',
-      },
-    ],
-    'g9-daisy': [
-      {
-        id: 11,
-        meta: 'PDF Resource',
-        title: 'Trigonometry Basics',
-        type: 'pdf',
-        url: '#',
-        duration: '1 hour, 20 minutes',
-        thumbnail: '',
-      },
-      {
-        id: 12,
-        meta: 'Class File',
-        title: 'Math Worksheet - Polynomials',
-        type: 'file',
-        url: '#',
-        duration: '40 minutes',
-        thumbnail: '',
-      },
-      {
-        id: 13,
-        meta: 'Math Website',
-        title: 'Brilliant: Math and Logic',
-        type: 'website',
-        url: 'https://brilliant.org/courses/math/',
-        duration: 'Self-paced',
-        thumbnail: 'https://brilliant.org/site_media/version-1/images/brilliant-fb-og.png',
-      },
-      {
-        id: 14,
-        meta: 'YouTube Video',
-        title: 'Visualizing the Riemann Hypothesis',
-        type: 'youtube',
-        url: 'https://www.youtube.com/watch?v=sD0NjbwqlYw',
-        duration: '12 minutes',
-        thumbnail: 'https://img.youtube.com/vi/sD0NjbwqlYw/hqdefault.jpg',
-      },
-    ]
-  });
+  // Fetch teacher's subjects on mount
+  useEffect(() => {
+    dispatch(fetchAllSubjects());
+  }, [dispatch]);
 
-  const sections = [
-    { value: 'g8-lilac', label: 'Grade 8 (Year III - Lilac)' },
-    { value: 'g8-tulip', label: 'Grade 8 (Year III - Tulip)' },
-    { value: 'g9-daisy', label: 'Grade 9 (Year IV - Daisy)' },
-  ];
+  // Set first subject as selected when subjects are loaded
+  useEffect(() => {
+    if (subjects.length > 0 && !selectedSubject) {
+      setSelectedSubject(subjects[0]);
+    }
+  }, [subjects, selectedSubject]);
+
+  // Fetch materials when subject is selected
+  useEffect(() => {
+    if (selectedSubject?._id) {
+      dispatch(fetchAllMaterials({ subjectId: selectedSubject._id }));
+    }
+  }, [selectedSubject?._id, dispatch]);
+
+  // Clear messages after timeout
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      const timer = setTimeout(() => setErrorMessage(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [errorMessage]);
+
+  // Filter materials for the selected subject
+  const subjectMaterials = materials.filter((material) => {
+    if (!selectedSubject?._id) return false;
+    const materialSubjectId = material.subjectId?._id || material.subjectId;
+    return materialSubjectId?.toString() === selectedSubject._id.toString();
+  });
 
   const handleFileSelect = () => {
     setUploadType('file');
@@ -176,146 +87,250 @@ function TeacherSubject() {
     }
   };
 
-  const handleUpload = (e) => {
+  const handleUpload = async (e) => {
     e.preventDefault();
+    
+    if (!selectedSubject) {
+      setErrorMessage('Please select a subject');
+      return;
+    }
+
     if (!formData.title.trim()) {
-      alert('Please enter a title.');
+      setErrorMessage('Please enter a title');
       return;
     }
 
     if (!uploadFile && !uploadLink) {
-      alert('Please attach a file or link.');
+      setErrorMessage('Please attach a file or link');
       return;
     }
 
-    const newResource = {
-      id: Date.now(),
-      meta: '',
-      title: formData.title,
-      type: '',
-      url: '',
-      duration: formData.description || '',
-      thumbnail: ''
-    };
+    setUploading(true);
+    setErrorMessage(null);
 
-    if (uploadFile) {
-      newResource.meta = 'Class File';
-      newResource.type = 'file';
-      newResource.url = URL.createObjectURL(uploadFile); // Create object URL for local file
-    } else if (uploadLink) {
-      // Detect YouTube
-      if (/youtube\.com|youtu\.be/.test(uploadLink)) {
-        newResource.meta = 'YouTube Video';
-        newResource.type = 'youtube';
-        newResource.url = uploadLink;
-        // Extract YouTube video ID for thumbnail
-        const match = uploadLink.match(/[?&]v=([^&#]+)/) || uploadLink.match(/youtu\.be\/([^?&#]+)/);
-        if (match && match[1]) {
-          newResource.thumbnail = `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-        }
-      } else {
-        newResource.meta = 'Website Link';
-        newResource.type = 'website';
-        newResource.url = uploadLink;
+    try {
+      let fileUrl = '';
+      let publicId = null;
+
+      if (uploadFile) {
+        // Upload file to Cloudinary
+        const formData = new FormData();
+        formData.append('file', uploadFile);
+
+        const uploadResponse = await api.post('/uploads/image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        fileUrl = uploadResponse.data.url;
+        publicId = uploadResponse.data.public_id;
+      } else if (uploadLink) {
+        // For links, just use the URL
+        fileUrl = uploadLink.trim();
       }
-    }
 
-    // Add to current section
-    setSectionMaterials(prev => ({
-      ...prev,
-      [selectedSection]: [newResource, ...prev[selectedSection]]
-    }));
+      // Create material using materials API
+      const materialData = {
+        subjectId: selectedSubject._id,
+        title: formData.title.trim(),
+        description: formData.description.trim() || undefined,
+        file: {
+          url: fileUrl,
+          ...(publicId && { public_id: publicId }),
+        },
+      };
 
-    // Reset form
-    setFormData({ title: '', description: '' });
-    setUploadType(null);
-    setUploadFile(null);
-    setUploadLink('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
+      await dispatch(createMaterial(materialData)).unwrap();
 
-  const handleResourceClick = (resource) => {
-    if (resource.type === 'file' || resource.type === 'pdf') {
-      // For files, trigger download or open
-      if (resource.url && resource.url !== '#') {
-        const link = document.createElement('a');
-        link.href = resource.url;
-        link.download = resource.title;
-        link.target = '_blank';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      // Refresh materials list
+      await dispatch(fetchAllMaterials({ subjectId: selectedSubject._id }));
+
+      // Reset form
+      setFormData({ title: '', description: '' });
+      setUploadType(null);
+      setUploadFile(null);
+      setUploadLink('');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
       }
-    } else if (resource.type === 'youtube' || resource.type === 'website') {
-      // For links, open in new tab
-      if (resource.url && resource.url !== '#') {
-        window.open(resource.url, '_blank', 'noopener,noreferrer');
-      }
+
+      setSuccessMessage('Material uploaded successfully!');
+    } catch (error) {
+      setErrorMessage(error?.payload || error?.response?.data?.message || 'Failed to upload material');
+    } finally {
+      setUploading(false);
     }
   };
 
-  const currentMaterials = sectionMaterials[selectedSection] || [];
+  const handleResourceClick = (material) => {
+    const url = material.file?.url;
+    if (!url) return;
+
+    if (isLink(url)) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
+  const isLink = (url) => {
+    return url && (url.startsWith('http://') || url.startsWith('https://'));
+  };
+
+  const getLinkSource = (url) => {
+    if (!url) return '';
+    if (/youtube\.com|youtu\.be/i.test(url)) return 'YouTube';
+    if (/drive\.google\.com/i.test(url)) return 'Google Drive';
+    if (/res\.cloudinary\.com|cloudinary\.com/i.test(url)) return 'File';
+    return 'Website';
+  };
+
+  const formatTimeAgo = (date) => {
+    if (!date) return 'just now';
+    const now = new Date();
+    const uploaded = new Date(date);
+    const diffInSeconds = Math.floor((now - uploaded) / 1000);
+
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} mins ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hrs ago`;
+    if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+    return uploaded.toLocaleDateString();
+  };
+
+  const loading = subjectsLoading || materialsLoading;
 
   return (
       <div className={styles.mainContent}>
+        {/* Success Message */}
+        {successMessage && (
+          <div style={{ 
+            padding: '1rem', 
+            marginBottom: '1rem', 
+            backgroundColor: '#d4edda', 
+            color: '#155724', 
+            borderRadius: '4px' 
+          }}>
+            {successMessage}
+          </div>
+        )}
+
+        {/* Error Message */}
+        {errorMessage && (
+          <div style={{ 
+            padding: '1rem', 
+            marginBottom: '1rem', 
+            backgroundColor: '#f8d7da', 
+            color: '#721c24', 
+            borderRadius: '4px' 
+          }}>
+            {errorMessage}
+          </div>
+        )}
+
         <div className={styles.subjectMain}>
           <div className={styles.subjectLeft}>
-            <h1>Subject - Mathematics</h1>
+            <h1>
+              {selectedSubject 
+                ? `Subject - ${selectedSubject.subjectName || selectedSubject.name}` 
+                : 'Subject Materials'}
+            </h1>
             <div className={styles.sectionSelect}>
               <select
-                value={selectedSection}
-                onChange={(e) => setSelectedSection(e.target.value)}
+                value={selectedSubject?._id || ''}
+                onChange={(e) => {
+                  const subject = subjects.find(s => s._id === e.target.value);
+                  setSelectedSubject(subject);
+                }}
+                disabled={loading || subjects.length === 0}
               >
-                {sections.map(section => (
-                  <option key={section.value} value={section.value}>
-                    {section.label}
-                  </option>
-                ))}
+                {subjects.length === 0 ? (
+                  <option value="">No subjects available</option>
+                ) : (
+                  <>
+                    <option value="">Select a subject</option>
+                    {subjects.map(subject => (
+                      <option key={subject._id} value={subject._id}>
+                        {subject.subjectName || subject.name} - Grade {subject.gradeLevel}
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
             </div>
-            <div className={styles.resourcesGrid}>
-              {currentMaterials.map((resource) => (
-                <div key={resource.id} className={styles.resourceCard}>
-                  <div className={styles.resourceThumbnail}>
-                    {resource.thumbnail ? (
-                      <img src={resource.thumbnail} alt={resource.title} />
-                    ) : (
-                      <div className={styles.thumbnailPlaceholder}>
-                        <svg width="48" height="48" fill="none" stroke="#a1c8b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5z"/>
-                        </svg>
+            {loading ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
+            ) : subjectMaterials.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>
+                {selectedSubject ? 'No materials uploaded yet' : 'Please select a subject'}
+              </div>
+            ) : (
+              <div className={styles.resourcesGrid}>
+                {subjectMaterials
+                  .sort((a, b) => new Date(b.dateUploaded || b.createdAt) - new Date(a.dateUploaded || a.createdAt))
+                  .map((material) => {
+                    const url = material.file?.url;
+                    const isLinkUrl = isLink(url);
+                    return (
+                      <div key={material._id} className={styles.resourceCard}>
+                        <div className={styles.resourceThumbnail}>
+                          {isLinkUrl && /youtube\.com|youtu\.be/i.test(url) ? (
+                            (() => {
+                              const match = url.match(/[?&]v=([^&#]+)/) || url.match(/youtu\.be\/([^?&#]+)/);
+                              const videoId = match && match[1];
+                              return videoId ? (
+                                <img 
+                                  src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`} 
+                                  alt={material.title} 
+                                />
+                              ) : (
+                                <div className={styles.thumbnailPlaceholder}>
+                                  <svg width="48" height="48" fill="none" stroke="#a1c8b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5z"/>
+                                  </svg>
+                                </div>
+                              );
+                            })()
+                          ) : (
+                            <div className={styles.thumbnailPlaceholder}>
+                              <svg width="48" height="48" fill="none" stroke="#a1c8b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M4 4.5A2.5 2.5 0 0 1 6.5 7H20v13H6.5A2.5 2.5 0 0 1 4 17.5z"/>
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <div className={styles.resourceContent}>
+                          <div className={styles.resourceMeta}>
+                            {isLinkUrl ? getLinkSource(url) : 'File'} • {formatTimeAgo(material.dateUploaded)}
+                          </div>
+                          <div className={styles.resourceTitle}>{material.title}</div>
+                          {material.description && (
+                            <div className={styles.resourceDuration}>{material.description}</div>
+                          )}
+                          <div className={styles.resourceActions}>
+                            <button
+                              className={styles.resourceButton}
+                              onClick={() => handleResourceClick(material)}
+                              title={isLinkUrl ? 'Open' : 'Download'}
+                            >
+                              {isLinkUrl ? (
+                                <>
+                                  <span>🔗</span> Open Resource
+                                </>
+                              ) : (
+                                <>
+                                  <span>📎</span> Download
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                  <div className={styles.resourceContent}>
-                    <div className={styles.resourceMeta}>{resource.meta}</div>
-                    <div className={styles.resourceTitle}>{resource.title}</div>
-                    {resource.duration && (
-                      <div className={styles.resourceDuration}>{resource.duration}</div>
-                    )}
-                    <div className={styles.resourceActions}>
-                      <button
-                        className={styles.resourceButton}
-                        onClick={() => handleResourceClick(resource)}
-                        title={resource.type === 'file' || resource.type === 'pdf' ? 'Download' : 'Open'}
-                      >
-                        {resource.type === 'file' || resource.type === 'pdf' ? (
-                          <>
-                            <span>📎</span> Download
-                          </>
-                        ) : (
-                          <>
-                            <span>🔗</span> Open Resource
-                          </>
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+                    );
+                  })}
+              </div>
+            )}
           </div>
           <div className={styles.subjectRight}>
             <div className={styles.uploadCard}>
@@ -358,8 +373,12 @@ function TeacherSubject() {
                   style={{ display: 'none' }}
                   onChange={handleFileChange}
                 />
-                <button type="submit" className={styles.uploadBtn}>
-                  Upload
+                <button 
+                  type="submit" 
+                  className={styles.uploadBtn}
+                  disabled={uploading || !selectedSubject || !formData.title.trim() || (!uploadFile && !uploadLink)}
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
                 </button>
               </form>
             </div>

@@ -5,6 +5,7 @@ import styles from './AdminSubjectEdit.module.css';
 import { fetchAllSubjects, updateSubject, fetchSubjectById } from '../../store/slices/subjectSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchAllMaterials, createMaterial } from '../../store/slices/materialsSlice';
 import api from '../../utils/api';
 
 function AdminSubjectEdit() {
@@ -15,15 +16,19 @@ function AdminSubjectEdit() {
   const { users: allUsers, loading: usersLoading } = useSelector((state) => state.users);
   const { user } = useSelector((state) => state.auth);
   const sectionsData = useSelector((state) => state.section.data);
+  const { materials, loading: materialsLoading } = useSelector((state) => state.materials);
 
   const [selectedSection, setSelectedSection] = useState('');
   const [showMaterialModal, setShowMaterialModal] = useState(false);
+  const [showLinkModal, setShowLinkModal] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [materialTitle, setMaterialTitle] = useState('');
   const [materialDescription, setMaterialDescription] = useState('');
   const [uploadType, setUploadType] = useState(null); // 'file' or 'link'
   const [uploadFile, setUploadFile] = useState(null);
   const [uploadLink, setUploadLink] = useState('');
+  const [linkInput, setLinkInput] = useState('');
+  const [linkError, setLinkError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [uploading, setUploading] = useState(false);
@@ -35,8 +40,8 @@ function AdminSubjectEdit() {
 
   // Get sections from API data
   const sections = sectionsData
-    .filter((s) => s.grade === gradeLevel)
-    .map((s) => s.name)
+    .filter((s) => s.gradeLevel === gradeLevel)
+    .map((s) => s.sectionName || s.name)
     .sort();
 
   // Filter subjects by grade level
@@ -55,7 +60,7 @@ function AdminSubjectEdit() {
   useEffect(() => {
     if (gradeLevel) {
       dispatch(fetchAllSubjects({ gradeLevel }));
-      dispatch(getAllSections({ grade: gradeLevel }));
+      dispatch(getAllSections({ gradeLevel }));
     }
     dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
   }, [dispatch, gradeLevel]);
@@ -67,10 +72,11 @@ function AdminSubjectEdit() {
     }
   }, [sections, selectedSection]);
 
-  // Fetch full subject data when modal opens
+  // Fetch full subject data and materials when modal opens
   useEffect(() => {
     if (showMaterialModal && selectedSubject?._id) {
       dispatch(fetchSubjectById(selectedSubject._id));
+      dispatch(fetchAllMaterials({ subjectId: selectedSubject._id }));
     }
   }, [showMaterialModal, selectedSubject?._id, dispatch]);
 
@@ -128,15 +134,47 @@ function AdminSubjectEdit() {
   };
 
   const handleLinkInput = () => {
-    const link = prompt('Enter the link URL:');
-    if (link) {
-      setUploadLink(link);
-      setUploadType('link');
-      setUploadFile(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    setShowLinkModal(true);
+    setLinkInput('');
+    setLinkError(null);
+  };
+
+  const handleLinkSubmit = () => {
+    let trimmedLink = linkInput.trim();
+    
+    if (!trimmedLink) {
+      setLinkError('Please enter a link URL');
+      return;
     }
+
+    // Auto-add https:// if no protocol is provided
+    if (!trimmedLink.startsWith('http://') && !trimmedLink.startsWith('https://')) {
+      trimmedLink = `https://${trimmedLink}`;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(trimmedLink);
+    } catch {
+      setLinkError('Please enter a valid URL (e.g., https://example.com or example.com)');
+      return;
+    }
+
+    setUploadLink(trimmedLink);
+    setUploadType('link');
+    setUploadFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    setShowLinkModal(false);
+    setLinkInput('');
+    setLinkError(null);
+  };
+
+  const handleLinkCancel = () => {
+    setShowLinkModal(false);
+    setLinkInput('');
+    setLinkError(null);
   };
 
   const formatTimeAgo = (date) => {
@@ -153,11 +191,35 @@ function AdminSubjectEdit() {
   };
 
   const getTeacherName = (teacher) => {
-    if (typeof teacher === 'object' && teacher.firstName && teacher.lastName) {
-      return `${teacher.firstName} ${teacher.lastName}`;
+    if (!teacher) return 'Unknown Teacher';
+    
+    // Handle populated Teacher object from backend (teacherId array)
+    // Backend populates: teacherId -> Teacher -> userId -> { firstName, lastName }
+    if (typeof teacher === 'object') {
+      // If teacher has userId populated (from backend populate)
+      if (teacher.userId) {
+        if (teacher.userId.firstName && teacher.userId.lastName) {
+          return `${teacher.userId.firstName} ${teacher.userId.lastName}`;
+        }
+      }
+      // If teacher has firstName/lastName directly (fallback)
+      if (teacher.firstName && teacher.lastName) {
+        return `${teacher.firstName} ${teacher.lastName}`;
+      }
+      // If it's just an ObjectId, try to find in availableTeachers
+      if (teacher._id) {
+        const teacherObj = availableTeachers.find(t => t.id === teacher._id);
+        if (teacherObj) return teacherObj.name;
+      }
     }
-    const teacherObj = availableTeachers.find(t => t.id === teacher);
-    return teacherObj ? teacherObj.name : 'Unknown Teacher';
+    
+    // Handle string/ObjectId case
+    if (typeof teacher === 'string' || (typeof teacher === 'object' && teacher.toString)) {
+      const teacherObj = availableTeachers.find(t => t.id === teacher || t.id === teacher.toString());
+      if (teacherObj) return teacherObj.name;
+    }
+    
+    return 'Unknown Teacher';
   };
 
   const getUploaderName = (uploadedBy) => {
@@ -195,15 +257,8 @@ function AdminSubjectEdit() {
     setErrorMessage(null);
 
     try {
-      // Get the latest subject data from Redux to ensure we have current materials
-      const latestSubject = subjects.find(s => s._id === selectedSubject._id) || selectedSubject;
-
-      let materialData = {
-        name: materialTitle.trim(),
-        url: '',
-        cloudinaryId: null,
-        uploadedBy: user?._id || user?.id || null,
-      };
+      let fileUrl = '';
+      let publicId = null;
 
       if (uploadType === 'file') {
         // Upload file to Cloudinary
@@ -216,27 +271,28 @@ function AdminSubjectEdit() {
           },
         });
 
-        materialData.url = uploadResponse.data.url;
-        materialData.cloudinaryId = uploadResponse.data.public_id;
+        fileUrl = uploadResponse.data.url;
+        publicId = uploadResponse.data.public_id;
       } else {
         // For links, just use the URL
-        materialData.url = uploadLink.trim();
+        fileUrl = uploadLink.trim();
       }
 
-      // Send single material in array - backend will use $push to append
-      // This ensures we don't lose any materials added by other users/sessions
-      const updatedSubjectResult = await dispatch(updateSubject({
-        id: latestSubject._id,
-        data: { materials: [materialData] }
-      })).unwrap();
+      // Create material using materials API
+      const materialData = {
+        subjectId: selectedSubject._id,
+        title: materialTitle.trim(),
+        description: materialDescription.trim() || undefined,
+        file: {
+          url: fileUrl,
+          ...(publicId && { public_id: publicId }),
+        },
+      };
 
-      // Update selectedSubject with the new data
-      if (updatedSubjectResult) {
-        setSelectedSubject(updatedSubjectResult);
-      }
+      await dispatch(createMaterial(materialData)).unwrap();
 
-      // Refresh subject data to get updated materials list
-      await dispatch(fetchSubjectById(latestSubject._id));
+      // Refresh materials list
+      await dispatch(fetchAllMaterials({ subjectId: selectedSubject._id }));
 
       // Reset form
       setMaterialTitle('');
@@ -250,7 +306,7 @@ function AdminSubjectEdit() {
 
       setSuccessMessage('Material uploaded successfully!');
     } catch (error) {
-      setErrorMessage(error?.response?.data?.message || 'Failed to upload material');
+      setErrorMessage(error?.payload || error?.response?.data?.message || 'Failed to upload material');
     } finally {
       setUploading(false);
     }
@@ -305,7 +361,14 @@ function AdminSubjectEdit() {
     ? subjects.find(s => s._id === selectedSubject._id) || selectedSubject
     : null;
 
-  const loading = subjectsLoading || usersLoading;
+  // Filter materials for the selected subject
+  const subjectMaterials = materials.filter((material) => {
+    if (!selectedSubject?._id) return false;
+    const materialSubjectId = material.subjectId?._id || material.subjectId;
+    return materialSubjectId?.toString() === selectedSubject._id.toString();
+  });
+
+  const loading = subjectsLoading || usersLoading || materialsLoading;
 
   return (
     <div className={styles.mainContent}>
@@ -331,24 +394,30 @@ function AdminSubjectEdit() {
         <div className={styles.contentLayout}>
           <div className={styles.sectionsListCard}>
             <div className={styles.listTitle}>Sections</div>
-            <ul className={styles.sectionsList}>
-              {sections.map((section) => (
-                <li
-                  key={section}
-                  className={selectedSection === section ? styles.active : ''}
-                  onClick={() => setSelectedSection(section)}
-                >
-                  {section}
-                </li>
-              ))}
-            </ul>
+            {sections.length === 0 ? (
+              <div style={{ padding: '1rem', color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
+                No sections found
+              </div>
+            ) : (
+              <ul className={styles.sectionsList}>
+                {sections.map((section) => (
+                  <li
+                    key={section}
+                    className={selectedSection === section ? styles.active : ''}
+                    onClick={() => setSelectedSection(section)}
+                  >
+                    {section}
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
 
           <div className={styles.tableCard}>
             <table className={styles.subjectsTable}>
               <thead>
                 <tr>
-                  <th>Subjects</th>
+                  <th>Subject & Section</th>
                   <th>Subject Teachers</th>
                   <th>Action</th>
                 </tr>
@@ -361,33 +430,102 @@ function AdminSubjectEdit() {
                     </td>
                   </tr>
                 ) : (
-                  gradeSubjects.map((subject) => (
-                    <tr key={subject._id}>
-                      <td>{subject.name}</td>
-                      <td className={styles.teacherCell}>
-                        {subject.teachers && subject.teachers.length > 0 ? (
-                          subject.teachers.map((teacher, idx) => (
-                            <button key={idx} className={styles.teacherPill}>
-                              {getTeacherName(teacher)}
-                            </button>
-                          ))
-                        ) : (
-                          <span className={styles.noTeachers}>No teachers assigned</span>
-                        )}
-                      </td>
-                      <td>
-                        <button
-                          className={styles.visitBtn}
-                          onClick={() => handleVisitSubject(subject)}
-                        >
-                          visit
-                        </button>
-                      </td>
-                    </tr>
-                  ))
+                  gradeSubjects.map((subject) => {
+                    // Handle teacherId array (populated or not)
+                    const teacherIds = Array.isArray(subject.teacherId)
+                      ? subject.teacherId
+                      : subject.teacherId
+                      ? [subject.teacherId]
+                      : [];
+                    
+                    // Get section name
+                    const sectionName = subject.sectionId?.sectionName || subject.sectionId?.name || 'No section';
+                    
+                    return (
+                      <tr key={subject._id}>
+                        <td>
+                          <div>{subject.subjectName || subject.name}</div>
+                          {subject.sectionId && (
+                            <div style={{ fontSize: '0.85rem', color: '#666', marginTop: '0.25rem' }}>
+                              Section: {sectionName}
+                            </div>
+                          )}
+                        </td>
+                        <td className={styles.teacherCell}>
+                          {teacherIds.length > 0 ? (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                              {teacherIds.map((teacher, idx) => (
+                                <button key={idx} className={styles.teacherPill}>
+                                  {getTeacherName(teacher)}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className={styles.noTeachers}>No teachers assigned</span>
+                          )}
+                        </td>
+                        <td>
+                          <button
+                            className={styles.visitBtn}
+                            onClick={() => handleVisitSubject(subject)}
+                          >
+                            visit
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Link Input Modal */}
+      {showLinkModal && (
+        <div className={styles.linkModalOverlay} onClick={handleLinkCancel}>
+          <div className={styles.linkModalContent} onClick={(e) => e.stopPropagation()}>
+            <button
+              className={styles.modalCloseBtn}
+              onClick={handleLinkCancel}
+            >
+              &times;
+            </button>
+            <h2 className={styles.linkModalTitle}>Add Link</h2>
+            <input
+              type="url"
+              placeholder="https://example.com"
+              value={linkInput}
+              onChange={(e) => {
+                setLinkInput(e.target.value);
+                setLinkError(null);
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  handleLinkSubmit();
+                }
+              }}
+              className={`${styles.linkModalInput} ${linkError ? styles.linkModalInputError : ''}`}
+              autoFocus
+            />
+            <div className={styles.linkModalError}>
+              {linkError || ''}
+            </div>
+            <div className={styles.linkModalButtons}>
+              <button
+                onClick={handleLinkCancel}
+                className={styles.linkModalCancelBtn}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLinkSubmit}
+                className={styles.linkModalSubmitBtn}
+              >
+                Add Link
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -399,44 +537,47 @@ function AdminSubjectEdit() {
             <div className={styles.modalFlexRow}>
               <div className={styles.modalFeed}>
                 <div className={styles.modalWelcome}>
-                  Welcome to {currentSubject.name}!
+                  Welcome to {currentSubject?.subjectName || currentSubject?.name || 'Subject'}!
                 </div>
                 <div className={styles.modalMaterials}>
-                  {currentSubject.materials && currentSubject.materials.length > 0 ? (
-                    [...currentSubject.materials]   // ← creates a new array copy
-                      .sort((a, b) => new Date(b.uploadedAt || b.createdAt) - new Date(a.uploadedAt || a.createdAt))
-                      .map((material, idx) => (
-                        <div key={idx} className={styles.modalResourceCard}>
+                  {subjectMaterials.length > 0 ? (
+                    [...subjectMaterials]
+                      .sort((a, b) => new Date(b.dateUploaded || b.createdAt) - new Date(a.dateUploaded || a.createdAt))
+                      .map((material) => (
+                        <div key={material._id} className={styles.modalResourceCard}>
                           <div className={styles.modalResourceMeta}>
-                            {getUploaderName(material.uploadedBy)} • {formatTimeAgo(material.uploadedAt)}
+                            {getUploaderName(material.uploadedById)} • {formatTimeAgo(material.dateUploaded)}
                           </div>
-                          <div className={styles.modalResourceTitle}>{material.name}</div>
+                          <div className={styles.modalResourceTitle}>{material.title}</div>
+                          {material.description && (
+                            <div className={styles.modalResourceDescription}>{material.description}</div>
+                          )}
                           <div className={styles.modalResourceFileRow}>
                             <div className={styles.modalResourceFileInfo}>
                               <span className={styles.modalResourceFileIcon}>
-                                {isLink(material.url) ? '🔗' : '📎'}
+                                {isLink(material.file?.url) ? '🔗' : '📎'}
                               </span>
                               <span className={styles.modalResourceFileName}>
-                                {isLink(material.url)
-                                  ? (material.name || material.url)
-                                  : (material.name || getFileName(material.url))
+                                {isLink(material.file?.url)
+                                  ? (material.title || material.file?.url)
+                                  : (material.title || getFileName(material.file?.url))
                                 }
                               </span>
-                              {isLink(material.url) ? (
+                              {isLink(material.file?.url) ? (
                                 <span className={styles.modalResourceFileSource}>
-                                  {getLinkSource(material.url)}
+                                  {getLinkSource(material.file?.url)}
                                 </span>
                               ) : (
                                 <span className={styles.modalResourceFileSize}>
-                                  {uploadFile && uploadType === 'file' ? getFileSize(uploadFile) : 'N/A'}
+                                  File
                                 </span>
                               )}
                             </div>
                             <button
-                              className={isLink(material.url) ? styles.modalResourceLinkBtn : styles.modalResourceDownloadBtn}
-                              onClick={() => isLink(material.url) ? handleOpenLink(material) : handleDownloadMaterial(material)}
+                              className={isLink(material.file?.url) ? styles.modalResourceLinkBtn : styles.modalResourceDownloadBtn}
+                              onClick={() => isLink(material.file?.url) ? handleOpenLink({ url: material.file?.url }) : handleDownloadMaterial({ url: material.file?.url })}
                             >
-                              {isLink(material.url) ? '↗️' : '⬇️'}
+                              {isLink(material.file?.url) ? '↗️' : '⬇️'}
                             </button>
                           </div>
                         </div>
