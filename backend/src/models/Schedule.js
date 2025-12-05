@@ -2,38 +2,30 @@ import mongoose from 'mongoose';
 
 const scheduleSchema = new mongoose.Schema(
   {
-    grade: {
-      type: Number,
-      required: true,
-      min: 7,
-      max: 10,
-    },
-    section: {
-      type: String,
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Student',
       required: true,
     },
-    timeSlot: {
-      type: String,
+    sectionId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Section',
       required: true,
     },
-    day: {
-      type: String,
-      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
-      required: true,
-    },
-    subject: {
+    subjectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Subject',
     },
-    teacher: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    day: {
+      type: String,
+      enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+      required: true,
     },
-    adviser: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    startTime: {
+      type: String,
+      required: true,
     },
-    schoolYear: {
+    endTime: {
       type: String,
       required: true,
     },
@@ -43,8 +35,11 @@ const scheduleSchema = new mongoose.Schema(
   }
 );
 
-// Compound index to ensure unique schedule entries
-scheduleSchema.index({ grade: 1, section: 1, timeSlot: 1, day: 1, schoolYear: 1 }, { unique: true });
+// Indexes for better query performance
+scheduleSchema.index({ studentId: 1 });
+scheduleSchema.index({ sectionId: 1 });
+scheduleSchema.index({ subjectId: 1 });
+scheduleSchema.index({ day: 1 });
 
 export default mongoose.model('Schedule', scheduleSchema);
 

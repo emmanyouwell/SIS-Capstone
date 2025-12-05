@@ -9,7 +9,8 @@ import {
   deleteSubject,
   clearError,
 } from '../../store/slices/subjectSlice';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminSubjectView() {
   const navigate = useNavigate();
@@ -18,7 +19,8 @@ function AdminSubjectView() {
 
   // Redux state
   const { subjects, loading, error } = useSelector((state) => state.subjects);
-  const { users } = useSelector((state) => state.users);
+  const { teachers } = useSelector((state) => state.teachers);
+  const { data: sections } = useSelector((state) => state.section);
 
   // Local state
   const [showEditSubjectsModal, setShowEditSubjectsModal] = useState(false);
@@ -59,13 +61,14 @@ function AdminSubjectView() {
     setLocalSubjects(filteredSubjects);
   }, [filteredSubjects]);
 
-  // Fetch teachers when opening the edit teachers modal
+  // Fetch teachers and sections when opening the edit teachers modal
   useEffect(() => {
     if (showEditTeachersModal) {
       setTeachersLoading(true);
-      dispatch(fetchAllUsers({ role: 'Teacher' }))
-        .unwrap()
-        .finally(() => setTeachersLoading(false));
+      Promise.all([
+        dispatch(fetchAllTeachers()).unwrap(),
+        dispatch(getAllSections()).unwrap(),
+      ]).finally(() => setTeachersLoading(false));
     }
   }, [showEditTeachersModal, dispatch]);
 
@@ -85,7 +88,7 @@ function AdminSubjectView() {
     if (!gradeLevel) return;
 
     // Check if subject already exists
-    if (filteredSubjects.find((s) => s.name.toLowerCase() === subjectName.toLowerCase())) {
+    if (filteredSubjects.find((s) => s.subjectName.toLowerCase() === subjectName.toLowerCase())) {
       alert('Subject with this name already exists');
       return;
     }
@@ -93,10 +96,9 @@ function AdminSubjectView() {
     try {
       await dispatch(
         createSubject({
-          name: subjectName,
+          subjectName: subjectName,
           gradeLevel,
-          teachers: [],
-          
+          status: 'Active',
         })
       ).unwrap();
 
@@ -121,7 +123,7 @@ function AdminSubjectView() {
   const handleUpdateSubjectName = (subjectId, newName) => {
     // Optimistic local update
     setLocalSubjects(
-      localSubjects.map((s) => (s._id === subjectId ? { ...s, name: newName } : s))
+      localSubjects.map((s) => (s._id === subjectId ? { ...s, subjectName: newName } : s))
     );
   };
 
@@ -135,7 +137,7 @@ function AdminSubjectView() {
       await dispatch(
         updateSubject({
           id: subjectId,
-          data: { name: newName.trim() },
+          data: { subjectName: newName.trim() },
         })
       ).unwrap();
     } catch (error) {
@@ -161,21 +163,19 @@ function AdminSubjectView() {
   const handleAddTeacher = () => {
     if (!selectedTeacherId || !editingSubject) return;
 
-    const teacherIds = editingSubject.teachers.map((t) =>
-      typeof t === 'object' ? t._id : t
-    );
-
-    if (teacherIds.includes(selectedTeacherId)) {
+    // Check if teacher is already assigned
+    const currentTeacherId = editingSubject.teacherId?._id || editingSubject.teacherId;
+    if (currentTeacherId === selectedTeacherId) {
       alert('Teacher is already assigned to this subject');
       return;
     }
 
     // Optimistic local update
-    const teacher = users.find((u) => u._id === selectedTeacherId);
+    const teacher = teachers.find((t) => t._id === selectedTeacherId);
     if (teacher) {
       const updatedSubject = {
         ...editingSubject,
-        teachers: [...editingSubject.teachers, teacher],
+        teacherId: teacher,
       };
       setEditingSubject(updatedSubject);
       setLocalSubjects(
@@ -185,19 +185,13 @@ function AdminSubjectView() {
     setSelectedTeacherId('');
   };
 
-  const handleRemoveTeacher = (teacherId) => {
+  const handleRemoveTeacher = () => {
     if (!editingSubject) return;
 
-    const teacherIds = editingSubject.teachers.map((t) =>
-      typeof t === 'object' ? t._id : t
-    );
-
-    // Optimistic local update
+    // Optimistic local update - clear teacher
     const updatedSubject = {
       ...editingSubject,
-      teachers: editingSubject.teachers.filter(
-        (t) => (typeof t === 'object' ? t._id : t) !== teacherId
-      ),
+      teacherId: null,
     };
     setEditingSubject(updatedSubject);
     setLocalSubjects(
@@ -208,16 +202,14 @@ function AdminSubjectView() {
   const handleUpdateTeachers = async () => {
     if (!editingSubject) return;
 
-    // Extract teacher IDs (handle both populated and non-populated)
-    const teacherIds = editingSubject.teachers.map((t) =>
-      typeof t === 'object' ? t._id : t
-    );
+    // Extract teacher ID (handle both populated and non-populated)
+    const teacherId = editingSubject.teacherId?._id || editingSubject.teacherId || null;
 
     try {
       await dispatch(
         updateSubject({
           id: editingSubject._id,
-          data: { teachers: teacherIds },
+          data: { teacherId },
         })
       ).unwrap();
 
@@ -242,11 +234,11 @@ function AdminSubjectView() {
     // Save all pending name changes
     const promises = localSubjects.map((localSubject) => {
       const originalSubject = filteredSubjects.find((s) => s._id === localSubject._id);
-      if (originalSubject && originalSubject.name !== localSubject.name) {
+      if (originalSubject && originalSubject.subjectName !== localSubject.subjectName) {
         return dispatch(
           updateSubject({
             id: localSubject._id,
-            data: { name: localSubject.name },
+            data: { subjectName: localSubject.subjectName },
           })
         ).unwrap();
       }
@@ -291,28 +283,36 @@ function AdminSubjectView() {
 
   // Get available teachers (filter out already assigned)
   const getAvailableTeachers = () => {
-    if (!editingSubject) return users.filter((u) => u.role === 'Teacher');
+    if (!editingSubject) return teachers;
 
-    const assignedTeacherIds = editingSubject.teachers.map((t) =>
-      typeof t === 'object' ? t._id : t
-    );
+    const assignedTeacherId = editingSubject.teacherId?._id || editingSubject.teacherId;
 
-    return users.filter(
-      (u) => u.role === 'Teacher' && !assignedTeacherIds.includes(u._id)
-    );
+    return teachers.filter((t) => t._id !== assignedTeacherId);
   };
 
   // Format teacher name for display
   const formatTeacherName = (teacher) => {
-    if (typeof teacher === 'object' && teacher.firstName && teacher.lastName) {
-      return `${teacher.firstName} ${teacher.lastName}`;
+    if (!teacher) return 'No teacher assigned';
+    if (typeof teacher === 'object') {
+      // Handle populated teacher with userId
+      if (teacher.userId) {
+        return `${teacher.userId.firstName} ${teacher.userId.lastName}`;
+      }
+      // Handle direct teacher object
+      if (teacher.firstName && teacher.lastName) {
+        return `${teacher.firstName} ${teacher.lastName}`;
+      }
     }
-    return teacher;
+    return 'Unknown Teacher';
   };
 
   // Get teacher ID (handle both populated and non-populated)
   const getTeacherId = (teacher) => {
-    return typeof teacher === 'object' ? teacher._id : teacher;
+    if (!teacher) return null;
+    if (typeof teacher === 'object') {
+      return teacher._id;
+    }
+    return teacher;
   };
 
   return (
@@ -349,7 +349,7 @@ function AdminSubjectView() {
             <div className={styles.listTitle}>Subjects</div>
             <ul className={styles.subjectsList}>
               {localSubjects.map((subject) => (
-                <li key={subject._id}>{subject.name}</li>
+                <li key={subject._id}>{subject.subjectName}</li>
               ))}
             </ul>
             <button className={styles.editSubjectsBtn} onClick={handleEditSubjects}>
@@ -373,16 +373,14 @@ function AdminSubjectView() {
               <tbody>
                 {localSubjects.map((subject) => (
                   <tr key={subject._id}>
-                    <td>{subject.name}</td>
+                    <td>{subject.subjectName}</td>
                     <td className={styles.teacherCell}>
-                      {subject.teachers && subject.teachers.length > 0 ? (
-                        subject.teachers.map((teacher, idx) => (
-                          <button key={idx} className={styles.teacherPill}>
-                            {formatTeacherName(teacher)}
-                          </button>
-                        ))
+                      {subject.teacherId ? (
+                        <button className={styles.teacherPill}>
+                          {formatTeacherName(subject.teacherId)}
+                        </button>
                       ) : (
-                        <span style={{ color: '#999', fontStyle: 'italic' }}>No teachers assigned</span>
+                        <span style={{ color: '#999', fontStyle: 'italic' }}>No teacher assigned</span>
                       )}
                     </td>
                     <td>
@@ -438,7 +436,7 @@ function AdminSubjectView() {
                     <div key={subject._id} className={styles.subjectItem}>
                       <input
                         type="text"
-                        value={subject.name}
+                        value={subject.subjectName}
                         onChange={(e) => handleUpdateSubjectName(subject._id, e.target.value)}
                         onBlur={(e) => handleSaveSubjectName(subject._id, e.target.value)}
                         className={styles.subjectInput}
@@ -469,7 +467,7 @@ function AdminSubjectView() {
         <div className={styles.modalOverlay} onClick={handleCloseEditTeachersModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span>Edit Teachers for {editingSubject.name}</span>
+              <span>Edit Teacher for {editingSubject.subjectName}</span>
               <button className={styles.modalClose} onClick={handleCloseEditTeachersModal}>
                 &times;
               </button>
@@ -489,7 +487,7 @@ function AdminSubjectView() {
                         <option value="">-- Select a teacher --</option>
                         {getAvailableTeachers().map((teacher) => (
                           <option key={teacher._id} value={teacher._id}>
-                            {teacher.firstName} {teacher.lastName}
+                            {teacher.userId ? `${teacher.userId.firstName} ${teacher.userId.lastName}` : `Teacher ${teacher._id}`}
                           </option>
                         ))}
                       </select>
@@ -499,25 +497,20 @@ function AdminSubjectView() {
                     </div>
                   </div>
                   <div className={styles.teachersListSection}>
-                    <label>Current Teachers:</label>
+                    <label>Current Teacher:</label>
                     <div className={styles.teachersPillsContainer}>
-                      {editingSubject.teachers && editingSubject.teachers.length > 0 ? (
-                        editingSubject.teachers.map((teacher) => {
-                          const teacherId = getTeacherId(teacher);
-                          return (
-                            <div key={teacherId} className={styles.teacherPillEdit}>
-                              {formatTeacherName(teacher)}
-                              <button
-                                className={styles.removeTeacherBtn}
-                                onClick={() => handleRemoveTeacher(teacherId)}
-                              >
-                                &#10060;
-                              </button>
-                            </div>
-                          );
-                        })
+                      {editingSubject.teacherId ? (
+                        <div className={styles.teacherPillEdit}>
+                          {formatTeacherName(editingSubject.teacherId)}
+                          <button
+                            className={styles.removeTeacherBtn}
+                            onClick={handleRemoveTeacher}
+                          >
+                            &#10060;
+                          </button>
+                        </div>
                       ) : (
-                        <p style={{ color: '#999', fontStyle: 'italic' }}>No teachers assigned</p>
+                        <p style={{ color: '#999', fontStyle: 'italic' }}>No teacher assigned</p>
                       )}
                     </div>
                   </div>

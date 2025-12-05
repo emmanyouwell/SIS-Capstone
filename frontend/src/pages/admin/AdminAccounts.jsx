@@ -3,34 +3,46 @@ import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminAccounts.module.css';
 import { useNavigate } from 'react-router-dom';
 import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins } from '../../store/slices/adminSlice';
 import { register } from '../../store/slices/authSlice';
 
 function AdminAccounts() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { students, loading: studentsLoading } = useSelector((state) => state.students);
+  const { teachers, loading: teachersLoading } = useSelector((state) => state.teachers);
+  const { admins, loading: adminsLoading } = useSelector((state) => state.admins);
   const { loading: registerLoading } = useSelector((state) => state.auth);
 
   const [showAddModal, setShowAddModal] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
+    middleName: '',
     email: '',
     password: '',
     role: '',
-    status: 'Active'
+    status: 'Active',
+    contactNumber: '',
+    address: '',
+    dateOfBirth: '',
   });
   const [formError, setFormError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
-  // Calculate counts from users array
-  const teacherCount = users.filter(user => user.role === 'Teacher' && user.status === 'Active').length;
-  const studentCount = users.filter(user => user.role === 'Student' && user.status === 'Active').length;
-  const adminCount = users.filter(user => user.role === 'Admin' && user.status === 'Active').length;
+  // Calculate counts from role-specific arrays
+  const teacherCount = teachers.filter(t => t.userId?.status === 'Active' || !t.userId).length;
+  const studentCount = students.filter(s => s.userId?.status === 'Active' || !s.userId).length;
+  const adminCount = admins.filter(a => a.userId?.status === 'Active' || !a.userId).length;
+  const loading = studentsLoading || teachersLoading || adminsLoading;
 
-  // Fetch users on mount
+  // Fetch role-specific data on mount
   useEffect(() => {
-    dispatch(fetchAllUsers());
+    dispatch(fetchAllStudents());
+    dispatch(fetchAllTeachers());
+    dispatch(fetchAllAdmins());
   }, [dispatch]);
 
   // Clear success message after 3 seconds
@@ -47,14 +59,18 @@ function AdminAccounts() {
     setSuccessMessage(null);
 
     try {
-      // Prepare data for register API
+      // Prepare data for register API (includes role-specific data)
       const registerData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        middleName: formData.middleName,
         email: formData.email,
         password: formData.password,
         role: formData.role,
-        status: formData.status
+        status: formData.status,
+        contactNumber: formData.contactNumber,
+        address: formData.address,
+        dateOfBirth: formData.dateOfBirth || undefined,
       };
 
       const result = await dispatch(register(registerData));
@@ -64,14 +80,20 @@ function AdminAccounts() {
         setFormData({
           firstName: '',
           lastName: '',
+          middleName: '',
           email: '',
           password: '',
           role: '',
-          status: 'Active'
+          status: 'Active',
+          contactNumber: '',
+          address: '',
+          dateOfBirth: '',
         });
         setShowAddModal(false);
-        // Refresh users list
-        dispatch(fetchAllUsers());
+        // Refresh role-specific lists
+        dispatch(fetchAllStudents());
+        dispatch(fetchAllTeachers());
+        dispatch(fetchAllAdmins());
       } else {
         setFormError(result.payload || 'Failed to create account');
       }
@@ -122,9 +144,9 @@ function AdminAccounts() {
         </div>
 
         {/* Error Message */}
-        {error && (
+        {formError && (
           <div className={styles.errorMessage} style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
-            {error}
+            {formError}
           </div>
         )}
 
@@ -236,6 +258,14 @@ function AdminAccounts() {
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                 required
               />
+              <label htmlFor="account-middleName">Middle Name</label>
+              <input
+                type="text"
+                id="account-middleName"
+                name="account-middleName"
+                value={formData.middleName}
+                onChange={(e) => setFormData({ ...formData, middleName: e.target.value })}
+              />
               <label htmlFor="account-lastName">Last Name</label>
               <input
                 type="text"
@@ -263,6 +293,30 @@ function AdminAccounts() {
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
                 minLength="6"
+              />
+              <label htmlFor="account-contactNumber">Contact Number</label>
+              <input
+                type="text"
+                id="account-contactNumber"
+                name="account-contactNumber"
+                value={formData.contactNumber}
+                onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+              />
+              <label htmlFor="account-address">Address</label>
+                <input
+                  type="text"
+                  id="account-address"
+                  name="account-address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                />
+              <label htmlFor="account-dateOfBirth">Date of Birth</label>
+              <input
+                type="date"
+                id="account-dateOfBirth"
+                name="account-dateOfBirth"
+                value={formData.dateOfBirth}
+                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
               />
               <label htmlFor="account-role">Role</label>
               <select
@@ -298,10 +352,14 @@ function AdminAccounts() {
                     setFormData({
                       firstName: '',
                       lastName: '',
+                      middleName: '',
                       email: '',
                       password: '',
                       role: '',
-                      status: 'Active'
+                      status: 'Active',
+                      contactNumber: '',
+                      address: '',
+                      dateOfBirth: '',
                     });
                   }}
                   disabled={registerLoading}

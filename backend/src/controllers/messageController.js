@@ -1,4 +1,5 @@
 import Message from '../models/Message.js';
+import Student from '../models/Student.js';
 import User from '../models/User.js';
 
 // @desc    Get all messages
@@ -6,30 +7,25 @@ import User from '../models/User.js';
 // @access  Private
 export const getMessages = async (req, res) => {
   try {
-    const { recipient, sender, read } = req.query;
+    const { receiverId, receiverRole, status } = req.query;
     const filter = {
       $or: [
-        { sender: req.user.id },
-        { recipient: req.user.id },
-        { recipientIds: req.user.id },
+        { senderId: req.user.id },
+        { receiverId: req.user.id },
+        { receiverRole: req.user.role },
+        { receiverRole: 'All' },
       ],
-      deletedBy: { $ne: req.user.id },
+      status: { $ne: 'deleted' },
     };
 
-    if (recipient) filter.recipient = recipient;
-    if (sender) filter.sender = sender;
-    if (read !== undefined) {
-      if (read === 'true') {
-        filter.readBy = { $elemMatch: { user: req.user.id } };
-      } else {
-        filter.readBy = { $not: { $elemMatch: { user: req.user.id } } };
-      }
-    }
+    if (receiverId) filter.receiverId = receiverId;
+    if (receiverRole) filter.receiverRole = receiverRole;
+    if (status) filter.status = status;
 
     const messages = await Message.find(filter)
-      .populate('sender', 'firstName lastName email profileImage')
-      .populate('recipient', 'firstName lastName email profileImage')
-      .sort({ createdAt: -1 });
+      .populate('senderId', 'firstName lastName email')
+      .populate('receiverId', 'firstName lastName email')
+      .sort({ dateSent: -1 });
 
     res.json({
       success: true,
@@ -47,8 +43,8 @@ export const getMessages = async (req, res) => {
 export const getMessage = async (req, res) => {
   try {
     const message = await Message.findById(req.params.id)
-      .populate('sender', 'firstName lastName email profileImage')
-      .populate('recipient', 'firstName lastName email profileImage');
+      .populate('senderId', 'firstName lastName email')
+      .populate('receiverId', 'firstName lastName email');
 
     if (!message) {
       return res.status(404).json({ message: 'Message not found' });
@@ -56,20 +52,18 @@ export const getMessage = async (req, res) => {
 
     // Check if user has access to this message
     const hasAccess =
-      message.sender._id.toString() === req.user.id ||
-      message.recipient?._id?.toString() === req.user.id ||
-      message.recipientIds?.some((id) => id.toString() === req.user.id);
+      message.senderId._id.toString() === req.user.id ||
+      message.receiverId?._id?.toString() === req.user.id ||
+      message.receiverRole === req.user.role ||
+      message.receiverRole === 'All';
 
     if (!hasAccess) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Mark as read if not already read by this user
-    const alreadyRead = message.readBy.some(
-      (r) => r.user.toString() === req.user.id
-    );
-    if (!alreadyRead) {
-      message.readBy.push({ user: req.user.id });
+    // Mark as read if not already read
+    if (message.status === 'sent') {
+      message.status = 'read';
       await message.save();
     }
 
@@ -87,34 +81,28 @@ export const getMessage = async (req, res) => {
 // @access  Private
 export const createMessage = async (req, res) => {
   try {
-    req.body.sender = req.user.id;
+    req.body.senderRole = req.user.role;
+    req.body.senderId = req.user.id;
+    req.body.dateSent = new Date();
+    req.body.status = 'sent';
 
-    // Handle recipient types
-    if (req.body.recipientType === 'All Students') {
-      const students = await User.find({ role: 'Student' });
-      req.body.recipientIds = students.map((s) => s._id);
-    } else if (req.body.recipientType === 'All Teachers') {
-      const teachers = await User.find({ role: 'Teacher' });
-      req.body.recipientIds = teachers.map((t) => t._id);
-    } else if (req.body.recipientType === 'Grade') {
-      const students = await User.find({
-        role: 'Student',
-        grade: req.body.grade,
-      });
-      req.body.recipientIds = students.map((s) => s._id);
-    } else if (req.body.recipientType === 'Section') {
-      const students = await User.find({
-        role: 'Student',
-        grade: req.body.grade,
-        section: req.body.section,
-      });
-      req.body.recipientIds = students.map((s) => s._id);
+    // Handle receiver types
+    if (req.body.receiverRole === 'All Students') {
+      const students = await Student.find().populate('userId');
+      req.body.receiverId = null; // No specific receiver
+      req.body.receiverRole = 'All Students';
+    } else if (req.body.receiverRole === 'All Teachers') {
+      req.body.receiverId = null;
+      req.body.receiverRole = 'All Teachers';
+    } else if (req.body.receiverRole === 'All') {
+      req.body.receiverId = null;
+      req.body.receiverRole = 'All';
     }
 
     const message = await Message.create(req.body);
-    await message.populate('sender', 'firstName lastName email profileImage');
-    if (message.recipient) {
-      await message.populate('recipient', 'firstName lastName email profileImage');
+    await message.populate('senderId', 'firstName lastName email');
+    if (message.receiverId) {
+      await message.populate('receiverId', 'firstName lastName email');
     }
 
     res.status(201).json({
@@ -138,7 +126,7 @@ export const updateMessage = async (req, res) => {
     }
 
     // Only sender can update
-    if (message.sender.toString() !== req.user.id) {
+    if (message.senderId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to update this message' });
     }
 
@@ -146,8 +134,8 @@ export const updateMessage = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate('sender', 'firstName lastName email profileImage')
-      .populate('recipient', 'firstName lastName email profileImage');
+      .populate('senderId', 'firstName lastName email')
+      .populate('receiverId', 'firstName lastName email');
 
     res.json({
       success: true,
@@ -169,11 +157,18 @@ export const deleteMessage = async (req, res) => {
       return res.status(404).json({ message: 'Message not found' });
     }
 
-    // Add user to deletedBy array
-    if (!message.deletedBy.includes(req.user.id)) {
-      message.deletedBy.push(req.user.id);
-      await message.save();
+    // Only sender or receiver can delete
+    const canDelete =
+      message.senderId.toString() === req.user.id ||
+      message.receiverId?.toString() === req.user.id;
+
+    if (!canDelete) {
+      return res.status(403).json({ message: 'Not authorized to delete this message' });
     }
+
+    // Soft delete by updating status
+    message.status = 'deleted';
+    await message.save();
 
     res.json({
       success: true,
@@ -183,4 +178,3 @@ export const deleteMessage = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

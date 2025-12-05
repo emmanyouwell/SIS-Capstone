@@ -42,13 +42,14 @@ function AdminGradeView() {
     }
   }, [subjectList])
  
-  // Build per-student rows from the { student, gradeRecord } response
+  // Build per-student rows from grades array (new structure: grade has studentId ref)
   const students = useMemo(() => {
-    return grades.map((entry) => {
-      const { student, gradeRecord } = entry;
+    return grades.map((gradeRecord) => {
+      const student = gradeRecord.studentId;
+      const studentUser = student?.userId || {};
 
-      const name = student
-        ? `${student.firstName} ${student.lastName}`.trim()
+      const name = studentUser.firstName && studentUser.lastName
+        ? `${studentUser.firstName} ${studentUser.lastName} ${studentUser.middleName || ''}`.trim()
         : 'Unknown Student';
 
       const finalGrade =
@@ -56,13 +57,13 @@ function AdminGradeView() {
           ? Math.round(gradeRecord.finalGrade)
           : null;
 
-      const status = gradeRecord?.status || 'incomplete';
-      const gradeLevelValue = gradeRecord?.gradeLevel || student?.grade || gradeNumber;
+      const status = gradeRecord?.remarks || 'incomplete';
+      const gradeLevelValue = student?.gradeLevel || gradeNumber;
 
       return {
         id: student?._id || gradeRecord?._id,
         name,
-        lrn: student?.learnerReferenceNo || '-',
+        lrn: student?.lrn || '-',
         grade: gradeLevelValue,
         status,
         finalGrade,
@@ -99,12 +100,12 @@ function AdminGradeView() {
     });
   };
   const subjects = useMemo(() => {
-    // Extract existing grade entries (if any)
-    const existingGrades = selectedGrade?.gradeRecord?.grades?.subjects || [];
+    // Extract existing grade entries (new structure: grades is array with subjectId)
+    const existingGrades = selectedGrade?.gradeRecord?.grades || [];
 
-    // Build a lookup for quick matching by subject _id
+    // Build a lookup for quick matching by subjectId _id
     const gradeMap = new Map(
-      existingGrades.map((g) => [g.subject?._id?.toString(), g])
+      existingGrades.map((g) => [g.subjectId?._id?.toString() || g.subjectId?.toString(), g])
     );
 
     // Always return ALL available subjects
@@ -115,7 +116,7 @@ function AdminGradeView() {
       if (gradeMap.has(id)) {
         const record = gradeMap.get(id);
         return {
-          subject: subj, // replace subject with the updated subject doc
+          subject: subj,
           q1: record.q1 ?? 0,
           q2: record.q2 ?? 0,
           q3: record.q3 ?? 0,
@@ -193,14 +194,16 @@ function AdminGradeView() {
         : s
     );
 
-    // Normalize subjects for payload: subject must be an ObjectId, not full doc
-    const subjectsPayload = updatedSubjects.map((s) => ({
-      subject: s.subject?._id || s.subject,
-      q1: s.q1,
-      q2: s.q2,
-      q3: s.q3,
-      q4: s.q4,
-    }));
+    // Normalize subjects for payload: subjectId must be an ObjectId (new structure)
+    const gradesPayload = updatedSubjects
+      .filter((s) => s.q1 || s.q2 || s.q3 || s.q4) // Only include subjects with at least one grade
+      .map((s) => ({
+        subjectId: s.subject?._id || s.subject,
+        q1: s.q1,
+        q2: s.q2,
+        q3: s.q3,
+        q4: s.q4,
+      }));
 
     // If there is already a gradeRecord, update it; otherwise create a new one
     if (selectedGrade.gradeRecord) {
@@ -208,26 +211,16 @@ function AdminGradeView() {
         updateGrade({
           id: selectedGrade.gradeRecord._id,
           data: {
-            grades: {
-              subjects: subjectsPayload,
-            },
+            grades: gradesPayload,
           },
         })
       );
     } else {
-      // Derive a simple schoolYear, e.g. "2024-2025" based on current date
-      const now = new Date();
-      const year = now.getFullYear();
-      const schoolYear = `${year}-${year + 1}`;
-
+      // Create new grade record with studentId
       dispatch(
         createGrade({
-          student: selectedGrade.student._id,
-          gradeLevel: gradeNumber,
-          schoolYear,
-          grades: {
-            subjects: subjectsPayload,
-          },
+          studentId: selectedGrade.student._id,
+          grades: gradesPayload,
         })
       );
     }
@@ -403,12 +396,12 @@ function AdminGradeView() {
             </button>
             <div className={styles.modalHeader}>
               <div className={styles.modalName}>
-                {selectedGrade.student
-                  ? `${selectedGrade.student.firstName} ${selectedGrade.student.lastName}`.trim()
+                {selectedGrade.student?.userId
+                  ? `${selectedGrade.student.userId.firstName || ''} ${selectedGrade.student.userId.lastName || ''}`.trim() || 'Unknown Student'
                   : 'Unknown Student'}
               </div>
               <div className={styles.modalLrn}>
-                {selectedGrade.student?.learnerReferenceNo || '-'}
+                {selectedGrade.student?.lrn || '-'}
               </div>
             </div>
             <table className={styles.modalTable}>
@@ -478,9 +471,9 @@ function AdminGradeView() {
                 <div>
                   STATUS:{' '}
                   <span className={styles.statusPassed}>
-                    {selectedGrade.status === 'failed'
+                    {selectedGrade.gradeRecord?.remarks === 'failed'
                       ? 'FAILED'
-                      : selectedGrade.status === 'completed'
+                      : selectedGrade.gradeRecord?.remarks === 'completed'
                         ? 'PASSED'
                         : 'PENDING'}
                   </span>

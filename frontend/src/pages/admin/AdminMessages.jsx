@@ -1,61 +1,59 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMessages.module.css';
+import { fetchAllMessages, createMessage } from '../../store/slices/messageSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins } from '../../store/slices/adminSlice';
 
 function AdminMessages() {
+  const dispatch = useDispatch();
+  const { messages, loading } = useSelector((state) => state.messages);
+  const { students } = useSelector((state) => state.students);
+  const { teachers } = useSelector((state) => state.teachers);
+  const { admins } = useSelector((state) => state.admins);
+  const { user } = useSelector((state) => state.auth);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
-    recipient: '',
+    receiverId: '',
+    receiverRole: '',
     subject: '',
-    message: '',
+    messageText: '',
   });
 
   const [sortBy, setSortBy] = useState('latest');
 
-  // Sample message data
-  const messages = [
-    {
-      id: 1,
-      name: 'Teacher 1',
+  useEffect(() => {
+    dispatch(fetchAllMessages());
+    dispatch(fetchAllStudents());
+    dispatch(fetchAllTeachers());
+    dispatch(fetchAllAdmins());
+  }, [dispatch]);
+
+  // Format messages for display
+  const formattedMessages = messages.map((msg) => {
+    const sender = msg.senderId;
+    const senderName = sender ? `${sender.firstName || ''} ${sender.lastName || ''}`.trim() : 'Unknown';
+    const timeAgo = msg.dateSent ? new Date(msg.dateSent).toLocaleString() : '';
+    
+    return {
+      id: msg._id,
+      name: senderName,
       avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good morning, admin! My students are having trouble with my materia...',
-      time: '2h ago',
-    },
-    {
-      id: 2,
-      name: 'Admin 2',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'hello, ma\'am! can u check the recent announcement regarding the even..',
-      time: '3h ago',
-    },
-    {
-      id: 3,
-      name: 'Student 1',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good day, Admin! I\'m xx from Grade x. I saw the event on xx posted las...',
-      time: '5h ago',
-    },
-    {
-      id: 4,
-      name: 'Teacher 2',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good afternoon, ma\'am Jerica! Can I ask if it\'s possible to open the gra..',
-      time: '6h ago',
-    },
-    {
-      id: 5,
-      name: 'Student 2',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good day, admin. I\'m a grade x student & regarding my enrollment, can...',
-      time: '8h ago',
-    },
-  ];
+      message: msg.messageText?.substring(0, 50) + '...' || '',
+      time: timeAgo,
+      status: msg.status,
+      senderRole: msg.senderRole
+    };
+  });
 
   // Statistics
   const stats = {
-    sent: 12,
-    trash: 24,
-    viewed: 13,
-    unread: 9,
+    sent: messages.filter(m => m.status === 'sent').length,
+    trash: messages.filter(m => m.status === 'deleted').length,
+    viewed: messages.filter(m => m.status === 'read').length,
+    unread: messages.filter(m => m.status === 'sent').length,
   };
 
   const handleOpenModal = () => {
@@ -64,7 +62,7 @@ function AdminMessages() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ recipient: '', subject: '', message: '' });
+    setFormData({ receiverId: '', receiverRole: '', subject: '', messageText: '' });
   };
 
   const handleInputChange = (e) => {
@@ -75,12 +73,21 @@ function AdminMessages() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add API call here to send message
-    console.log('Sending message:', formData);
-    handleCloseModal();
-    // Show success message or update UI
+    try {
+      const messageData = {
+        receiverId: formData.receiverId || undefined,
+        receiverRole: formData.receiverRole || undefined,
+        subject: formData.subject,
+        messageText: formData.messageText
+      };
+
+      await dispatch(createMessage(messageData));
+      handleCloseModal();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
   };
 
   const handleModalClick = (e) => {
@@ -151,22 +158,28 @@ function AdminMessages() {
         </div>
 
         <div className={styles.messagesList}>
-          {messages.map((msg) => (
-            <div key={msg.id} className={styles.messageItem}>
-              <img
-                src={msg.avatar}
-                alt="Avatar"
-                className={styles.studentAvatar}
-              />
-              <div className={styles.messageContent}>
-                <div className={styles.messageHeader}>
-                  <div className={styles.studentName}>{msg.name}</div>
-                  <div className={styles.messageTime}>{msg.time}</div>
+          {loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>Loading messages...</div>
+          ) : formattedMessages.length === 0 ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>No messages</div>
+          ) : (
+            formattedMessages.map((msg) => (
+              <div key={msg.id} className={styles.messageItem}>
+                <img
+                  src={msg.avatar}
+                  alt="Avatar"
+                  className={styles.studentAvatar}
+                />
+                <div className={styles.messageContent}>
+                  <div className={styles.messageHeader}>
+                    <div className={styles.studentName}>{msg.name} ({msg.senderRole})</div>
+                    <div className={styles.messageTime}>{msg.time}</div>
+                  </div>
+                  <div className={styles.messageText}>{msg.message}</div>
                 </div>
-                <div className={styles.messageText}>{msg.message}</div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -180,20 +193,44 @@ function AdminMessages() {
           <div className={styles.modalContent}>
             <h3>New Message</h3>
             <form id="message-form" onSubmit={handleSubmit}>
-              <label htmlFor="recipient">To:</label>
+              <label htmlFor="receiverRole">To (Role):</label>
               <select
-                id="recipient"
-                name="recipient"
-                value={formData.recipient}
+                id="receiverRole"
+                name="receiverRole"
+                value={formData.receiverRole}
                 onChange={handleInputChange}
                 required
               >
-                <option value="">Select recipient...</option>
-                <option value="all">All Students</option>
-                <option value="all-teachers">All Teachers</option>
-                <option value="8-lilac">Grade 8 - Lilac</option>
-                <option value="8-tulip">Grade 8 - Tulip</option>
-                <option value="9-daisy">Grade 9 - Daisy</option>
+                <option value="">Select recipient type...</option>
+                <option value="All">All Users</option>
+                <option value="Student">All Students</option>
+                <option value="Teacher">All Teachers</option>
+                <option value="Admin">All Admins</option>
+              </select>
+
+              <label htmlFor="receiverId">To (Specific User - Optional):</label>
+              <select
+                id="receiverId"
+                name="receiverId"
+                value={formData.receiverId}
+                onChange={handleInputChange}
+              >
+                <option value="">Select specific user (optional)...</option>
+                {students.map((student) => (
+                  <option key={student._id} value={student.userId?._id}>
+                    {student.userId?.firstName} {student.userId?.lastName} (Student)
+                  </option>
+                ))}
+                {teachers.map((teacher) => (
+                  <option key={teacher._id} value={teacher.userId?._id}>
+                    {teacher.userId?.firstName} {teacher.userId?.lastName} (Teacher)
+                  </option>
+                ))}
+                {admins.map((admin) => (
+                  <option key={admin._id} value={admin.userId?._id}>
+                    {admin.userId?.firstName} {admin.userId?.lastName} (Admin)
+                  </option>
+                ))}
               </select>
 
               <label htmlFor="subject">Subject:</label>
@@ -207,12 +244,12 @@ function AdminMessages() {
                 placeholder="Enter subject"
               />
 
-              <label htmlFor="message">Message:</label>
+              <label htmlFor="messageText">Message:</label>
               <textarea
-                id="message"
-                name="message"
+                id="messageText"
+                name="messageText"
                 rows="5"
-                value={formData.message}
+                value={formData.messageText}
                 onChange={handleInputChange}
                 required
                 placeholder="Type your message here..."

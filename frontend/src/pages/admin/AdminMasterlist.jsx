@@ -27,8 +27,8 @@ function AdminMasterlist() {
   const gradeSections = useMemo(() => {
     const grouped = { 7: [], 8: [], 9: [], 10: [] };
     sections.forEach((section) => {
-      if (grouped[section.grade]) {
-        grouped[section.grade].push(section.name);
+      if (grouped[section.gradeLevel]) {
+        grouped[section.gradeLevel].push(section.sectionName);
       }
     });
     // Sort each grade's sections
@@ -67,13 +67,13 @@ function AdminMasterlist() {
   };
 
   const openEditSectionForm = (grade, sectionName) => {
-    const section = sections.find((s) => s.grade === parseInt(grade) && s.name === sectionName);
+    const section = sections.find((s) => s.gradeLevel === parseInt(grade) && s.sectionName === sectionName);
     if (section) {
       setSectionForm({
         mode: 'edit',
         grade: parseInt(grade),
         sectionId: section._id,
-        value: section.name,
+        value: section.sectionName,
       });
     }
   };
@@ -96,15 +96,15 @@ function AdminMasterlist() {
       if (sectionForm.mode === 'add') {
         await dispatch(
           createSection({
-            name: trimmed,
-            grade: sectionForm.grade,
+            sectionName: trimmed,
+            gradeLevel: sectionForm.grade,
           })
         ).unwrap();
       } else if (sectionForm.mode === 'edit' && sectionForm.sectionId) {
         await dispatch(
           updateSection({
             id: sectionForm.sectionId,
-            data: { name: trimmed },
+            data: { sectionName: trimmed },
           })
         ).unwrap();
       }
@@ -124,7 +124,7 @@ function AdminMasterlist() {
   const confirmRemoveSection = async () => {
     if (!pendingRemoval) return;
     const { grade, sectionName } = pendingRemoval;
-    const section = sections.find((s) => s.grade === parseInt(grade) && s.name === sectionName);
+    const section = sections.find((s) => s.gradeLevel === parseInt(grade) && s.sectionName === sectionName);
     if (section) {
       try {
         await dispatch(deleteSection(section._id)).unwrap();

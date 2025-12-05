@@ -1,33 +1,52 @@
 import Schedule from '../models/Schedule.js';
+import Student from '../models/Student.js';
 
 // @desc    Get all schedules
 // @route   GET /api/v1/schedules
 // @access  Private
 export const getSchedules = async (req, res) => {
   try {
-    const { grade, section, schoolYear } = req.query;
+    const { studentId, sectionId, day } = req.query;
     const filter = {};
 
-    if (grade) filter.grade = parseInt(grade);
-    if (section) filter.section = section;
-    if (schoolYear) filter.schoolYear = schoolYear;
+    if (studentId) filter.studentId = studentId;
+    if (sectionId) filter.sectionId = sectionId;
+    if (day) filter.day = day;
 
-    // Students see only their grade/section schedule
+    // Students see only their own schedule
     if (req.user.role === 'Student') {
-      filter.grade = req.user.grade;
-      filter.section = req.user.section;
-    }
-
-    // Teachers see only schedules where they teach
-    if (req.user.role === 'Teacher') {
-      filter.teacher = req.user.id;
+      const student = await Student.findOne({ userId: req.user.id });
+      if (student) {
+        filter.studentId = student._id;
+      } else {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
     }
 
     const schedules = await Schedule.find(filter)
-      .populate('subject', 'name gradeLevel')
-      .populate('teacher', 'firstName lastName')
-      .populate('adviser', 'firstName lastName')
-      .sort({ grade: 1, section: 1, day: 1, timeSlot: 1 });
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('sectionId', 'sectionName gradeLevel')
+      .populate({
+        path: 'subjectId',
+        populate: {
+          path: 'teacherId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email',
+          },
+        },
+      })
+      .sort({ day: 1, startTime: 1 });
 
     res.json({
       success: true,
@@ -45,9 +64,24 @@ export const getSchedules = async (req, res) => {
 export const getSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.findById(req.params.id)
-      .populate('subject', 'name gradeLevel')
-      .populate('teacher', 'firstName lastName')
-      .populate('adviser', 'firstName lastName');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('sectionId', 'sectionName gradeLevel')
+      .populate({
+        path: 'subjectId',
+        populate: {
+          path: 'teacherId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email',
+          },
+        },
+      });
 
     if (!schedule) {
       return res.status(404).json({ message: 'Schedule not found' });
@@ -68,8 +102,24 @@ export const getSchedule = async (req, res) => {
 export const createSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.create(req.body);
-    await schedule.populate('subject', 'name gradeLevel');
-    await schedule.populate('teacher', 'firstName lastName');
+    await schedule.populate({
+      path: 'studentId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName middleName email',
+      },
+    });
+    await schedule.populate('sectionId', 'sectionName gradeLevel');
+    await schedule.populate({
+      path: 'subjectId',
+      populate: {
+        path: 'teacherId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email',
+        },
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -89,9 +139,24 @@ export const updateSchedule = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate('subject', 'name gradeLevel')
-      .populate('teacher', 'firstName lastName')
-      .populate('adviser', 'firstName lastName');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('sectionId', 'sectionName gradeLevel')
+      .populate({
+        path: 'subjectId',
+        populate: {
+          path: 'teacherId',
+          populate: {
+            path: 'userId',
+            select: 'firstName lastName email',
+          },
+        },
+      });
 
     if (!schedule) {
       return res.status(404).json({ message: 'Schedule not found' });
@@ -127,4 +192,3 @@ export const deleteSchedule = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

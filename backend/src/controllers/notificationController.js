@@ -5,16 +5,17 @@ import Notification from '../models/Notification.js';
 // @access  Private
 export const getNotifications = async (req, res) => {
   try {
-    const { read, type } = req.query;
+    const { status } = req.query;
     const filter = {
-      recipient: req.user.id,
+      userId: req.user.id,
+      userRole: req.user.role,
     };
 
-    if (read !== undefined) filter.read = read === 'true';
-    if (type) filter.type = type;
+    if (status) filter.status = status;
 
     const notifications = await Notification.find(filter)
-      .sort({ createdAt: -1 })
+      .populate('userId', 'firstName lastName email')
+      .sort({ dateCreated: -1 })
       .limit(100);
 
     res.json({
@@ -32,20 +33,21 @@ export const getNotifications = async (req, res) => {
 // @access  Private
 export const getNotification = async (req, res) => {
   try {
-    const notification = await Notification.findById(req.params.id);
+    const notification = await Notification.findById(req.params.id)
+      .populate('userId', 'firstName lastName email');
 
     if (!notification) {
       return res.status(404).json({ message: 'Notification not found' });
     }
 
     // Users can only view their own notifications
-    if (notification.recipient.toString() !== req.user.id) {
+    if (notification.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
     // Mark as read when viewed
-    if (!notification.read) {
-      notification.read = true;
+    if (notification.status === 'unread') {
+      notification.status = 'read';
       await notification.save();
     }
 
@@ -63,7 +65,13 @@ export const getNotification = async (req, res) => {
 // @access  Private (Admin, System)
 export const createNotification = async (req, res) => {
   try {
+    req.body.dateCreated = new Date();
+    if (!req.body.status) {
+      req.body.status = 'unread';
+    }
+
     const notification = await Notification.create(req.body);
+    await notification.populate('userId', 'firstName lastName email');
 
     res.status(201).json({
       success: true,
@@ -86,7 +94,7 @@ export const updateNotification = async (req, res) => {
     }
 
     // Users can only update their own notifications
-    if (notification.recipient.toString() !== req.user.id) {
+    if (notification.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -97,7 +105,7 @@ export const updateNotification = async (req, res) => {
         new: true,
         runValidators: true,
       }
-    );
+    ).populate('userId', 'firstName lastName email');
 
     res.json({
       success: true,
@@ -120,7 +128,7 @@ export const deleteNotification = async (req, res) => {
     }
 
     // Users can only delete their own notifications
-    if (notification.recipient.toString() !== req.user.id) {
+    if (notification.userId.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
@@ -141,8 +149,8 @@ export const deleteNotification = async (req, res) => {
 export const markAllAsRead = async (req, res) => {
   try {
     await Notification.updateMany(
-      { recipient: req.user.id, read: false },
-      { read: true }
+      { userId: req.user.id, userRole: req.user.role, status: 'unread' },
+      { status: 'read' }
     );
 
     res.json({
@@ -153,4 +161,3 @@ export const markAllAsRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

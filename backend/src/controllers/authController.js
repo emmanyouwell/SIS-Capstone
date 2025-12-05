@@ -1,24 +1,19 @@
 import User from '../models/User.js';
+import Student from '../models/Student.js';
+import Teacher from '../models/Teacher.js';
+import Admin from '../models/Admin.js';
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
 // @access  Public (or Admin only in production)
 export const register = async (req, res) => {
   try {
-    const { firstName, lastName, middleName, email, password, role, learnerReferenceNo, grade, section } = req.body;
+    const { firstName, lastName, middleName, email, password, role, contactNumber, address, dateOfBirth, ...roleSpecificData } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists with this email' });
-    }
-
-    // Check LRN uniqueness for students
-    if (role === 'Student' && learnerReferenceNo) {
-      const existingLRN = await User.findOne({ learnerReferenceNo });
-      if (existingLRN) {
-        return res.status(400).json({ message: 'LRN already exists' });
-      }
     }
 
     // Create user
@@ -29,10 +24,40 @@ export const register = async (req, res) => {
       email,
       password,
       role,
-      learnerReferenceNo: role === 'Student' ? learnerReferenceNo : undefined,
-      grade: role === 'Student' ? grade : undefined,
-      section: role === 'Student' ? section : undefined,
+      contactNumber,
+      address,
+      dateOfBirth,
     });
+
+    // Create role-specific record
+    if (role === 'Student') {
+      await Student.create({
+        userId: user._id,
+        lrn: roleSpecificData.lrn,
+        gradeLevel: roleSpecificData.gradeLevel,
+        sectionId: roleSpecificData.sectionId,
+        guardianName: roleSpecificData.guardianName,
+        guardianContact: roleSpecificData.guardianContact,
+      });
+    } else if (role === 'Teacher') {
+      await Teacher.create({
+        userId: user._id,
+        employeeId: roleSpecificData.employeeId,
+        department: roleSpecificData.department,
+        position: roleSpecificData.position,
+        teachingLoad: roleSpecificData.teachingLoad || 0,
+        emergencyContactName: roleSpecificData.emergencyContactName,
+        emergencyContactNumber: roleSpecificData.emergencyContactNumber,
+      });
+    } else if (role === 'Admin') {
+      await Admin.create({
+        userId: user._id,
+        employeeId: roleSpecificData.employeeId,
+        position: roleSpecificData.position,
+        department: roleSpecificData.department,
+        assignedOffice: roleSpecificData.assignedOffice,
+      });
+    }
 
     const token = user.generateJWT();
 
@@ -47,9 +72,6 @@ export const register = async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        learnerReferenceNo: user.learnerReferenceNo,
-        grade: user.grade,
-        section: user.section,
       },
     });
   } catch (error) {
@@ -69,15 +91,16 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Please provide password' });
     }
 
-
     if (studentId) {
-      user = await User.findOne({ learnerReferenceNo: studentId }).select('+password');
-    }
-    else {
-      // Find user and include password for comparison
+      // Find student by LRN, then get user
+      const student = await Student.findOne({ lrn: studentId }).populate('userId');
+      if (student && student.userId) {
+        user = await User.findById(student.userId._id).select('+password');
+      }
+    } else {
+      // Find user by email
       user = await User.findOne({ email }).select('+password');
     }
-
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
@@ -107,10 +130,6 @@ export const login = async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        learnerReferenceNo: user.learnerReferenceNo,
-        grade: user.grade,
-        section: user.section,
-        profileImage: user.profileImage,
       },
     });
   } catch (error) {
@@ -123,7 +142,19 @@ export const login = async (req, res) => {
 // @access  Private
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).populate('subjects');
+    const user = await User.findById(req.user.id);
+
+    // Get role-specific data
+    let roleData = null;
+    if (user.role === 'Student') {
+      roleData = await Student.findOne({ userId: user._id })
+        .populate('sectionId', 'sectionName gradeLevel')
+        .populate('subjects.subjectId', 'subjectName gradeLevel');
+    } else if (user.role === 'Teacher') {
+      roleData = await Teacher.findOne({ userId: user._id });
+    } else if (user.role === 'Admin') {
+      roleData = await Admin.findOne({ userId: user._id });
+    }
 
     res.json({
       success: true,
@@ -135,15 +166,13 @@ export const getMe = async (req, res) => {
         email: user.email,
         role: user.role,
         status: user.status,
-        learnerReferenceNo: user.learnerReferenceNo,
-        grade: user.grade,
-        section: user.section,
-        profileImage: user.profileImage,
-        subjects: user.subjects,
+        contactNumber: user.contactNumber,
+        address: user.address,
+        dateOfBirth: user.dateOfBirth,
+        roleData,
       },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 };
-

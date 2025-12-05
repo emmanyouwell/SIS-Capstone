@@ -1,6 +1,14 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './AdminAnnouncements.module.css';
+import {
+  fetchAnnouncements,
+  createAnnouncement,
+  updateAnnouncement,
+  deleteAnnouncement,
+  clearError,
+} from '../../store/slices/announcementSlice';
 
 const calendarIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -21,64 +29,39 @@ const unreadIcon = (
 );
 
 function AdminAnnouncements() {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      subject: "School Reopening",
-      date: "August 1, 2025",
-      sender: "Admin",
-      message: "BANTOT",
-      image: "",
-      pinned: true,
-      type: "general"
-    },
-    {
-      id: 2,
-      subject: "New Classroom Assignm",
-      date: "June 1, 2025",
-      sender: "Sir Hermie",
-      message: "Good day, Admin! Just wanted to ask if the subject materials for my ESP class for grade 7 has been uploaded? I apologize I can't see it on my end.",
-      image: "",
-      pinned: false,
-      type: "message"
-    },
-    {
-      id: 3,
-      subject: "IMPORTANT",
-      date: "June 1, 2025",
-      sender: "Sir JP",
-      message: "Greetings, Admin! I have a student named James Trio. He said he already passed the soft copy of his form 138. Can you please check whether he passed it already?",
-      image: "",
-      pinned: false,
-      type: "message"
-    }
-  ]);
+  const dispatch = useDispatch();
+  const { announcements, loading, error } = useSelector((state) => state.announcements);
+  const { user } = useSelector((state) => state.auth);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewEditModal, setShowViewEditModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
   const [viewingAnnouncement, setViewingAnnouncement] = useState(null);
   const [formData, setFormData] = useState({
-    subject: '',
-    recipient: '',
-    message: '',
-    image: null
+    title: '',
+    audience: 'All',
+    content: '',
   });
 
-  const handleAddAnnouncement = (e) => {
+  useEffect(() => {
+    dispatch(fetchAnnouncements());
+  }, [dispatch]);
+
+  const handleAddAnnouncement = async (e) => {
     e.preventDefault();
-    const newAnnouncement = {
-      id: announcements.length + 1,
-      subject: formData.subject,
-      date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
-      sender: "Admin",
-      message: formData.message,
-      image: formData.image ? URL.createObjectURL(formData.image) : "",
-      pinned: false,
-      type: "general"
-    };
-    setAnnouncements([newAnnouncement, ...announcements]);
-    setFormData({ subject: '', recipient: '', message: '', image: null });
-    setShowAddModal(false);
+    try {
+      await dispatch(
+        createAnnouncement({
+          title: formData.title,
+          content: formData.content,
+          audience: formData.audience,
+        })
+      ).unwrap();
+      setFormData({ title: '', audience: 'All', content: '' });
+      setShowAddModal(false);
+    } catch (err) {
+      alert(err || 'Failed to create announcement');
+    }
   };
 
   const handleView = (announcement) => {
@@ -89,30 +72,57 @@ function AdminAnnouncements() {
   const handleEdit = (announcement) => {
     setEditingAnnouncement(announcement);
     setFormData({
-      subject: announcement.subject,
-      recipient: '',
-      message: announcement.message,
-      image: null
+      title: announcement.title,
+      audience: announcement.audience,
+      content: announcement.content,
     });
     setShowViewEditModal(true);
   };
 
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this announcement?')) {
-      setAnnouncements(announcements.filter(a => a.id !== id));
+      try {
+        await dispatch(deleteAnnouncement(id)).unwrap();
+      } catch (err) {
+        alert(err || 'Failed to delete announcement');
+      }
     }
   };
 
-  const handleSaveEdit = (e) => {
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
-    setAnnouncements(announcements.map(a =>
-      a.id === editingAnnouncement.id
-        ? { ...a, subject: formData.subject, message: formData.message }
-        : a
-    ));
-    setEditingAnnouncement(null);
-    setShowViewEditModal(false);
-    setFormData({ subject: '', recipient: '', message: '', image: null });
+    if (!editingAnnouncement) return;
+    try {
+      await dispatch(
+        updateAnnouncement({
+          id: editingAnnouncement._id,
+          data: {
+            title: formData.title,
+            content: formData.content,
+            audience: formData.audience,
+          },
+        })
+      ).unwrap();
+      setEditingAnnouncement(null);
+      setShowViewEditModal(false);
+      setFormData({ title: '', audience: 'All', content: '' });
+    } catch (err) {
+      alert(err || 'Failed to update announcement');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  };
+
+  const getPosterName = (postedBy) => {
+    if (!postedBy) return 'Unknown';
+    if (typeof postedBy === 'object') {
+      return `${postedBy.firstName || ''} ${postedBy.lastName || ''}`.trim() || 'Admin';
+    }
+    return 'Admin';
   };
 
   return (
@@ -133,62 +143,67 @@ function AdminAnnouncements() {
           >
             Add Announcement
           </button>
-          <div className={styles.announcementsList}>
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className={`${styles.announcementCard} ${announcement.pinned ? styles.pinned : ''}`}>
-                <div className={styles.announcementIcons}>
-                  {announcement.pinned && (
-                    <span className={styles.cardPin}>
+          {loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>Loading announcements...</div>
+          ) : error ? (
+            <div style={{ padding: '1rem', background: '#fee', color: '#c00', marginBottom: '1rem' }}>
+              {error}
+              <button onClick={() => dispatch(clearError())} style={{ marginLeft: '1rem' }}>
+                Dismiss
+              </button>
+            </div>
+          ) : (
+            <div className={styles.announcementsList}>
+              {announcements.map((announcement) => (
+                <div key={announcement._id} className={styles.announcementCard}>
+                  <div className={styles.announcementIcons}>
+                    <span className={styles.cardBell}>
                       <svg width="28" height="28" fill="none" stroke="#f6c23e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                        <path d="M17 3a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2l-7 7v5a1 1 0 0 1-2 0v-5l-7-7a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h8z" />
+                        <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
                       </svg>
                     </span>
-                  )}
-                  <span className={styles.cardBell}>
-                    <svg width="28" height="28" fill="none" stroke="#f6c23e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                      <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                  </span>
-                </div>
-                <div className={styles.announcementHeader}>
-                  <div>
-                    <div className={styles.announcementSubject}>Subject: {announcement.subject}</div>
-                    <div className={styles.announcementDate}>{announcement.date}</div>
-                    <div className={styles.announcementSender}>From: {announcement.sender}</div>
                   </div>
-                  <div className={styles.dropdownContainer}>
-                    <button
-                      type="button"
-                      className={styles.dotsBtn}
-                      onClick={(e) => {
-                        const menu = e.target.nextElementSibling;
-                        document.querySelectorAll(`.${styles.dropdownMenu}`).forEach(m => {
-                          if (m !== menu) m.style.display = 'none';
-                        });
-                        menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-                      }}
-                    >
-                      ⋮
-                    </button>
-                    <div className={styles.dropdownMenu} style={{ display: 'none' }}>
-                      <button type="button" onClick={() => handleView(announcement)}>View</button>
-                      <br />
-                      <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
-                      <br />
-                      <button type="button" onClick={() => handleDelete(announcement.id)}>Delete</button>
+                  <div className={styles.announcementHeader}>
+                    <div>
+                      <div className={styles.announcementSubject}>Title: {announcement.title}</div>
+                      <div className={styles.announcementDate}>{formatDate(announcement.datePosted)}</div>
+                      <div className={styles.announcementSender}>From: {getPosterName(announcement.postedBy)}</div>
+                      <div className={styles.announcementAudience}>To: {announcement.audience}</div>
+                    </div>
+                    <div className={styles.dropdownContainer}>
+                      <button
+                        type="button"
+                        className={styles.dotsBtn}
+                        onClick={(e) => {
+                          const menu = e.target.nextElementSibling;
+                          document.querySelectorAll(`.${styles.dropdownMenu}`).forEach(m => {
+                            if (m !== menu) m.style.display = 'none';
+                          });
+                          menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+                        }}
+                      >
+                        ⋮
+                      </button>
+                      <div className={styles.dropdownMenu} style={{ display: 'none' }}>
+                        <button type="button" onClick={() => handleView(announcement)}>View</button>
+                        <br />
+                        <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
+                        <br />
+                        <button type="button" onClick={() => handleDelete(announcement._id)}>Delete</button>
+                      </div>
                     </div>
                   </div>
+                  <div className={styles.announcementMeta}>
+                    <span className={styles.announcementType}>
+                      {announcement.audience}
+                    </span>
+                    <span className={styles.announcementSender}>{getPosterName(announcement.postedBy)}</span>
+                  </div>
+                  <div className={styles.announcementMessage}>{announcement.content}</div>
                 </div>
-                <div className={styles.announcementMeta}>
-                  <span className={`${styles.announcementType} ${styles[announcement.type]}`}>
-                    {announcement.type === 'general' ? 'General' : 'Message'}
-                  </span>
-                  <span className={styles.announcementSender}>{announcement.sender}</span>
-                </div>
-                <div className={styles.announcementMessage}>{announcement.message}</div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
         <div className={styles.announcementsRight}>
           <div className={styles.locationCard}>
@@ -240,43 +255,34 @@ function AdminAnnouncements() {
             <button className={styles.modalClose} onClick={() => setShowAddModal(false)}>&times;</button>
             <h3>Add Announcement</h3>
             <form onSubmit={handleAddAnnouncement}>
-              <label htmlFor="subject">Subject</label>
+              <label htmlFor="title">Title</label>
               <input
                 type="text"
-                id="subject"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
-              <label htmlFor="recipient">To / Year Level</label>
+              <label htmlFor="audience">Audience</label>
               <select
-                id="recipient"
-                value={formData.recipient}
-                onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
+                id="audience"
+                value={formData.audience}
+                onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
                 required
               >
-                <option value="">Select Year Level and Section</option>
                 <option value="All">All</option>
-                <option value="Grade 7">Grade 7</option>
-                <option value="Grade 8">Grade 8</option>
-                <option value="Grade 9">Grade 9</option>
-                <option value="Grade 10">Grade 10</option>
+                <option value="Students">Students</option>
+                <option value="Teachers">Teachers</option>
+                <option value="Admin">Admin</option>
               </select>
-              <label htmlFor="message">Message</label>
+              <label htmlFor="content">Content</label>
               <textarea
-                id="message"
+                id="content"
                 rows="4"
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
               ></textarea>
-              <label htmlFor="image">Image (optional)</label>
-              <input
-                type="file"
-                id="image"
-                accept="image/*"
-                onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
-              />
               <div className={styles.modalButtons}>
                 <button type="button" className={styles.btnSecondary} onClick={() => setShowAddModal(false)}>
                   Cancel
@@ -304,27 +310,39 @@ function AdminAnnouncements() {
             <h3>{editingAnnouncement ? 'Edit Announcement' : 'Announcement Details'}</h3>
             {editingAnnouncement ? (
               <form onSubmit={handleSaveEdit}>
-                <label htmlFor="edit-subject">Subject</label>
+                <label htmlFor="edit-title">Title</label>
                 <input
                   type="text"
-                  id="edit-subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  id="edit-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
-                <label htmlFor="edit-date">Date</label>
+                <label htmlFor="edit-audience">Audience</label>
+                <select
+                  id="edit-audience"
+                  value={formData.audience}
+                  onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
+                  required
+                >
+                  <option value="All">All</option>
+                  <option value="Students">Students</option>
+                  <option value="Teachers">Teachers</option>
+                  <option value="Admin">Admin</option>
+                </select>
+                <label htmlFor="edit-date">Date Posted</label>
                 <input
                   type="text"
                   id="edit-date"
-                  value={editingAnnouncement.date}
+                  value={formatDate(editingAnnouncement.datePosted)}
                   readOnly
                 />
-                <label htmlFor="edit-message">Message</label>
+                <label htmlFor="edit-content">Content</label>
                 <textarea
-                  id="edit-message"
+                  id="edit-content"
                   rows="4"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   required
                 ></textarea>
                 <div className={styles.modalButtons}>
@@ -338,20 +356,20 @@ function AdminAnnouncements() {
             ) : viewingAnnouncement ? (
               <div className={styles.viewDetails}>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Subject:</span> <span>{viewingAnnouncement.subject}</span>
+                  <span className={styles.viewLabel}>Title:</span> <span>{viewingAnnouncement.title}</span>
                 </div>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Date:</span> <span>{viewingAnnouncement.date}</span>
+                  <span className={styles.viewLabel}>Date Posted:</span> <span>{formatDate(viewingAnnouncement.datePosted)}</span>
                 </div>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Message:</span> <span>{viewingAnnouncement.message}</span>
+                  <span className={styles.viewLabel}>Posted By:</span> <span>{getPosterName(viewingAnnouncement.postedBy)}</span>
                 </div>
-                {viewingAnnouncement.image && (
-                  <div className={styles.viewRow}>
-                    <span className={styles.viewLabel}>Image:</span><br />
-                    <img src={viewingAnnouncement.image} alt="Announcement" style={{ maxWidth: '100%', borderRadius: '8px', marginTop: '0.5rem' }} />
-                  </div>
-                )}
+                <div className={styles.viewRow}>
+                  <span className={styles.viewLabel}>Audience:</span> <span>{viewingAnnouncement.audience}</span>
+                </div>
+                <div className={styles.viewRow}>
+                  <span className={styles.viewLabel}>Content:</span> <span>{viewingAnnouncement.content}</span>
+                </div>
               </div>
             ) : null}
           </div>

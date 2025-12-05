@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudEdit.module.css';
+import { fetchAllStudents, updateStudent, deleteStudent, createStudent } from '../../store/slices/studentSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
@@ -10,7 +11,8 @@ function AdminAccountStudEdit() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { students, loading, error } = useSelector((state) => state.students);
+  const { users, loading: usersLoading } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
   const sections = useSelector((state) => state.section.data);
 
@@ -26,51 +28,57 @@ function AdminAccountStudEdit() {
     email: '',
     password: '',
     status: 'Active',
-    learnerReferenceNo: '',
-    grade: '',
-    section: '',
-    birthdate: '',
-    sex: '',
+    lrn: '',
+    gradeLevel: '',
+    sectionId: '',
+    dateOfBirth: '',
+    contactNumber: '',
+    address: '',
+    guardianName: '',
+    guardianContact: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
+  const [editingStudent, setEditingStudent] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
+  const [studentToDelete, setStudentToDelete] = useState(null);
 
   useEffect(() => {
-    dispatch(fetchAllUsers({ role: 'Student' }));
+    dispatch(fetchAllStudents());
     dispatch(getAllSections());
   }, [dispatch]);
 
   // Get sections for selected grade
-  const gradeSections = formData.grade
+  const gradeSections = formData.gradeLevel
     ? sections
-        .filter((s) => s.grade === parseInt(formData.grade))
-        .map((s) => s.name)
-        .sort()
+        .filter((s) => s.gradeLevel === parseInt(formData.gradeLevel))
+        .map((s) => ({ id: s._id, name: s.sectionName }))
+        .sort((a, b) => a.name.localeCompare(b.name))
     : [];
 
   useEffect(() => {
-    if (!id || !users.length) return;
-    const found = users.find((u) => u._id === id && u.role === 'Student');
+    if (!id || !students.length) return;
+    const found = students.find((s) => s._id === id);
     if (!found) return;
 
-    setEditingUser(found);
+    setEditingStudent(found);
     setShowModal(true);
     setFormData({
-      firstName: found.firstName || '',
-      lastName: found.lastName || '',
-      middleName: found.middleName || '',
-      email: found.email || '',
+      firstName: found.userId?.firstName || '',
+      lastName: found.userId?.lastName || '',
+      middleName: found.userId?.middleName || '',
+      email: found.userId?.email || '',
       password: '',
-      status: found.status || 'Active',
-      learnerReferenceNo: found.learnerReferenceNo || '',
-      grade: found.grade ? found.grade.toString() : '',
-      section: found.section || '',
-      birthdate: found.birthdate ? new Date(found.birthdate).toISOString().split('T')[0] : '',
-      sex: found.sex || '',
+      status: found.userId?.status || 'Active',
+      lrn: found.lrn || '',
+      gradeLevel: found.gradeLevel ? found.gradeLevel.toString() : '',
+      sectionId: found.sectionId?._id || found.sectionId || '',
+      dateOfBirth: found.userId?.dateOfBirth ? new Date(found.userId.dateOfBirth).toISOString().split('T')[0] : '',
+      contactNumber: found.userId?.contactNumber || '',
+      address: found.userId?.address || '',
+      guardianName: found.guardianName || '',
+      guardianContact: found.guardianContact || ''
     });
-  }, [id, users]);
+  }, [id, students]);
 
   useEffect(() => {
     if (successMessage) {
@@ -96,20 +104,18 @@ function AdminAccountStudEdit() {
     navigate('/admin/accounts');
   };
 
-  const accounts = users
-    .filter((user) => user.role === 'Student')
-    .map((user) => ({
-      id: user._id,
-      name: `${user.firstName} ${user.lastName}`,
-      email: user.email,
-      username: user.email ? user.email.split('@')[0] : '',
-      totalLogins: 0,
-      status: user.status,
-      grade: user.grade,
-      learnerReferenceNo: user.learnerReferenceNo,
-      _id: user._id,
-      ...user,
-    }));
+  const accounts = students.map((student) => ({
+    id: student._id,
+    name: `${student.userId?.firstName || ''} ${student.userId?.lastName || ''}`.trim(),
+    email: student.userId?.email || '',
+    username: student.userId?.email ? student.userId.email.split('@')[0] : '',
+    totalLogins: 0,
+    status: student.userId?.status,
+    grade: student.gradeLevel,
+    lrn: student.lrn,
+    _id: student._id,
+    student: student
+  }));
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -122,7 +128,7 @@ function AdminAccountStudEdit() {
       account.name.toLowerCase().includes(term) ||
       account.email.toLowerCase().includes(term) ||
       account.username.toLowerCase().includes(term) ||
-      (account.learnerReferenceNo || '').toString().toLowerCase().includes(term)
+      (account.lrn || '').toString().toLowerCase().includes(term)
     );
   };
 
@@ -140,24 +146,28 @@ function AdminAccountStudEdit() {
   };
 
   const openEditForAccount = (account) => {
-    setEditingUser(account);
+    const student = account.student;
+    setEditingStudent(student);
     setShowModal(true);
     setFormError(null);
     setSuccessMessage(null);
     setFormData({
-      firstName: account.firstName || '',
-      lastName: account.lastName || '',
-      middleName: account.middleName || '',
-      email: account.email || '',
+      firstName: student.userId?.firstName || '',
+      lastName: student.userId?.lastName || '',
+      middleName: student.userId?.middleName || '',
+      email: student.userId?.email || '',
       password: '',
-      status: account.status || 'Active',
-      learnerReferenceNo: account.learnerReferenceNo || '',
-      grade: account.grade ? account.grade.toString() : '',
-      section: account.section || '',
-      birthdate: account.birthdate
-        ? new Date(account.birthdate).toISOString().split('T')[0]
+      status: student.userId?.status || 'Active',
+      lrn: student.lrn || '',
+      gradeLevel: student.gradeLevel ? student.gradeLevel.toString() : '',
+      sectionId: student.sectionId?._id || student.sectionId || '',
+      dateOfBirth: student.userId?.dateOfBirth
+        ? new Date(student.userId.dateOfBirth).toISOString().split('T')[0]
         : '',
-      sex: account.sex || '',
+      contactNumber: student.userId?.contactNumber || '',
+      address: student.userId?.address || '',
+      guardianName: student.guardianName || '',
+      guardianContact: student.guardianContact || ''
     });
   };
 
@@ -174,7 +184,7 @@ function AdminAccountStudEdit() {
         openEditForAccount(account);
         break;
       case 'delete':
-        setUserToDelete(account);
+        setStudentToDelete(account);
         setShowDeleteModal(true);
         break;
       default:
@@ -183,7 +193,7 @@ function AdminAccountStudEdit() {
   };
 
   const resetForm = () => {
-    setEditingUser(null);
+    setEditingStudent(null);
     setFormData({
       firstName: '',
       lastName: '',
@@ -191,11 +201,14 @@ function AdminAccountStudEdit() {
       email: '',
       password: '',
       status: 'Active',
-      learnerReferenceNo: '',
-      grade: '',
-      section: '',
-      birthdate: '',
-      sex: '',
+      lrn: '',
+      gradeLevel: '',
+      sectionId: '',
+      dateOfBirth: '',
+      contactNumber: '',
+      address: '',
+      guardianName: '',
+      guardianContact: ''
     });
   };
 
@@ -205,36 +218,57 @@ function AdminAccountStudEdit() {
     setSuccessMessage(null);
 
     try {
-      if (editingUser) {
-        const updateData = {
+      if (editingStudent) {
+        // Update existing student - need to update both User and Student records
+        const userUpdateData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           middleName: formData.middleName,
           email: formData.email,
-          role: 'Student',
           status: formData.status,
-          learnerReferenceNo: formData.learnerReferenceNo,
-          grade: formData.grade ? parseInt(formData.grade, 10) : undefined,
-          section: formData.section,
-          birthdate: formData.birthdate || undefined,
-          sex: formData.sex || undefined,
+          dateOfBirth: formData.dateOfBirth || undefined,
+          contactNumber: formData.contactNumber || undefined,
+          address: formData.address || undefined
         };
 
         if (formData.password) {
-          updateData.password = formData.password;
+          userUpdateData.password = formData.password;
         }
 
-        const result = await dispatch(updateUser({ id: editingUser._id, data: updateData }));
+        const studentUpdateData = {
+          lrn: formData.lrn || undefined,
+          gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
+          sectionId: formData.sectionId || undefined,
+          guardianName: formData.guardianName || undefined,
+          guardianContact: formData.guardianContact || undefined
+        };
 
-        if (updateUser.fulfilled.match(result)) {
-          setSuccessMessage('Student updated successfully!');
-          setShowModal(false);
-          resetForm();
-          dispatch(fetchAllUsers({ role: 'Student' }));
+        // Update User first
+        const userResult = await dispatch(updateUser({ 
+          id: editingStudent.userId._id, 
+          data: userUpdateData 
+        }));
+
+        if (updateUser.fulfilled.match(userResult)) {
+          // Then update Student
+          const studentResult = await dispatch(updateStudent({ 
+            id: editingStudent._id, 
+            data: studentUpdateData 
+          }));
+
+          if (updateStudent.fulfilled.match(studentResult)) {
+            setSuccessMessage('Student updated successfully!');
+            setShowModal(false);
+            resetForm();
+            dispatch(fetchAllStudents());
+          } else {
+            setFormError(studentResult.payload || 'Failed to update student details');
+          }
         } else {
-          setFormError(result.payload || 'Failed to update student');
+          setFormError(userResult.payload || 'Failed to update user details');
         }
       } else {
+        // Create new student - first create User, then Student
         const registerData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -243,22 +277,36 @@ function AdminAccountStudEdit() {
           password: formData.password,
           role: 'Student',
           status: formData.status,
-          learnerReferenceNo: formData.learnerReferenceNo,
-          grade: formData.grade ? parseInt(formData.grade, 10) : undefined,
-          section: formData.section,
-          birthdate: formData.birthdate || undefined,
-          sex: formData.sex || undefined,
+          dateOfBirth: formData.dateOfBirth || undefined,
+          contactNumber: formData.contactNumber || undefined,
+          address: formData.address || undefined
         };
 
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          setSuccessMessage('Student created successfully!');
-          setShowModal(false);
-          resetForm();
-          dispatch(fetchAllUsers({ role: 'Student' }));
+          // Create Student record
+          const studentData = {
+            userId: result.payload.id,
+            lrn: formData.lrn || undefined,
+            gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
+            sectionId: formData.sectionId || undefined,
+            guardianName: formData.guardianName || undefined,
+            guardianContact: formData.guardianContact || undefined
+          };
+
+          const createStudentResult = await dispatch(createStudent(studentData));
+
+          if (createStudent.fulfilled.match(createStudentResult)) {
+            setSuccessMessage('Student created successfully!');
+            setShowModal(false);
+            resetForm();
+            dispatch(fetchAllStudents());
+          } else {
+            setFormError('User created but failed to create student record');
+          }
         } else {
-          setFormError(result.payload || 'Failed to create student');
+          setFormError(result.payload || 'Failed to create user');
         }
       }
     } catch (err) {
@@ -273,30 +321,35 @@ function AdminAccountStudEdit() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!userToDelete) return;
+    if (!studentToDelete) return;
 
     try {
-      const result = await dispatch(deleteUser(userToDelete._id));
-      if (deleteUser.fulfilled.match(result)) {
+      // Delete student record first, then user
+      const studentResult = await dispatch(deleteStudent(studentToDelete._id));
+      if (deleteStudent.fulfilled.match(studentResult)) {
+        // Also delete the associated user
+        if (studentToDelete.student?.userId?._id) {
+          await dispatch(deleteUser(studentToDelete.student.userId._id));
+        }
         setSuccessMessage('Student deleted successfully!');
         setShowDeleteModal(false);
-        setUserToDelete(null);
-        dispatch(fetchAllUsers({ role: 'Student' }));
+        setStudentToDelete(null);
+        dispatch(fetchAllStudents());
       } else {
-        setFormError(result.payload || 'Failed to delete student');
+        setFormError(studentResult.payload || 'Failed to delete student');
         setShowDeleteModal(false);
-        setUserToDelete(null);
+        setStudentToDelete(null);
       }
     } catch (err) {
       setFormError('An unexpected error occurred');
       setShowDeleteModal(false);
-      setUserToDelete(null);
+      setStudentToDelete(null);
     }
   };
 
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
-    setUserToDelete(null);
+    setStudentToDelete(null);
   };
 
   return (
@@ -419,7 +472,7 @@ function AdminAccountStudEdit() {
         </div>
       </div>
 
-      {loading ? (
+      {loading || usersLoading ? (
         <div className={styles.loading}>Loading...</div>
       ) : (
         <div className={styles.tableWrapper}>
@@ -454,7 +507,7 @@ function AdminAccountStudEdit() {
                       {account.name}
                     </a>
                   </td>
-                  <td>{account.learnerReferenceNo || '—'}</td>
+                  <td>{account.lrn || '—'}</td>
                   <td>{account.grade ?? '—'}</td>
                   <td>{account.totalLogins}</td>
                   <td>{account.status === 'Active' ? 'Enrolled' : account.status}</td>
@@ -523,7 +576,7 @@ function AdminAccountStudEdit() {
             <button className={styles.modalClose} onClick={handleCloseModal}>
               &times;
             </button>
-            <h3>{editingUser ? 'Edit Student' : 'Add New Student'}</h3>
+            <h3>{editingStudent ? 'Edit Student' : 'Add New Student'}</h3>
             {formError && (
               <div
                 style={{
@@ -541,24 +594,24 @@ function AdminAccountStudEdit() {
             <form onSubmit={handleSubmit}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="learnerReferenceNo">Learner Reference No (LRN)</label>
+                  <label htmlFor="lrn">Learner Reference No (LRN)</label>
                   <input
                     type="text"
-                    id="learnerReferenceNo"
-                    name="learnerReferenceNo"
-                    value={formData.learnerReferenceNo}
+                    id="lrn"
+                    name="lrn"
+                    value={formData.lrn}
                     onChange={(e) =>
-                      setFormData({ ...formData, learnerReferenceNo: e.target.value })
+                      setFormData({ ...formData, lrn: e.target.value })
                     }
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="grade">Grade Level</label>
+                  <label htmlFor="gradeLevel">Grade Level</label>
                   <select
-                    id="grade"
-                    name="grade"
-                    value={formData.grade}
-                    onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                    id="gradeLevel"
+                    name="gradeLevel"
+                    value={formData.gradeLevel}
+                    onChange={(e) => setFormData({ ...formData, gradeLevel: e.target.value })}
                   >
                     <option value="">Select Grade</option>
                     <option value="7">Grade 7</option>
@@ -612,20 +665,20 @@ function AdminAccountStudEdit() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="section">Section</label>
+                  <label htmlFor="sectionId">Section</label>
                   <select
-                    id="section"
-                    name="section"
-                    value={formData.section}
+                    id="sectionId"
+                    name="sectionId"
+                    value={formData.sectionId}
                     onChange={(e) =>
-                      setFormData({ ...formData, section: e.target.value })
+                      setFormData({ ...formData, sectionId: e.target.value })
                     }
-                    disabled={!formData.grade}
+                    disabled={!formData.gradeLevel}
                   >
                     <option value="">Select Section</option>
                     {gradeSections.map((section) => (
-                      <option key={section} value={section}>
-                        {section}
+                      <option key={section.id} value={section.id}>
+                        {section.name}
                       </option>
                     ))}
                   </select>
@@ -647,14 +700,14 @@ function AdminAccountStudEdit() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="birthdate">Date of Birth</label>
+                  <label htmlFor="dateOfBirth">Date of Birth</label>
                   <input
                     type="date"
-                    id="birthdate"
-                    name="birthdate"
-                    value={formData.birthdate}
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
                     onChange={(e) =>
-                      setFormData({ ...formData, birthdate: e.target.value })
+                      setFormData({ ...formData, dateOfBirth: e.target.value })
                     }
                   />
                 </div>
@@ -662,18 +715,56 @@ function AdminAccountStudEdit() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="sex">Sex</label>
-                  <select
-                    id="sex"
-                    name="sex"
-                    value={formData.sex}
-                    onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
-                  >
-                    <option value="">Select</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
-                  </select>
+                  <label htmlFor="contactNumber">Contact Number</label>
+                  <input
+                    type="text"
+                    id="contactNumber"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
+                    placeholder="Enter contact number"
+                  />
                 </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="address">Address</label>
+                  <input
+                    type="text"
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Enter address"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="guardianName">Guardian Name</label>
+                  <input
+                    type="text"
+                    id="guardianName"
+                    name="guardianName"
+                    value={formData.guardianName}
+                    onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })}
+                    placeholder="Enter guardian name"
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="guardianContact">Guardian Contact</label>
+                  <input
+                    type="text"
+                    id="guardianContact"
+                    name="guardianContact"
+                    value={formData.guardianContact}
+                    onChange={(e) => setFormData({ ...formData, guardianContact: e.target.value })}
+                    placeholder="Enter guardian contact"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                
                 <div className={styles.formGroup}>
                   <label htmlFor="status">Status</label>
                   <select
@@ -694,7 +785,7 @@ function AdminAccountStudEdit() {
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="password">
-                    Password {editingUser && '(leave blank to keep current)'}
+                    Password {editingStudent && '(leave blank to keep current)'}
                   </label>
                   <input
                     type="password"
@@ -704,7 +795,7 @@ function AdminAccountStudEdit() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    required={!editingUser}
+                    required={!editingStudent}
                     minLength={6}
                   />
                 </div>
@@ -725,10 +816,10 @@ function AdminAccountStudEdit() {
                   disabled={registerLoading || loading}
                 >
                   {registerLoading || loading
-                    ? editingUser
+                    ? editingStudent
                       ? 'Updating...'
                       : 'Creating...'
-                    : editingUser
+                    : editingStudent
                     ? 'Update Student'
                     : 'Add Student'}
                 </button>
@@ -743,7 +834,7 @@ function AdminAccountStudEdit() {
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
             <h3>Confirm Delete</h3>
             <p>
-              Are you sure you want to delete <strong>{userToDelete.name}</strong>?
+              Are you sure you want to delete <strong>{studentToDelete?.name}</strong>?
             </p>
             <p
               style={{

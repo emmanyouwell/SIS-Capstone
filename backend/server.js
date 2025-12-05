@@ -16,6 +16,10 @@ import sectionRoutes from './src/routes/sectionRoutes.js';
 import notificationRoutes from './src/routes/notificationRoutes.js';
 import messageRoutes from './src/routes/messageRoutes.js';
 import uploadRoutes from './src/routes/uploadRoutes.js';
+import materialsRoutes from './src/routes/materialsRoutes.js';
+import studentRoutes from './src/routes/studentRoutes.js';
+import teacherRoutes from './src/routes/teacherRoutes.js';
+import adminRoutes from './src/routes/adminRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -48,6 +52,10 @@ app.use('/api/v1/sections', sectionRoutes);
 app.use('/api/v1/notifications', notificationRoutes);
 app.use('/api/v1/messages', messageRoutes);
 app.use('/api/v1/uploads', uploadRoutes);
+app.use('/api/v1/materials', materialsRoutes);
+app.use('/api/v1/students', studentRoutes);
+app.use('/api/v1/teachers', teacherRoutes);
+app.use('/api/v1/admins', adminRoutes);
 
 // 404 handler
 app.use((req, res) => {

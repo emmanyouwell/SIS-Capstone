@@ -1,18 +1,27 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminNotifications.module.css';
+import { fetchAllNotifications, updateNotification, deleteNotification, markAllAsRead } from '../../store/slices/notificationSlice';
 
 function AdminNotifications() {
-  // Original notification data
-  const originalNotifications = [
-    { id: 1, type: 'Enrollment', message: '3 Students submitted their documents for enrollment.', date: 'June 10', read: false },
-    { id: 2, type: 'Message', message: 'Ms. Mariah A. Lordez sent a message.', date: 'June 3', read: false },
-    { id: 3, type: 'Message', message: 'Mr. Jason K. Yason sent a message.', date: 'June 3', read: false },
-    { id: 4, type: 'Subject Materials', message: 'Mr. James B. Ramos posted a file in Science Grade 8 Section 2.', date: 'May 28', read: false },
-    { id: 5, type: 'Announcement', message: 'Ms. Karla D. Sales posted a class announcement.', date: 'May 27', read: false },
-    { id: 6, type: 'Announcement', message: 'Your post has been archived.', date: 'May 25', read: false },
-  ];
+  const dispatch = useDispatch();
+  const { notifications: allNotifications, loading } = useSelector((state) => state.notifications);
+  const { user } = useSelector((state) => state.auth);
 
-  const [notifications, setNotifications] = useState(originalNotifications);
+  useEffect(() => {
+    dispatch(fetchAllNotifications());
+  }, [dispatch]);
+
+  // Format notifications for display
+  const notifications = allNotifications.map((notif) => ({
+    id: notif._id,
+    type: notif.message?.split(':')[0] || 'Notification',
+    message: notif.message,
+    date: notif.dateCreated ? new Date(notif.dateCreated).toLocaleDateString() : '',
+    read: notif.status === 'read',
+    userRole: notif.userRole,
+    userId: notif.userId
+  }));
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
 
@@ -55,30 +64,37 @@ function AdminNotifications() {
   const isAllSelected = filteredNotifications.length > 0 && filteredNotifications.every((n) => selectedIds.has(n.id));
 
   // Handle delete selected notifications
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedIds.size === 0) return;
-    setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+    const deletePromises = Array.from(selectedIds).map(id => 
+      dispatch(deleteNotification(id))
+    );
+    await Promise.all(deletePromises);
     setSelectedIds(new Set());
+    dispatch(fetchAllNotifications());
   };
 
   // Handle mark selected as read
-  const handleMarkAsRead = () => {
+  const handleMarkAsRead = async () => {
     if (selectedIds.size === 0) return;
-    setNotifications((prev) =>
-      prev.map((n) => (selectedIds.has(n.id) ? { ...n, read: true } : n))
+    const updatePromises = Array.from(selectedIds).map(id => 
+      dispatch(updateNotification({ id, data: { status: 'read' } }))
     );
+    await Promise.all(updatePromises);
     setSelectedIds(new Set());
+    dispatch(fetchAllNotifications());
   };
 
   // Handle mark all as read
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllAsRead = async () => {
+    await dispatch(markAllAsRead());
     setSelectedIds(new Set());
+    dispatch(fetchAllNotifications());
   };
 
-  // Handle refresh (reset to original data)
+  // Handle refresh
   const handleRefresh = () => {
-    setNotifications(originalNotifications.map((n) => ({ ...n })));
+    dispatch(fetchAllNotifications());
     setSearchQuery('');
     setSelectedIds(new Set());
   };
@@ -169,37 +185,41 @@ function AdminNotifications() {
           </button>
         </div>
         <div className={styles.notificationTableWrapper}>
-          <table className={styles.notificationTable}>
-            <tbody>
-              {filteredNotifications.length === 0 ? (
-                <tr>
-                  <td colSpan="4" className={styles.emptyState}>
-                    No notifications found
-                  </td>
-                </tr>
-              ) : (
-                filteredNotifications.map((notification) => (
-                  <tr
-                    key={notification.id}
-                    className={notification.read ? styles.read : ''}
-                  >
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(notification.id)}
-                        onChange={() => handleCheckboxChange(notification.id)}
-                      />
+          {loading ? (
+            <div style={{ padding: '2rem', textAlign: 'center' }}>Loading notifications...</div>
+          ) : (
+            <table className={styles.notificationTable}>
+              <tbody>
+                {filteredNotifications.length === 0 ? (
+                  <tr>
+                    <td colSpan="4" className={styles.emptyState}>
+                      No notifications found
                     </td>
-                    <td>
-                      <b>{notification.type}</b>
-                    </td>
-                    <td>{notification.message}</td>
-                    <td className={styles.date}>{notification.date}</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  filteredNotifications.map((notification) => (
+                    <tr
+                      key={notification.id}
+                      className={notification.read ? styles.read : ''}
+                    >
+                      <td>
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(notification.id)}
+                          onChange={() => handleCheckboxChange(notification.id)}
+                        />
+                      </td>
+                      <td>
+                        <b>{notification.type}</b>
+                      </td>
+                      <td>{notification.message}</td>
+                      <td className={styles.date}>{notification.date}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          )}
         </div>
       </div>
     </div>

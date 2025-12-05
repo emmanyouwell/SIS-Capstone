@@ -1,27 +1,41 @@
 import Enrollment from '../models/Enrollment.js';
-import User from '../models/User.js';
+import Student from '../models/Student.js';
 
 // @desc    Get all enrollments
 // @route   GET /api/v1/enrollments
 // @access  Private
 export const getEnrollments = async (req, res) => {
   try {
-    const { status, gradeLevelToEnroll, schoolYear } = req.query;
+    const { status, gradeToEnroll, schoolYear } = req.query;
     const filter = {};
 
     // Students can only see their own enrollments
     if (req.user.role === 'Student') {
-      filter.student = req.user.id;
+      const student = await Student.findOne({ userId: req.user.id });
+      if (student) {
+        filter.studentId = student._id;
+      } else {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
     }
 
     if (status) filter.status = status;
-    if (gradeLevelToEnroll) filter.gradeLevelToEnroll = parseInt(gradeLevelToEnroll);
+    if (gradeToEnroll) filter.gradeToEnroll = parseInt(gradeToEnroll);
     if (schoolYear) filter.schoolYear = schoolYear;
 
     const enrollments = await Enrollment.find(filter)
-      .populate('student', 'firstName lastName email learnerReferenceNo')
-      .populate('reviewedBy', 'firstName lastName')
-      .sort({ createdAt: -1 });
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email contactNumber',
+        },
+      })
+      .sort({ dateSubmitted: -1 });
 
     res.json({
       success: true,
@@ -39,16 +53,24 @@ export const getEnrollments = async (req, res) => {
 export const getEnrollment = async (req, res) => {
   try {
     const enrollment = await Enrollment.findById(req.params.id)
-      .populate('student', 'firstName lastName email learnerReferenceNo')
-      .populate('reviewedBy', 'firstName lastName');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email contactNumber',
+        },
+      });
 
     if (!enrollment) {
       return res.status(404).json({ message: 'Enrollment not found' });
     }
 
     // Students can only view their own enrollments
-    if (req.user.role === 'Student' && enrollment.student._id.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (req.user.role === 'Student') {
+      const student = await Student.findOne({ userId: req.user.id });
+      if (!student || enrollment.studentId._id.toString() !== student._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
     }
 
     res.json({
@@ -66,10 +88,22 @@ export const getEnrollment = async (req, res) => {
 export const createEnrollment = async (req, res) => {
   try {
     // Students can only create their own enrollment
-    req.body.student = req.user.id;
+    const student = await Student.findOne({ userId: req.user.id });
+    if (!student) {
+      return res.status(404).json({ message: 'Student record not found' });
+    }
+
+    req.body.studentId = student._id;
+    req.body.dateSubmitted = new Date();
 
     const enrollment = await Enrollment.create(req.body);
-    await enrollment.populate('student', 'firstName lastName email learnerReferenceNo');
+    await enrollment.populate({
+      path: 'studentId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName middleName email contactNumber',
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -91,23 +125,26 @@ export const updateEnrollment = async (req, res) => {
       return res.status(404).json({ message: 'Enrollment not found' });
     }
 
-    // If status is being changed to 'enrolled', update student's grade/section
+    // If status is being changed to 'enrolled', update student's gradeLevel and sectionId
     if (req.body.status === 'enrolled' && enrollment.status !== 'enrolled') {
-      await User.findByIdAndUpdate(enrollment.student, {
-        grade: enrollment.gradeLevelToEnroll,
-        section: req.body.section || enrollment.section,
+      const Student = (await import('../models/Student.js')).default;
+      await Student.findByIdAndUpdate(enrollment.studentId, {
+        gradeLevel: enrollment.gradeToEnroll,
+        sectionId: req.body.sectionId,
       });
     }
-
-    req.body.reviewedBy = req.user.id;
-    req.body.reviewedAt = new Date();
 
     const updatedEnrollment = await Enrollment.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
     })
-      .populate('student', 'firstName lastName email learnerReferenceNo')
-      .populate('reviewedBy', 'firstName lastName');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email contactNumber',
+        },
+      });
 
     res.json({
       success: true,
@@ -130,12 +167,15 @@ export const deleteEnrollment = async (req, res) => {
     }
 
     // Students can only delete their own pending enrollments
-    if (req.user.role === 'Student' && enrollment.student.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
-    }
+    if (req.user.role === 'Student') {
+      const student = await Student.findOne({ userId: req.user.id });
+      if (!student || enrollment.studentId.toString() !== student._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
 
-    if (req.user.role === 'Student' && enrollment.status !== 'pending') {
-      return res.status(403).json({ message: 'Cannot delete non-pending enrollment' });
+      if (enrollment.status !== 'pending') {
+        return res.status(403).json({ message: 'Cannot delete non-pending enrollment' });
+      }
     }
 
     await enrollment.deleteOne();

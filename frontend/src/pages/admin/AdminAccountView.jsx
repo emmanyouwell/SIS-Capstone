@@ -2,31 +2,29 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountView.module.css';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
 
 function AdminAccountView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { teachers, loading, error } = useSelector((state) => state.teachers);
 
-  // Fetch users filtered by role
+  // Fetch teachers
   useEffect(() => {
-
-    dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
+    dispatch(fetchAllTeachers());
   }, [dispatch]);
 
-  // Filter and format accounts for display
-  const roleFilter = 'Teacher';
-  const accounts = users
-    .filter(user => user.role === roleFilter && user.status === 'Active')
-    .map(user => ({
-      id: user._id,
-      name: `${user.firstName} ${user.lastName}`,
-      role: user.role,
-      email: user.email,
-      totalLogins: 0, // This field doesn't exist in the User model - keeping for UI compatibility
-      avatar: user.profileImage?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+  // Format accounts for display
+  const accounts = teachers
+    .filter(teacher => teacher.userId?.status === 'Active')
+    .map(teacher => ({
+      id: teacher._id,
+      name: `${teacher.userId?.firstName || ''} ${teacher.userId?.lastName || ''}`.trim(),
+      role: 'Teacher',
+      email: teacher.userId?.email || '',
+      totalLogins: 0, // This field doesn't exist in the models - keeping for UI compatibility
+      avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
     }));
 
   const handleBack = () => {

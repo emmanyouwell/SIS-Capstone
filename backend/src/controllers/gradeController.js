@@ -1,65 +1,77 @@
 import Grade from '../models/Grade.js';
-import User from '../models/User.js';
+import Student from '../models/Student.js';
+import Subject from '../models/Subject.js';
+import Teacher from '../models/Teacher.js';
+
 // @desc    Get all grades
 // @route   GET /api/v1/grades
 // @access  Private
 export const getGrades = async (req, res) => {
   try {
-    const { gradeLevel, schoolYear } = req.query;
+    const { studentId, subjectId, gradeLevel } = req.query;
+    const filter = {};
 
-    if (!gradeLevel) {
-      return res.status(400).json({ message: "gradeLevel is required" });
+    if (studentId) filter.studentId = studentId;
+    if (subjectId) filter['grades.subjectId'] = subjectId;
+
+    // Filter by gradeLevel through student relationship
+    if (gradeLevel) {
+      const studentsInGrade = await Student.find({ gradeLevel: parseInt(gradeLevel) }).select('_id');
+      const studentIds = studentsInGrade.map((s) => s._id);
+      filter.studentId = { $in: studentIds };
     }
 
-    // 1. Fetch all students for this grade level
-    const students = await User.find({
-      role: "Student",
-      grade: parseInt(gradeLevel),
-      status: "Active",
-    }).select("firstName lastName learnerReferenceNo grade section");
-
-    // If teacher: filter only students they teach
-    let allowedSubjects = [];
-    if (req.user.role === "Teacher") {
-      allowedSubjects = req.user.subjects; // array of ObjectIds
+    // Students can only see their own grades
+    if (req.user.role === 'Student') {
+      const student = await Student.findOne({ userId: req.user.id });
+      if (student) {
+        filter.studentId = student._id;
+      } else {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
     }
 
-    // 2. Fetch all grades for students in this grade level
-    const grades = await Grade.find({
-      gradeLevel: parseInt(gradeLevel),
-      ...(schoolYear && { schoolYear }),
-      ...(req.user.role === "Teacher" && {
-        "grades.subjects.subject": { $in: allowedSubjects },
-      }),
-    })
-      .populate("student", "firstName lastName learnerReferenceNo grade section")
-      .populate("grades.subjects.subject", "name gradeLevel");
+    // Teachers can only see grades for subjects they teach
+    if (req.user.role === 'Teacher') {
+      const teacher = await Teacher.findOne({ userId: req.user.id });
+      if (teacher) {
+        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        const subjectIds = teacherSubjects.map((s) => s._id);
+        filter['grades.subjectId'] = { $in: subjectIds };
+      } else {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
+    }
 
-    // Convert to a Map for fast lookup
-    const gradeMap = new Map();
-    grades.forEach((g) => gradeMap.set(g.student._id.toString(), g));
-
-    // 3. Build final response: all students + optional grade record
-    const result = students.map((student) => {
-      const gradeRecord = gradeMap.get(student._id.toString()) || null;
-
-      return {
-        student,
-        gradeRecord,
-      };
-    });
+    const grades = await Grade.find(filter)
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('grades.subjectId', 'subjectName gradeLevel')
+      .sort({ dateRecorded: -1 });
 
     res.json({
       success: true,
-      count: result.length,
-      data: result,
+      count: grades.length,
+      data: grades,
     });
   } catch (error) {
-    console.error("Error fetching grades:", error);
+    console.error('Error fetching grades:', error);
     res.status(500).json({ message: error.message });
   }
 };
-
 
 // @desc    Get single grade
 // @route   GET /api/v1/grades/:id
@@ -67,16 +79,40 @@ export const getGrades = async (req, res) => {
 export const getGrade = async (req, res) => {
   try {
     const grade = await Grade.findById(req.params.id)
-      .populate('student', 'firstName lastName learnerReferenceNo grade section')
-      .populate('grades.subjects.subject', 'name gradeLevel');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('grades.subjectId', 'subjectName gradeLevel');
 
     if (!grade) {
       return res.status(404).json({ message: 'Grade not found' });
     }
 
     // Students can only view their own grades
-    if (req.user.role === 'Student' && grade.student._id.toString() !== req.user.id) {
-      return res.status(403).json({ message: 'Not authorized' });
+    if (req.user.role === 'Student') {
+      const student = await Student.findOne({ userId: req.user.id });
+      if (!student || grade.studentId._id.toString() !== student._id.toString()) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+    }
+
+    // Teachers can only view grades for subjects they teach
+    if (req.user.role === 'Teacher') {
+      const teacher = await Teacher.findOne({ userId: req.user.id });
+      if (teacher) {
+        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        const subjectIds = teacherSubjects.map((s) => s._id.toString());
+        const hasAuthorizedSubject = grade.grades.some((g) =>
+          subjectIds.includes(g.subjectId._id.toString())
+        );
+        if (!hasAuthorizedSubject) {
+          return res.status(403).json({ message: 'Not authorized' });
+        }
+      }
     }
 
     res.json({
@@ -93,9 +129,17 @@ export const getGrade = async (req, res) => {
 // @access  Private (Admin, Teacher)
 export const createGrade = async (req, res) => {
   try {
+    req.body.dateRecorded = new Date();
+
     const grade = await Grade.create(req.body);
-    await grade.populate('student', 'firstName lastName learnerReferenceNo grade section');
-    await grade.populate('grades.subjects.subject', 'name gradeLevel');
+    await grade.populate({
+      path: 'studentId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName middleName email',
+      },
+    });
+    await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
     res.status(201).json({
       success: true,
@@ -119,13 +163,19 @@ export const updateGrade = async (req, res) => {
 
     // Teachers can only update grades that include at least one of their subjects
     if (req.user.role === 'Teacher') {
-      const userSubjects = req.user.subjects || [];
-      const hasAuthorizedSubject = (grade.grades?.subjects || []).some((s) =>
-        userSubjects.some((subId) => s.subject?.toString() === subId.toString())
-      );
+      const teacher = await Teacher.findOne({ userId: req.user.id });
+      if (teacher) {
+        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        const subjectIds = teacherSubjects.map((s) => s._id.toString());
+        const hasAuthorizedSubject = grade.grades.some((g) =>
+          subjectIds.includes(g.subjectId?.toString())
+        );
 
-      if (!hasAuthorizedSubject) {
-        return res.status(403).json({ message: 'Not authorized to update this grade' });
+        if (!hasAuthorizedSubject) {
+          return res.status(403).json({ message: 'Not authorized to update this grade' });
+        }
+      } else {
+        return res.status(403).json({ message: 'Teacher record not found' });
       }
     }
 
@@ -133,8 +183,14 @@ export const updateGrade = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate('student', 'firstName lastName learnerReferenceNo grade section')
-      .populate('grades.subjects.subject', 'name gradeLevel');
+      .populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email',
+        },
+      })
+      .populate('grades.subjectId', 'subjectName gradeLevel');
 
     res.json({
       success: true,
@@ -158,13 +214,19 @@ export const deleteGrade = async (req, res) => {
 
     // Teachers can only delete grades that include at least one of their subjects
     if (req.user.role === 'Teacher') {
-      const userSubjects = req.user.subjects || [];
-      const hasAuthorizedSubject = (grade.grades?.subjects || []).some((s) =>
-        userSubjects.some((subId) => s.subject?.toString() === subId.toString())
-      );
+      const teacher = await Teacher.findOne({ userId: req.user.id });
+      if (teacher) {
+        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        const subjectIds = teacherSubjects.map((s) => s._id.toString());
+        const hasAuthorizedSubject = grade.grades.some((g) =>
+          subjectIds.includes(g.subjectId?.toString())
+        );
 
-      if (!hasAuthorizedSubject) {
-        return res.status(403).json({ message: 'Not authorized to delete this grade' });
+        if (!hasAuthorizedSubject) {
+          return res.status(403).json({ message: 'Not authorized to delete this grade' });
+        }
+      } else {
+        return res.status(403).json({ message: 'Teacher record not found' });
       }
     }
 
@@ -178,4 +240,3 @@ export const deleteGrade = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

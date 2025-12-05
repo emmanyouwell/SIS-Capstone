@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminSchedule.module.css';
 import {
@@ -9,7 +9,7 @@ import {
   clearError,
 } from '../../store/slices/scheduleSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminSchedule() {
@@ -18,16 +18,8 @@ function AdminSchedule() {
   // Redux state
   const { schedules: allSchedules, loading, error } = useSelector((state) => state.schedules);
   const { subjects } = useSelector((state) => state.subjects);
-  const { users } = useSelector((state) => state.users);
-  const sections = useSelector((state) => state.section.data);
-
-  // Group sections by grade
-  const gradeSections = {
-    7: sections.filter((s) => s.grade === 7).map((s) => s.name).sort(),
-    8: sections.filter((s) => s.grade === 8).map((s) => s.name).sort(),
-    9: sections.filter((s) => s.grade === 9).map((s) => s.name).sort(),
-    10: sections.filter((s) => s.grade === 10).map((s) => s.name).sort(),
-  };
+  const { students } = useSelector((state) => state.students);
+  const { data: sections } = useSelector((state) => state.section);
 
   const times = [
     '7:00-8:00 AM',
@@ -42,109 +34,127 @@ function AdminSchedule() {
 
   // Local state
   const [currentGrade, setCurrentGrade] = useState(7);
-  const [currentSection, setCurrentSection] = useState('Dahlia');
+  const [currentSectionId, setCurrentSectionId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [uiSchedules, setUiSchedules] = useState({});
-  const [schoolYear, setSchoolYear] = useState(() => {
-    // Default to current school year (e.g., 2024-2025)
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-    return `${currentYear}-${nextYear}`;
-  });
   const [saving, setSaving] = useState(false);
 
-  // Get current year schedules filtered by grade, section, and schoolYear
-  const getFilteredSchedules = () => {
-    return allSchedules.filter(
-      (schedule) =>
-        schedule.grade === currentGrade &&
-        schedule.section === currentSection &&
-        schedule.schoolYear === schoolYear
-    );
-  };
+  // Get sections for current grade
+  const gradeSections = useMemo(() => {
+    return sections.filter((s) => s.gradeLevel === currentGrade);
+  }, [sections, currentGrade]);
 
-  // Transform backend schedule array to UI structure
-  const transformSchedulesToUI = (schedules) => {
-    const uiStructure = {};
-    schedules.forEach((schedule) => {
-      const { section, timeSlot, day, subject, teacher } = schedule;
-      if (!uiStructure[section]) {
-        uiStructure[section] = {};
-      }
-      if (!uiStructure[section][timeSlot]) {
-        uiStructure[section][timeSlot] = {};
-      }
-      uiStructure[section][timeSlot][day] = {
-        subject: subject?._id || '',
-        subjectName: subject?.name || '',
-        teacher: teacher?._id || '',
-        teacherName: teacher ? `${teacher.firstName} ${teacher.lastName}` : '',
-        scheduleId: schedule._id,
-      };
+  // Get students in current section
+  const sectionStudents = useMemo(() => {
+    if (!currentSectionId) return [];
+    return students.filter((s) => s.sectionId?._id?.toString() === currentSectionId.toString());
+  }, [students, currentSectionId]);
+
+  // Get current section object
+  const currentSection = useMemo(() => {
+    return sections.find((s) => s._id?.toString() === currentSectionId?.toString());
+  }, [sections, currentSectionId]);
+
+  // Get schedules for current section students
+  const sectionSchedules = useMemo(() => {
+    if (!currentSectionId || sectionStudents.length === 0) return [];
+    const studentIds = sectionStudents.map((s) => s._id.toString());
+    return allSchedules.filter((schedule) => {
+      const scheduleStudentId = schedule.studentId?._id?.toString() || schedule.studentId?.toString();
+      const scheduleSectionId = schedule.sectionId?._id?.toString() || schedule.sectionId?.toString();
+      return (
+        studentIds.includes(scheduleStudentId) &&
+        scheduleSectionId === currentSectionId.toString()
+      );
     });
-    return uiStructure;
-  };
+  }, [allSchedules, sectionStudents, currentSectionId]);
 
-  // Initialize UI structure with empty values
-  const initializeUIStructure = () => {
-    const structure = {};
-    gradeSections[currentGrade]?.forEach((section) => {
-      structure[section] = {};
-      times.forEach((time) => {
-        if (time !== 'BREAK') {
-          structure[section][time] = {};
-          days.forEach((day) => {
-            structure[section][time][day] = {
-              subject: '',
-              subjectName: '',
-              teacher: '',
-              teacherName: '',
-              scheduleId: null,
-            };
-          });
+  // Transform schedules to UI structure (grouped by time and day)
+  const transformSchedulesToUI = useMemo(() => {
+    const uiStructure = {};
+    
+    times.forEach((time) => {
+      if (time === 'BREAK') return;
+      uiStructure[time] = {};
+      days.forEach((day) => {
+        // Find a representative schedule for this time/day (all students should have the same)
+        const matchingSchedule = sectionSchedules.find((s) => {
+          const scheduleDay = s.day;
+          const scheduleTime = `${s.startTime}-${s.endTime}`;
+          // Try to match time format
+          const timeMatch = time.includes(s.startTime) || scheduleTime === time;
+          return scheduleDay === day && timeMatch;
+        });
+
+        if (matchingSchedule) {
+          const subject = matchingSchedule.subjectId;
+          const teacher = subject?.teacherId?.userId;
+          uiStructure[time][day] = {
+            subjectId: subject?._id || '',
+            subjectName: subject?.subjectName || '',
+            teacherId: teacher?._id || '',
+            teacherName: teacher ? `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() : '',
+            scheduleIds: sectionSchedules
+              .filter((s) => {
+                const scheduleDay = s.day;
+                const scheduleTime = `${s.startTime}-${s.endTime}`;
+                const timeMatch = time.includes(s.startTime) || scheduleTime === time;
+                return (
+                  scheduleDay === day &&
+                  timeMatch &&
+                  (s.subjectId?._id?.toString() === subject?._id?.toString() || !s.subjectId)
+                );
+              })
+              .map((s) => s._id),
+            startTime: matchingSchedule.startTime,
+            endTime: matchingSchedule.endTime,
+          };
+        } else {
+          uiStructure[time][day] = {
+            subjectId: '',
+            subjectName: '',
+            teacherId: '',
+            teacherName: '',
+            scheduleIds: [],
+            startTime: time.split('-')[0]?.trim() || '',
+            endTime: time.split('-')[1]?.trim() || '',
+          };
         }
       });
     });
-    return structure;
-  };
+
+    return uiStructure;
+  }, [sectionSchedules, times, days]);
 
   // Update section when grade changes
   useEffect(() => {
-    if (gradeSections[currentGrade] && gradeSections[currentGrade].length > 0) {
-      setCurrentSection(gradeSections[currentGrade][0]);
+    if (gradeSections.length > 0 && !currentSectionId) {
+      setCurrentSectionId(gradeSections[0]._id);
     }
-  }, [currentGrade]);
+  }, [currentGrade, gradeSections, currentSectionId]);
 
   // Fetch data on mount and when dependencies change
   useEffect(() => {
-    dispatch(fetchAllSchedules({ grade: currentGrade, section: currentSection, schoolYear }));
-    dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
-    dispatch(fetchAllUsers());
-    dispatch(getAllSections({ grade: currentGrade }));
-  }, [dispatch, currentGrade, currentSection, schoolYear]);
+    if (currentGrade) {
+      dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
+      dispatch(fetchAllStudents({ gradeLevel: currentGrade }));
+      dispatch(getAllSections({ gradeLevel: currentGrade }));
+    }
+  }, [dispatch, currentGrade]);
 
-  // Transform schedules to UI structure when schedules or filters change
+  // Fetch schedules when section changes
   useEffect(() => {
-    const filteredSchedules = getFilteredSchedules();
-    const transformed = transformSchedulesToUI(filteredSchedules);
-    const initialized = initializeUIStructure();
-    
-    // Merge transformed schedules with initialized structure
-    const merged = { ...initialized };
-    Object.keys(transformed).forEach((section) => {
-      if (merged[section]) {
-        Object.keys(transformed[section]).forEach((time) => {
-          if (merged[section][time]) {
-            Object.keys(transformed[section][time]).forEach((day) => {
-              merged[section][time][day] = transformed[section][time][day];
-            });
-          }
-        });
-      }
-    });
-    
-    setUiSchedules(merged);
-  }, [allSchedules, currentGrade, currentSection, schoolYear]);
+    if (currentSectionId && sectionStudents.length > 0) {
+      const studentIds = sectionStudents.map((s) => s._id);
+      // Fetch schedules for all students in section
+      dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
+    }
+  }, [dispatch, currentSectionId, sectionStudents.length]);
+
+  // Update UI schedules when transformed schedules change
+  useEffect(() => {
+    setUiSchedules(transformSchedulesToUI);
+  }, [transformSchedulesToUI]);
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -157,35 +167,40 @@ function AdminSchedule() {
   }, [error, dispatch]);
 
   // Get available subjects for current grade
-  const availableSubjects = subjects.filter((subject) => subject.gradeLevel === currentGrade);
+  const availableSubjects = useMemo(() => {
+    return subjects.filter((subject) => subject.gradeLevel === currentGrade);
+  }, [subjects, currentGrade]);
 
-  // Get available teachers
-  const availableTeachers = users
-    .filter((user) => user.role === 'Teacher' && user.status === 'Active')
-    .map((user) => ({
-      id: user._id,
-      name: `${user.firstName} ${user.lastName}`,
-    }));
-
-  // Get adviser for current section (from schedules or users)
-  const getAdviser = () => {
-    const filteredSchedules = getFilteredSchedules();
-    const scheduleWithAdviser = filteredSchedules.find((s) => s.adviser);
-    if (scheduleWithAdviser?.adviser) {
-      return `${scheduleWithAdviser.adviser.firstName} ${scheduleWithAdviser.adviser.lastName}`;
-    }
-    return '';
-  };
+  // Get available teachers from subjects
+  const availableTeachers = useMemo(() => {
+    const teacherMap = new Map();
+    availableSubjects.forEach((subject) => {
+      if (subject.teacherId?.userId) {
+        const teacher = subject.teacherId.userId;
+        const teacherId = teacher._id;
+        if (!teacherMap.has(teacherId)) {
+          teacherMap.set(teacherId, {
+            id: teacherId,
+            name: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+          });
+        }
+      }
+    });
+    return Array.from(teacherMap.values());
+  }, [availableSubjects]);
 
   // Handle grade change
   const handleGradeChange = (e) => {
     const newGrade = parseInt(e.target.value);
     setCurrentGrade(newGrade);
+    setCurrentSectionId(null);
+    setEditMode(false);
   };
 
   // Handle section click
-  const handleSectionClick = (section) => {
-    setCurrentSection(section);
+  const handleSectionClick = (sectionId) => {
+    setCurrentSectionId(sectionId);
+    setEditMode(false);
   };
 
   // Enable edit mode
@@ -196,26 +211,15 @@ function AdminSchedule() {
   // Handle subject change in edit mode
   const handleSubjectChange = (time, day, subjectId) => {
     const updatedSchedules = { ...uiSchedules };
-    if (updatedSchedules[currentSection] && updatedSchedules[currentSection][time]) {
+    if (updatedSchedules[time] && updatedSchedules[time][day]) {
       const subject = availableSubjects.find((s) => s._id === subjectId);
-      updatedSchedules[currentSection][time][day] = {
-        ...updatedSchedules[currentSection][time][day],
-        subject: subjectId,
-        subjectName: subject?.name || '',
-      };
-      setUiSchedules(updatedSchedules);
-    }
-  };
-
-  // Handle teacher change in edit mode
-  const handleTeacherChange = (time, day, teacherId) => {
-    const updatedSchedules = { ...uiSchedules };
-    if (updatedSchedules[currentSection] && updatedSchedules[currentSection][time]) {
-      const teacher = availableTeachers.find((t) => t.id === teacherId);
-      updatedSchedules[currentSection][time][day] = {
-        ...updatedSchedules[currentSection][time][day],
-        teacher: teacherId,
-        teacherName: teacher?.name || '',
+      const teacher = subject?.teacherId?.userId;
+      updatedSchedules[time][day] = {
+        ...updatedSchedules[time][day],
+        subjectId: subjectId || '',
+        subjectName: subject?.subjectName || '',
+        teacherId: teacher?._id || '',
+        teacherName: teacher ? `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() : '',
       };
       setUiSchedules(updatedSchedules);
     }
@@ -223,63 +227,76 @@ function AdminSchedule() {
 
   // Transform UI structure to backend format and save
   const handleSave = async () => {
+    if (!currentSectionId || sectionStudents.length === 0) {
+      alert('Please select a section with students');
+      return;
+    }
+
     setSaving(true);
     try {
-      const sectionData = uiSchedules[currentSection] || {};
       const operations = [];
 
       // Process each time slot and day
       times.forEach((time) => {
         if (time === 'BREAK') return;
-        
+
         days.forEach((day) => {
-          const cellData = sectionData[time]?.[day];
+          const cellData = uiSchedules[time]?.[day];
           if (!cellData) return;
 
-          const { subject, teacher, scheduleId } = cellData;
+          const { subjectId, scheduleIds, startTime, endTime } = cellData;
 
-          // Skip if both subject and teacher are empty
-          if (!subject && !teacher) {
-            // If there's an existing schedule, delete it
-            if (scheduleId) {
+          // If no subject selected, delete all existing schedules for this time/day
+          if (!subjectId) {
+            scheduleIds.forEach((scheduleId) => {
               operations.push(dispatch(deleteSchedule(scheduleId)));
+            });
+            return;
+          }
+
+          // Update or create schedules for all students in section
+          sectionStudents.forEach((student) => {
+            // Check if schedule already exists for this student/time/day
+            const existingSchedule = sectionSchedules.find((s) => {
+              const scheduleStudentId = s.studentId?._id?.toString() || s.studentId?.toString();
+              const scheduleDay = s.day;
+              const scheduleTime = `${s.startTime}-${s.endTime}`;
+              const timeMatch = time.includes(s.startTime) || scheduleTime === time;
+              return (
+                scheduleStudentId === student._id.toString() &&
+                scheduleDay === day &&
+                timeMatch
+              );
+            });
+
+            const scheduleData = {
+              studentId: student._id,
+              sectionId: currentSectionId,
+              subjectId: subjectId,
+              day: day,
+              startTime: startTime,
+              endTime: endTime,
+            };
+
+            if (existingSchedule) {
+              // Update existing schedule
+              operations.push(
+                dispatch(updateSchedule({ id: existingSchedule._id, data: scheduleData }))
+              );
+            } else {
+              // Create new schedule
+              operations.push(dispatch(createSchedule(scheduleData)));
             }
-            return;
-          }
-
-          // Validate required fields
-          if (!subject || !teacher) {
-            alert(`Please select both subject and teacher for ${time} - ${day}`);
-            setSaving(false);
-            return;
-          }
-
-          const scheduleData = {
-            grade: currentGrade,
-            section: currentSection,
-            timeSlot: time,
-            day: day,
-            subject: subject,
-            teacher: teacher,
-            schoolYear: schoolYear,
-          };
-
-          if (scheduleId) {
-            // Update existing schedule
-            operations.push(dispatch(updateSchedule({ id: scheduleId, data: scheduleData })));
-          } else {
-            // Create new schedule
-            operations.push(dispatch(createSchedule(scheduleData)));
-          }
+          });
         });
       });
 
       // Wait for all operations to complete
       await Promise.all(operations);
-      
+
       // Refresh schedules
-      await dispatch(fetchAllSchedules({ grade: currentGrade, section: currentSection, schoolYear }));
-      
+      await dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
+
       setEditMode(false);
       alert('Schedule successfully updated!');
     } catch (error) {
@@ -291,32 +308,13 @@ function AdminSchedule() {
 
   // Cancel edit mode
   const handleCancel = () => {
-    // Reload schedules to reset UI state
-    const filteredSchedules = getFilteredSchedules();
-    const transformed = transformSchedulesToUI(filteredSchedules);
-    const initialized = initializeUIStructure();
-    
-    const merged = { ...initialized };
-    Object.keys(transformed).forEach((section) => {
-      if (merged[section]) {
-        Object.keys(transformed[section]).forEach((time) => {
-          if (merged[section][time]) {
-            Object.keys(transformed[section][time]).forEach((day) => {
-              merged[section][time][day] = transformed[section][time][day];
-            });
-          }
-        });
-      }
-    });
-    
-    setUiSchedules(merged);
+    setUiSchedules(transformSchedulesToUI);
     setEditMode(false);
   };
 
   // Render schedule table
   const renderTableRows = () => {
     const rows = [];
-    const sectionData = uiSchedules[currentSection] || {};
 
     times.forEach((time, timeIndex) => {
       if (time === 'BREAK') {
@@ -337,10 +335,10 @@ function AdminSchedule() {
             {time}
           </td>
           {days.map((day) => {
-            const scheduleData = sectionData[time]?.[day] || {
-              subject: '',
+            const scheduleData = uiSchedules[time]?.[day] || {
+              subjectId: '',
               subjectName: '',
-              teacher: '',
+              teacherId: '',
               teacherName: '',
             };
             if (editMode) {
@@ -348,14 +346,14 @@ function AdminSchedule() {
                 <td key={`subject-${time}-${day}`}>
                   <select
                     className={styles.subjectDropdown}
-                    value={scheduleData.subject || ''}
+                    value={scheduleData.subjectId || ''}
                     onChange={(e) => handleSubjectChange(time, day, e.target.value)}
                     disabled={saving}
                   >
                     <option value="">Subject</option>
                     {availableSubjects.map((subject) => (
                       <option key={subject._id} value={subject._id}>
-                        {subject.name}
+                        {subject.subjectName}
                       </option>
                     ))}
                   </select>
@@ -374,31 +372,12 @@ function AdminSchedule() {
       const teacherRow = (
         <tr key={`teacher-${time}`}>
           {days.map((day) => {
-            const scheduleData = sectionData[time]?.[day] || {
-              subject: '',
+            const scheduleData = uiSchedules[time]?.[day] || {
+              subjectId: '',
               subjectName: '',
-              teacher: '',
+              teacherId: '',
               teacherName: '',
             };
-            if (editMode) {
-              return (
-                <td key={`teacher-${time}-${day}`}>
-                  <select
-                    className={styles.teacherDropdown}
-                    value={scheduleData.teacher || ''}
-                    onChange={(e) => handleTeacherChange(time, day, e.target.value)}
-                    disabled={saving}
-                  >
-                    <option value="">Teacher</option>
-                    {availableTeachers.map((teacher) => (
-                      <option key={teacher.id} value={teacher.id}>
-                        {teacher.name}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              );
-            }
             return (
               <td key={`teacher-${time}-${day}`}>{scheduleData.teacherName || ''}</td>
             );
@@ -425,118 +404,118 @@ function AdminSchedule() {
           onChange={handleGradeChange}
           disabled={editMode}
         >
-          {Object.keys(gradeSections).map((grade) => (
+          {[7, 8, 9, 10].map((grade) => (
             <option key={grade} value={grade}>
               Grade {grade}
             </option>
           ))}
         </select>
-
-        <select
-          className={styles.gradeSelect}
-          value={schoolYear}
-          onChange={(e) => setSchoolYear(e.target.value)}
-          disabled={editMode}
-          style={{ width: '180px' }}
-        >
-          <option value="2023-2024">2023-2024</option>
-          <option value="2024-2025">2024-2025</option>
-          <option value="2025-2026">2025-2026</option>
-        </select>
       </div>
 
       {error && (
-        <div style={{ 
-          padding: '12px', 
-          marginBottom: '16px', 
-          backgroundColor: '#fee', 
-          color: '#c33', 
-          borderRadius: '8px' 
-        }}>
+        <div
+          style={{
+            padding: '12px',
+            marginBottom: '16px',
+            backgroundColor: '#fee',
+            color: '#c33',
+            borderRadius: '8px',
+          }}
+        >
           {error}
         </div>
       )}
 
       {loading && !allSchedules.length && (
-        <div style={{ textAlign: 'center', padding: '40px' }}>
-          Loading schedules...
-        </div>
+        <div style={{ textAlign: 'center', padding: '40px' }}>Loading schedules...</div>
       )}
 
       <div className={styles.contentLayout}>
         <div className={styles.sectionListCard}>
           <div className={styles.sectionListTitle}>Sections</div>
           <ul className={styles.sectionList}>
-            {gradeSections[currentGrade]?.map((section) => (
+            {gradeSections.map((section) => (
               <li
-                key={section}
+                key={section._id}
                 className={`${styles.sectionItem} ${
-                  section === currentSection ? styles.active : ''
+                  section._id?.toString() === currentSectionId?.toString() ? styles.active : ''
                 }`}
-                onClick={() => !editMode && handleSectionClick(section)}
+                onClick={() => !editMode && handleSectionClick(section._id)}
                 style={{ cursor: editMode ? 'not-allowed' : 'pointer' }}
               >
-                {section}
+                {section.sectionName}
               </li>
             ))}
           </ul>
         </div>
 
         <div className={styles.scheduleContainer}>
-          <div className={styles.schedContainer}>
-            <div className={styles.schedHeader}>
-              <div className={styles.schedTitle}>
-                Grade and Section: <b id="section-title">{currentGrade} - {currentSection}</b>
+          {currentSection ? (
+            <div className={styles.schedContainer}>
+              <div className={styles.schedHeader}>
+                <div className={styles.schedTitle}>
+                  Grade and Section: <b id="section-title">
+                    {currentGrade} - {currentSection.sectionName}
+                  </b>
+                </div>
+                <div className={styles.schedTitle}>
+                  Adviser: <b id="adviser-title">
+                    {currentSection.adviserId?.userId
+                      ? `${currentSection.adviserId.userId.firstName || ''} ${currentSection.adviserId.userId.lastName || ''}`.trim()
+                      : 'Not assigned'}
+                  </b>
+                </div>
               </div>
-              <div className={styles.schedTitle}>
-                Adviser: <b id="adviser-title">{getAdviser() || 'Not assigned'}</b>
+
+              <table className={styles.schedTable}>
+                <thead>
+                  <tr>
+                    <th className={styles.timeCol}>TIME</th>
+                    <th>Monday</th>
+                    <th>Tuesday</th>
+                    <th>Wednesday</th>
+                    <th>Thursday</th>
+                    <th>Friday</th>
+                  </tr>
+                </thead>
+                <tbody>{renderTableRows()}</tbody>
+              </table>
+
+              <div className={styles.schedActions}>
+                {editMode ? (
+                  <>
+                    <button
+                      className={`${styles.schedBtn} ${styles.saveBtn}`}
+                      onClick={handleSave}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                    <button
+                      className={`${styles.schedBtn}`}
+                      onClick={handleCancel}
+                      disabled={saving}
+                      style={{ marginLeft: '12px', backgroundColor: '#ccc', color: '#333' }}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    className={`${styles.schedBtn} ${styles.editBtn}`}
+                    onClick={handleEdit}
+                    disabled={loading || !currentSection}
+                  >
+                    Edit
+                  </button>
+                )}
               </div>
             </div>
-
-            <table className={styles.schedTable}>
-              <thead>
-                <tr>
-                  <th className={styles.timeCol}>TIME</th>
-                  <th>Monday</th>
-                  <th>Tuesday</th>
-                  <th>Wednesday</th>
-                  <th>Thursday</th>
-                  <th>Friday</th>
-                </tr>
-              </thead>
-              <tbody>{renderTableRows()}</tbody>
-            </table>
-
-            <div className={styles.schedActions}>
-              {editMode ? (
-                <>
-                  <button
-                    className={`${styles.schedBtn} ${styles.saveBtn}`}
-                    onClick={handleSave}
-                    disabled={saving}
-                  >
-                    {saving ? 'Saving...' : 'Save Changes'}
-                  </button>
-                  <button
-                    className={`${styles.schedBtn}`}
-                    onClick={handleCancel}
-                    disabled={saving}
-                    style={{ marginLeft: '12px', backgroundColor: '#ccc', color: '#333' }}
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <button
-                  className={`${styles.schedBtn} ${styles.editBtn}`}
-                  onClick={handleEdit}
-                  disabled={loading}
-                >
-                  Edit
-                </button>
-              )}
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              Please select a section to view schedules
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

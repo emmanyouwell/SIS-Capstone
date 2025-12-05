@@ -34,19 +34,20 @@ function AdminEnrollmentPending() {
     const grouped = { 7: [], 8: [], 9: [], 10: [] };
     
     pendingEnrollments.forEach((enrollment) => {
-      const grade = enrollment.gradeLevelToEnroll;
+      const grade = enrollment.gradeToEnroll;
       if (grade >= 7 && grade <= 10) {
-        const student = enrollment.student;
-        const studentName = student
-          ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
+        const student = enrollment.studentId;
+        const studentUser = student?.userId || {};
+        const studentName = studentUser.firstName && studentUser.lastName
+          ? `${studentUser.firstName || ''} ${studentUser.lastName || ''} ${studentUser.middleName || ''}`.trim()
           : 'Unknown Student';
         
         grouped[grade].push({
           id: enrollment._id,
           name: studentName,
-          currentGrade: `Grade ${enrollment.gradeLevelToEnroll}`,
-          enrollingTo: `Grade ${enrollment.gradeLevelToEnroll}`,
-          lrn: student?.learnerReferenceNo || enrollment.learnerReferenceNo || 'N/A',
+          currentGrade: `Grade ${enrollment.gradeToEnroll}`,
+          enrollingTo: `Grade ${enrollment.gradeToEnroll}`,
+          lrn: student?.lrn || 'N/A',
           enrollment,
         });
       }

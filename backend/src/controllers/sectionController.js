@@ -5,12 +5,22 @@ import Section from '../models/Section.js';
 // @access  Private
 export const getSections = async (req, res) => {
   try {
-    const { grade } = req.query;
+    const { gradeLevel, status } = req.query;
     const filter = {};
 
-    if (grade) filter.grade = parseInt(grade);
+    if (gradeLevel) filter.gradeLevel = parseInt(gradeLevel);
+    if (status) filter.status = status;
 
-    const sections = await Section.find(filter).sort({ grade: 1, name: 1 });
+    const sections = await Section.find(filter)
+      .populate('adviserId', 'userId')
+      .populate({
+        path: 'adviserId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email',
+        },
+      })
+      .sort({ gradeLevel: 1, sectionName: 1 });
 
     res.json({
       success: true,
@@ -27,7 +37,15 @@ export const getSections = async (req, res) => {
 // @access  Private
 export const getSection = async (req, res) => {
   try {
-    const section = await Section.findById(req.params.id);
+    const section = await Section.findById(req.params.id)
+      .populate('adviserId', 'userId')
+      .populate({
+        path: 'adviserId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email',
+        },
+      });
 
     if (!section) {
       return res.status(404).json({ message: 'Section not found' });
@@ -48,6 +66,13 @@ export const getSection = async (req, res) => {
 export const createSection = async (req, res) => {
   try {
     const section = await Section.create(req.body);
+    await section.populate({
+      path: 'adviserId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email',
+      },
+    });
 
     res.status(201).json({
       success: true,
@@ -77,7 +102,14 @@ export const updateSection = async (req, res) => {
     section = await Section.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    });
+    })
+      .populate({
+        path: 'adviserId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email',
+        },
+      });
 
     res.json({
       success: true,

@@ -2,68 +2,53 @@ import mongoose from 'mongoose';
 
 const messageSchema = new mongoose.Schema(
   {
-    sender: {
+    senderRole: {
+      type: String,
+      enum: ['Student', 'Teacher', 'Admin'],
+      required: true,
+    },
+    senderId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    recipient: {
+    receiverRole: {
+      type: String,
+      enum: ['Student', 'Teacher', 'Admin', 'All'],
+    },
+    receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
     },
-    recipientType: {
-      type: String,
-      enum: ['User', 'All Students', 'All Teachers', 'Grade', 'Section'],
-    },
-    recipientIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
     subject: {
       type: String,
       required: true,
       trim: true,
     },
-    message: {
+    messageText: {
       type: String,
       required: true,
     },
-    attachments: [
-      {
-        name: String,
-        url: String,
-        cloudinaryId: String,
-      },
-    ],
-    read: {
-      type: Boolean,
-      default: false,
+    dateSent: {
+      type: Date,
+      default: Date.now,
     },
-    readBy: [
-      {
-        user: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: 'User',
-        },
-        readAt: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-    deletedBy: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
+    status: {
+      type: String,
+      enum: ['sent', 'read', 'deleted'],
+      default: 'sent',
+    },
   },
   {
     timestamps: true,
   }
 );
+
+// Indexes for better query performance
+messageSchema.index({ senderId: 1 });
+messageSchema.index({ receiverId: 1 });
+messageSchema.index({ dateSent: -1 });
+messageSchema.index({ status: 1 });
 
 export default mongoose.model('Message', messageSchema);
 

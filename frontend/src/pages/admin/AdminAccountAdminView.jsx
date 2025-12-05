@@ -2,30 +2,29 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styles from './AdminAccountView.module.css';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllAdmins } from '../../store/slices/adminSlice';
 
 function AdminAccountAdminView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { admins, loading, error } = useSelector((state) => state.admins);
 
-  // Fetch users filtered by role
+  // Fetch admins
   useEffect(() => {
-    dispatch(fetchAllUsers({ role: 'Admin', status: 'Active' }));
+    dispatch(fetchAllAdmins());
   }, [dispatch]);
 
-  // Filter and format accounts for display
-  const roleFilter = 'Admin';
-  const accounts = users
-    .filter(user => user.role === roleFilter && user.status === 'Active')
-    .map(user => ({
-      id: user._id,
-      name: `${user.firstName} ${user.lastName}`,
-      role: user.role,
-      email: user.email,
-      totalLogins: 0, // This field doesn't exist in the User model - keeping for UI compatibility
-      avatar: user.profileImage?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+  // Format accounts for display
+  const accounts = admins
+    .filter(admin => admin.userId?.status === 'Active')
+    .map(admin => ({
+      id: admin._id,
+      name: `${admin.userId?.firstName || ''} ${admin.userId?.lastName || ''}`.trim(),
+      role: 'Admin',
+      email: admin.userId?.email || '',
+      totalLogins: 0, // This field doesn't exist in the models - keeping for UI compatibility
+      avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
     }));
 
   const handleBack = () => {

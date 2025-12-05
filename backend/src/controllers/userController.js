@@ -5,13 +5,11 @@ import User from '../models/User.js';
 // @access  Private (Admin)
 export const getUsers = async (req, res) => {
   try {
-    const { role, status, grade, section } = req.query;
+    const { role, status } = req.query;
     const filter = {};
 
     if (role) filter.role = role;
     if (status) filter.status = status;
-    if (grade) filter.grade = parseInt(grade);
-    if (section) filter.section = section;
 
     const users = await User.find(filter).select('-password').sort({ lastName: 1, firstName: 1 });
 
@@ -35,9 +33,7 @@ export const getUser = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    const user = await User.findById(req.params.id)
-      .select('-password')
-      .populate('subjects', 'name gradeLevel');
+    const user = await User.findById(req.params.id).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -92,9 +88,7 @@ export const updateUser = async (req, res) => {
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    })
-      .select('-password')
-      .populate('subjects', 'name gradeLevel');
+    }).select('-password');
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });

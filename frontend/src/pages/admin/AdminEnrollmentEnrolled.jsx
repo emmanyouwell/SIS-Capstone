@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminEnrollmentEnrolled.module.css';
 import { fetchAllEnrollments, clearError } from '../../store/slices/enrollmentSlice';
-import { fetchAllUsers } from '../../store/slices/userSlice';
 
 function AdminEnrollmentEnrolled() {
   const navigate = useNavigate();
@@ -15,11 +14,9 @@ function AdminEnrollmentEnrolled() {
   const { enrollments, loading: enrollmentsLoading, error } = useSelector(
     (state) => state.enrollments
   );
-  const { users, loading: usersLoading } = useSelector((state) => state.users);
 
   useEffect(() => {
     dispatch(fetchAllEnrollments({ status: 'enrolled' }));
-    dispatch(fetchAllUsers({ role: 'Student' }));
   }, [dispatch]);
 
   // Process enrolled students data
@@ -32,11 +29,11 @@ function AdminEnrollmentEnrolled() {
     const grouped = { 7: {}, 8: {}, 9: {}, 10: {} };
     
     enrolledEnrollments.forEach((enrollment) => {
-      const grade = enrollment.gradeLevelToEnroll;
+      const grade = enrollment.gradeToEnroll;
       if (grade >= 7 && grade <= 10) {
-        // Find the student's section from users
-        const student = users.find((u) => u._id === enrollment.student?._id || u._id === enrollment.student);
-        const section = student?.section || 'Unassigned';
+        // Get section from studentId (which is populated with Student model)
+        const student = enrollment.studentId;
+        const section = student?.sectionId?.sectionName || 'Unassigned';
         
         if (!grouped[grade][section]) {
           grouped[grade][section] = 0;
@@ -59,7 +56,7 @@ function AdminEnrollmentEnrolled() {
     });
 
     return result;
-  }, [enrolledEnrollments, users]);
+  }, [enrolledEnrollments]);
 
   // Calculate chart data
   const chartData = useMemo(() => {
@@ -133,7 +130,7 @@ function AdminEnrollmentEnrolled() {
   };
 
   const selectedGradeData = selectedGrade ? gradeData[selectedGrade] : null;
-  const loading = enrollmentsLoading || usersLoading;
+  const loading = enrollmentsLoading;
 
   if (error) {
     return (

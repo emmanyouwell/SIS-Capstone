@@ -5,25 +5,22 @@ import Announcement from '../models/Announcement.js';
 // @access  Private
 export const getAnnouncements = async (req, res) => {
   try {
-    const { recipient, pinned, type } = req.query;
+    const { audience } = req.query;
     const filter = {};
 
-    if (recipient) filter.recipient = recipient;
-    if (pinned !== undefined) filter.pinned = pinned === 'true';
-    if (type) filter.type = type;
+    if (audience) filter.audience = audience;
 
     // Students and Teachers only see their own or "All" announcements
     if (req.user.role === 'Student' || req.user.role === 'Teacher') {
       filter.$or = [
-        { recipient: 'All' },
-        { recipient: req.user.role + 's' },
-        { recipientIds: req.user._id },
+        { audience: 'All' },
+        { audience: req.user.role + 's' },
       ];
     }
 
     const announcements = await Announcement.find(filter)
-      .populate('sender', 'firstName lastName email')
-      .sort({ pinned: -1, createdAt: -1 });
+      .populate('postedBy', 'firstName lastName email')
+      .sort({ datePosted: -1 });
 
     res.json({
       success: true,
@@ -41,7 +38,7 @@ export const getAnnouncements = async (req, res) => {
 export const getAnnouncement = async (req, res) => {
   try {
     const announcement = await Announcement.findById(req.params.id).populate(
-      'sender',
+      'postedBy',
       'firstName lastName email'
     );
 
@@ -63,10 +60,11 @@ export const getAnnouncement = async (req, res) => {
 // @access  Private (Admin, Teacher)
 export const createAnnouncement = async (req, res) => {
   try {
-    req.body.sender = req.user.id;
+    req.body.postedBy = req.user.id;
+    req.body.datePosted = new Date();
 
     const announcement = await Announcement.create(req.body);
-    await announcement.populate('sender', 'firstName lastName email');
+    await announcement.populate('postedBy', 'firstName lastName email');
 
     res.status(201).json({
       success: true,
@@ -89,14 +87,14 @@ export const updateAnnouncement = async (req, res) => {
     }
 
     // Teachers can only update their own announcements
-    if (req.user.role === 'Teacher' && announcement.sender.toString() !== req.user.id) {
+    if (req.user.role === 'Teacher' && announcement.postedBy.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to update this announcement' });
     }
 
     announcement = await Announcement.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
-    }).populate('sender', 'firstName lastName email');
+    }).populate('postedBy', 'firstName lastName email');
 
     res.json({
       success: true,
@@ -119,7 +117,7 @@ export const deleteAnnouncement = async (req, res) => {
     }
 
     // Teachers can only delete their own announcements
-    if (req.user.role === 'Teacher' && announcement.sender.toString() !== req.user.id) {
+    if (req.user.role === 'Teacher' && announcement.postedBy.toString() !== req.user.id) {
       return res.status(403).json({ message: 'Not authorized to delete this announcement' });
     }
 
@@ -133,4 +131,3 @@ export const deleteAnnouncement = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-

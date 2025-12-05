@@ -2,35 +2,40 @@ import mongoose from 'mongoose';
 
 const notificationSchema = new mongoose.Schema(
   {
-    type: {
+    userRole: {
       type: String,
-      enum: ['Enrollment', 'Message', 'Announcement', 'Subject Materials', 'Grade', 'System'],
+      enum: ['Student', 'Teacher', 'Admin'],
+      required: true,
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       required: true,
     },
     message: {
       type: String,
       required: true,
     },
-    recipient: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true,
+    dateCreated: {
+      type: Date,
+      default: Date.now,
     },
-    read: {
-      type: Boolean,
-      default: false,
-    },
-    link: {
+    status: {
       type: String,
-    },
-    metadata: {
-      type: mongoose.Schema.Types.Mixed,
+      enum: ['unread', 'read'],
+      default: 'unread',
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Indexes for better query performance
+notificationSchema.index({ userId: 1 });
+notificationSchema.index({ userRole: 1 });
+notificationSchema.index({ status: 1 });
+notificationSchema.index({ dateCreated: -1 });
 
 export default mongoose.model('Notification', notificationSchema);
 

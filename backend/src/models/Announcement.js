@@ -2,49 +2,39 @@ import mongoose from 'mongoose';
 
 const announcementSchema = new mongoose.Schema(
   {
-    subject: {
+    title: {
       type: String,
       required: true,
       trim: true,
     },
-    message: {
+    content: {
       type: String,
       required: true,
     },
-    sender: {
+    postedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
     },
-    recipient: {
+    audience: {
       type: String,
       enum: ['All', 'Students', 'Teachers', 'Admin', 'Specific'],
       default: 'All',
     },
-    recipientIds: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-      },
-    ],
-    image: {
-      url: String,
-      cloudinaryId: String,
-    },
-    pinned: {
-      type: Boolean,
-      default: false,
-    },
-    type: {
-      type: String,
-      enum: ['general', 'message', 'announcement'],
-      default: 'announcement',
+    datePosted: {
+      type: Date,
+      default: Date.now,
     },
   },
   {
     timestamps: true,
   }
 );
+
+// Indexes for better query performance
+announcementSchema.index({ postedBy: 1 });
+announcementSchema.index({ audience: 1 });
+announcementSchema.index({ datePosted: -1 });
 
 export default mongoose.model('Announcement', announcementSchema);
 

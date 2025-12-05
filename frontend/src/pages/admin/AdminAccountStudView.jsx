@@ -2,19 +2,17 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudView.module.css';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
 
 function AdminAccountStudView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
-  const { users, loading, error } = useSelector((state) => state.users);
+  const { students, loading, error } = useSelector((state) => state.students);
 
   useEffect(() => {
-    dispatch(fetchAllUsers({ role: 'Student' }));
+    dispatch(fetchAllStudents());
   }, [dispatch]);
-
-  const student = users
 
   const handleBack = () => {
     navigate('/admin/accounts');
@@ -28,25 +26,7 @@ function AdminAccountStudView() {
     );
   }
 
-  if (!student) {
-    return (
-      <div className={styles.mainContent}>
-        {error && (
-          <div style={{ padding: '10px', marginBottom: '20px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
-            {error}
-          </div>
-        )}
-        <div style={{ padding: '20px', textAlign: 'center' }}>Student not found.</div>
-        <button className={styles.fabBtn} title="Back" onClick={handleBack}>
-          <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-      </div>
-    );
-  }
-
-  const activeCount = users.filter(user => user.status === 'Active').length;
+  const activeCount = students.filter(student => student.userId?.status === 'Active').length;
 
 
   return (
@@ -83,16 +63,15 @@ function AdminAccountStudView() {
           </tr>
         </thead>
         <tbody>
-          {users.map((user, index) => {
-            const avatar = user.profileImage?.url || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
-            const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-            const grade = user.grade ?? '';
-            const statusLabel = user.status === 'Active' ? 'Enrolled' : user.status || 'Inactive';
+          {students.map((student) => {
+            const avatar = 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+            const fullName = `${student.userId?.firstName || ''} ${student.userId?.lastName || ''}`.trim();
+            const grade = student.gradeLevel ?? '';
+            const statusLabel = student.userId?.status === 'Active' ? 'Enrolled' : student.userId?.status || 'Inactive';
             const totalLogins = 0;
             
-            
             return (
-              <tr key={user._id}>
+              <tr key={student._id}>
                 <td className={styles.facultyNameCell}>
                   <img className={styles.facultyAvatar} src={avatar} alt="Avatar" />
                   {fullName}
