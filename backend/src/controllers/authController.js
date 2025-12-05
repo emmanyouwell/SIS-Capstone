@@ -62,14 +62,22 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { studentId, email, password } = req.body;
+    let user = null;
 
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
+    if (!password) {
+      return res.status(400).json({ message: 'Please provide password' });
     }
 
-    // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password');
+
+    if (studentId) {
+      user = await User.findOne({ learnerReferenceNo: studentId }).select('+password');
+    }
+    else {
+      // Find user and include password for comparison
+      user = await User.findOne({ email }).select('+password');
+    }
+
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });

@@ -26,6 +26,7 @@ function AdminAccounts() {
   // Calculate counts from users array
   const teacherCount = users.filter(user => user.role === 'Teacher' && user.status === 'Active').length;
   const studentCount = users.filter(user => user.role === 'Student' && user.status === 'Active').length;
+  const adminCount = users.filter(user => user.role === 'Admin' && user.status === 'Active').length;
 
   // Fetch users on mount
   useEffect(() => {
@@ -93,6 +94,14 @@ function AdminAccounts() {
 
   const handleEditStudents = () => {
     navigate('/admin/accounts/student/edit');
+  };
+
+  const handleViewAdmins = () => {
+    navigate('/admin/accounts/admin/view');
+  };
+
+  const handleEditAdmins = () => {
+    navigate('/admin/accounts/admin/edit');
   };
 
   if (loading) {
@@ -171,6 +180,30 @@ function AdminAccounts() {
                 <button
                   className={`${styles.accountSummaryBtn} ${styles.edit}`}
                   onClick={handleEditStudents}
+                >
+                  EDIT
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className={styles.accountSummaryOuter}>
+            <div className={styles.accountSummaryCard}>
+              <div className={styles.accountSummaryTop}>
+                <div className={styles.accountSummaryTitle}>Active Admin Accounts:</div>
+                <div className={styles.accountSummaryCount}>
+                  <span>{adminCount}</span>
+                </div>
+              </div>
+              <div className={styles.accountSummaryBottom}>
+                <button
+                  className={`${styles.accountSummaryBtn} ${styles.view}`}
+                  onClick={handleViewAdmins}
+                >
+                  VIEW
+                </button>
+                <button
+                  className={`${styles.accountSummaryBtn} ${styles.edit}`}
+                  onClick={handleEditAdmins}
                 >
                   EDIT
                 </button>

@@ -2,6 +2,8 @@ import AdminLogin from '../admin/AdminLogin';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import styles from './StudentLogin.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../../store/slices/authSlice';
 
 function StudentLogin() {
   const [studentId, setStudentId] = useState('');
@@ -9,34 +11,47 @@ function StudentLogin() {
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showProgress, setShowProgress] = useState(false);
   const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
+  const dispatch = useDispatch();
+  const authError = useSelector((state) => state.auth.error);
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    const validUsername = 'admin';
-    const validPassword = '12345';
+    setError('');
+    setIsLoading(true);
+    setShowProgress(true);
 
-    if (studentId.trim() === validUsername && password.trim() === validPassword) {
-      setError(false);
-      setIsLoading(true);
-      
-      setTimeout(() => {
+    try {
+      const result = await dispatch(login({ studentId, password }));
+      if (login.fulfilled.match(result)) {
+        // Check if user is Admin
+        if (result.payload.user.role === 'Student') {
+          setTimeout(() => {
+            setIsLoading(false);
+            setIsSuccess(true);
+            navigate('/student/dashboard');
+          }, 500);
+        } else {
+          setError('Access denied. Please check your credentials.');
+          setIsLoading(false);
+          setShowProgress(false);
+        }
+      } else {
+        setError(result.payload || 'Login failed');
         setIsLoading(false);
-        setIsSuccess(true);
-        
-        setTimeout(() => {
-          navigate('/student/dashboard');
-        }, 1000);
-      }, 1500);
-    } else {
-      setError(true);
+        setShowProgress(false);
+      }
+    } catch (err) {
+      console.log(err)
+      setError('An error occurred. Please try again.');
+      setIsLoading(false);
+      setShowProgress(false);
     }
   };
 
   return (
     <>
-      <div className={styles.loginProgress}></div>
+      <div className={`${styles.loginProgress} ${showProgress ? styles.start : ''}`}></div>
       <div className="container-fluid vh-100 p-0">
         <div className="row g-0 h-100">
           <div className={`col-lg-8 ${styles.rectangle1}`}>
@@ -51,10 +66,10 @@ function StudentLogin() {
                 <h2 className={styles.welcomeText}>Welcome back, Student!</h2>
                 <p className={styles.textGray}>Access your student portal</p>
               </div>
-              {error && (
+              {(error || authError) && (
                 <div className={`alert alert-danger ${styles.alert}`} role="alert">
                   <i className="fas fa-exclamation-circle me-2"></i>
-                  Invalid Learners ID or Password.
+                  {error || authError || 'Invalid credentials'}
                 </div>
               )}
               <form onSubmit={handleSubmit} className={`${styles.loginForm} needs-validation`} noValidate>

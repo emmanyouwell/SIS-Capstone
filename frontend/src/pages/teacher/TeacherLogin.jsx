@@ -33,7 +33,7 @@ function TeacherLogin() {
             navigate('/teacher/dashboard');
           }, 500);
         } else {
-          setError('Access denied. Admin account required.');
+          setError('Access denied. Please check your credentials.');
           setIsLoading(false);
           setShowProgress(false);
         }

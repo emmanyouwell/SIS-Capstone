@@ -13,6 +13,8 @@ import AdminAccountView from './pages/admin/AdminAccountView';
 import AdminAccountEdit from './pages/admin/AdminAccountEdit';
 import AdminAccountStudView from './pages/admin/AdminAccountStudView';
 import AdminAccountStudEdit from './pages/admin/AdminAccountStudEdit';
+import AdminAccountAdminView from './pages/admin/AdminAccountAdminView';
+import AdminAccountAdminEdit from './pages/admin/AdminAccountAdminEdit';
 import AdminGrades from './pages/admin/AdminGrades';
 import AdminGradeView from './pages/admin/AdminGradeView';
 import AdminSubjects from './pages/admin/AdminSubjects';
@@ -72,6 +74,8 @@ function App() {
           <Route path="accounts/teacher/edit" element={<AdminAccountEdit />} />
           <Route path="accounts/student/view" element={<AdminAccountStudView />} />
           <Route path="accounts/student/edit" element={<AdminAccountStudEdit />} />
+          <Route path="accounts/admin/view" element={<AdminAccountAdminView />} />
+          <Route path="accounts/admin/edit" element={<AdminAccountAdminEdit />} />
           <Route path="grades" element={<AdminGrades />} />
           <Route path="grades/:grade" element={<AdminGradeView />} />
           <Route path="subjects" element={<AdminSubjects />} />

@@ -1,18 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
-import { getAllSections } from '../../store/slices/sectionSlice';
 
-function AdminAccountEdit() {
+function AdminAccountAdminEdit() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
   const { users, loading, error } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
-  const sections = useSelector((state) => state.section.data);
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [formError, setFormError] = useState(null);
@@ -23,32 +21,20 @@ function AdminAccountEdit() {
     middleName: '',
     email: '',
     password: '',
-    role: '',
+    role: 'Admin',
     status: 'Active',
     learnerReferenceNo: '',
-    grade: '',
-    section: '',
-    birthdate: '',
-    sex: ''
+    birthdate: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingUser, setEditingUser] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  // Fetch users filtered by role and sections
+  // Fetch users filtered by role
   useEffect(() => {
-    dispatch(fetchAllUsers({ role: 'Teacher' }));
-    dispatch(getAllSections());
+    dispatch(fetchAllUsers({ role: 'Admin' }));
   }, [dispatch]);
-
-  // Get sections for selected grade
-  const gradeSections = formData.grade
-    ? sections
-        .filter((s) => s.grade === parseInt(formData.grade))
-        .map((s) => s.name)
-        .sort()
-    : [];
 
   // Clear success message after 3 seconds
   useEffect(() => {
@@ -77,15 +63,15 @@ function AdminAccountEdit() {
   };
 
   // Format accounts for display
-  const roleFilter = 'Teacher';
+  const roleFilter = 'Admin';
   const accounts = users
     .filter(user => user.role === roleFilter)
     .map(user => ({
       id: user._id,
       name: `${user.firstName} ${user.lastName}`,
       email: user.email,
-      username: user.email.split('@')[0], // Generate username from email
-      totalLogins: 0, // This field doesn't exist in the User model
+      username: user.email.split('@')[0],
+      totalLogins: 0,
       role: user.role,
       _id: user._id,
       ...user
@@ -112,25 +98,20 @@ function AdminAccountEdit() {
 
     switch (action) {
       case 'view':
-        // Navigate to view page or show details
         console.log('View:', account);
         break;
       case 'edit':
-        // Populate form with user data for editing
         setEditingUser(account);
         setFormData({
           firstName: account.firstName || '',
           lastName: account.lastName || '',
           middleName: account.middleName || '',
           email: account.email || '',
-          password: '', // Don't pre-fill password
-          role: account.role || '',
+          password: '',
+          role: account.role || 'Admin',
           status: account.status || 'Active',
           learnerReferenceNo: account.learnerReferenceNo || '',
-          grade: account.grade || '',
-          section: account.section || '',
-          birthdate: account.birthdate ? new Date(account.birthdate).toISOString().split('T')[0] : '',
-          sex: account.sex || ''
+          birthdate: account.birthdate ? new Date(account.birthdate).toISOString().split('T')[0] : ''
         });
         setShowAddModal(true);
         break;
@@ -158,20 +139,10 @@ function AdminAccountEdit() {
           email: formData.email,
           role: formData.role,
           status: formData.status,
-          ...(formData.role === 'Student' && {
-            learnerReferenceNo: formData.learnerReferenceNo,
-            grade: formData.grade ? parseInt(formData.grade) : undefined,
-            section: formData.section,
-            birthdate: formData.birthdate || undefined,
-            sex: formData.sex || undefined
-          }),
-          ...((formData.role === 'Teacher' || formData.role === 'Admin') && {
-            learnerReferenceNo: formData.learnerReferenceNo || undefined,
-            birthdate: formData.birthdate || undefined
-          })
+          learnerReferenceNo: formData.learnerReferenceNo || undefined,
+          birthdate: formData.birthdate || undefined
         };
 
-        // Only include password if it was provided
         if (formData.password) {
           updateData.password = formData.password;
         }
@@ -179,12 +150,12 @@ function AdminAccountEdit() {
         const result = await dispatch(updateUser({ id: editingUser._id, data: updateData }));
 
         if (updateUser.fulfilled.match(result)) {
-          setSuccessMessage('User updated successfully!');
+          setSuccessMessage('Admin updated successfully!');
           setShowAddModal(false);
           setEditingUser(null);
           dispatch(fetchAllUsers({ role: roleFilter }));
         } else {
-          setFormError(result.payload || 'Failed to update user');
+          setFormError(result.payload || 'Failed to update admin');
         }
       } else {
         // Create new user
@@ -196,23 +167,18 @@ function AdminAccountEdit() {
           password: formData.password,
           role: formData.role,
           status: formData.status,
-          ...(formData.role === 'Student' && {
-            learnerReferenceNo: formData.learnerReferenceNo,
-            grade: formData.grade ? parseInt(formData.grade) : undefined,
-            section: formData.section,
-            birthdate: formData.birthdate || undefined,
-            sex: formData.sex || undefined
-          })
+          learnerReferenceNo: formData.learnerReferenceNo || undefined,
+          birthdate: formData.birthdate || undefined
         };
 
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          setSuccessMessage('User created successfully!');
+          setSuccessMessage('Admin created successfully!');
           setShowAddModal(false);
           dispatch(fetchAllUsers({ role: roleFilter }));
         } else {
-          setFormError(result.payload || 'Failed to create user');
+          setFormError(result.payload || 'Failed to create admin');
         }
       }
 
@@ -223,22 +189,14 @@ function AdminAccountEdit() {
         middleName: '',
         email: '',
         password: '',
-        role: '',
+        role: 'Admin',
         status: 'Active',
         learnerReferenceNo: '',
-        grade: '',
-        section: '',
-        birthdate: '',
-        sex: ''
+        birthdate: ''
       });
     } catch (err) {
       setFormError('An unexpected error occurred');
     }
-  };
-
-  const handleRoleChange = (e) => {
-    const role = e.target.value;
-    setFormData({ ...formData, role });
   };
 
   const handleCloseModal = () => {
@@ -251,13 +209,10 @@ function AdminAccountEdit() {
       middleName: '',
       email: '',
       password: '',
-      role: '',
+      role: 'Admin',
       status: 'Active',
       learnerReferenceNo: '',
-      grade: '',
-      section: '',
-      birthdate: '',
-      sex: ''
+      birthdate: ''
     });
   };
 
@@ -267,12 +222,12 @@ function AdminAccountEdit() {
     try {
       const result = await dispatch(deleteUser(userToDelete._id));
       if (deleteUser.fulfilled.match(result)) {
-        setSuccessMessage('User deleted successfully!');
+        setSuccessMessage('Admin deleted successfully!');
         setShowDeleteModal(false);
         setUserToDelete(null);
         dispatch(fetchAllUsers({ role: roleFilter }));
       } else {
-        setFormError(result.payload || 'Failed to delete user');
+        setFormError(result.payload || 'Failed to delete admin');
         setShowDeleteModal(false);
         setUserToDelete(null);
       }
@@ -288,7 +243,7 @@ function AdminAccountEdit() {
     setUserToDelete(null);
   };
 
-  const title = 'Faculty Table';
+  const title = 'Admin Table';
 
   return (
     <div className={styles.mainContent}>
@@ -329,7 +284,7 @@ function AdminAccountEdit() {
             <line x1="12" y1="8" x2="12" y2="16"/>
             <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
-          Add new user
+          Add new admin
         </button>
       </div>
 
@@ -423,59 +378,13 @@ function AdminAccountEdit() {
             <button className={styles.modalClose} onClick={handleCloseModal}>
               &times;
             </button>
-            <h3>{editingUser ? 'Edit User' : 'Add New User'}</h3>
+            <h3>{editingUser ? 'Edit Admin' : 'Add New Admin'}</h3>
             {formError && (
               <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px', fontSize: '14px' }}>
                 {formError}
               </div>
             )}
             <form onSubmit={handleAddUser}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="role">Role</label>
-                  <select
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    onChange={handleRoleChange}
-                    required
-                    disabled={!!editingUser} // Don't allow role change when editing
-                  >
-                    <option value="">Select Role</option>
-                    <option value="Teacher">Teacher</option>
-                    <option value="Admin">Admin</option>
-                    <option value="Student">Student</option>
-                  </select>
-                </div>
-                {formData.role === 'Student' && (
-                  <div className={styles.formGroup}>
-                    <label htmlFor="learnerReferenceNo">Learner Reference No (LRN)</label>
-                    <input
-                      type="text"
-                      id="learnerReferenceNo"
-                      name="learnerReferenceNo"
-                      value={formData.learnerReferenceNo}
-                      onChange={(e) => setFormData({ ...formData, learnerReferenceNo: e.target.value })}
-                    />
-                  </div>
-                )}
-                {(formData.role === 'Teacher' || formData.role === 'Admin') && (
-                  <div className={styles.formGroup}>
-                    <label htmlFor="learnerReferenceNo">
-                      {formData.role === 'Teacher' ? 'Employee ID' : 'Employee ID'}
-                    </label>
-                    <input
-                      type="text"
-                      id="learnerReferenceNo"
-                      name="learnerReferenceNo"
-                      value={formData.learnerReferenceNo}
-                      onChange={(e) => setFormData({ ...formData, learnerReferenceNo: e.target.value })}
-                      placeholder={`Enter ${formData.role === 'Teacher' ? 'teacher' : 'admin'} employee ID`}
-                    />
-                  </div>
-                )}
-              </div>
-
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="firstName">First Name</label>
@@ -512,26 +421,6 @@ function AdminAccountEdit() {
                     required
                   />
                 </div>
-                {formData.role === 'Student' && (
-                  <div className={styles.formGroup}>
-                    <label htmlFor="grade">Grade</label>
-                    <select
-                      id="grade"
-                      name="grade"
-                      value={formData.grade}
-                      onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
-                    >
-                      <option value="">Select Grade</option>
-                      <option value="7">7</option>
-                      <option value="8">8</option>
-                      <option value="9">9</option>
-                      <option value="10">10</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-
-              <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="email">Email</label>
                   <input
@@ -543,105 +432,23 @@ function AdminAccountEdit() {
                     required
                   />
                 </div>
-                {formData.role === 'Student' && (
-                  <div className={styles.formGroup}>
-                    <label htmlFor="section">Section</label>
-                    <select
-                      id="section"
-                      name="section"
-                      value={formData.section}
-                      onChange={(e) => setFormData({ ...formData, section: e.target.value })}
-                      disabled={!formData.grade}
-                    >
-                      <option value="">Select Section</option>
-                      {gradeSections.map((section) => (
-                        <option key={section} value={section}>
-                          {section}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
               </div>
 
-              {formData.role === 'Student' && (
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="birthdate">Date of Birth</label>
-                    <input
-                      type="date"
-                      id="birthdate"
-                      name="birthdate"
-                      value={formData.birthdate}
-                      onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-                    />
-                  </div>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="sex">Sex</label>
-                    <select
-                      id="sex"
-                      name="sex"
-                      value={formData.sex}
-                      onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
-                    >
-                      <option value="">Select</option>
-                      <option value="Male">Male</option>
-                      <option value="Female">Female</option>
-                    </select>
-                  </div>
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="birthdate">Date of Birth</label>
+                  <input
+                    type="date"
+                    id="birthdate"
+                    name="birthdate"
+                    value={formData.birthdate}
+                    onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
+                  />
                 </div>
-              )}
+              </div>
 
-              {(formData.role === 'Teacher' || formData.role === 'Admin') && (
-                <div className={styles.formRow}>
-                  <div className={styles.formGroup}>
-                    <label htmlFor="birthdate">Date of Birth</label>
-                    <input
-                      type="date"
-                      id="birthdate"
-                      name="birthdate"
-                      value={formData.birthdate}
-                      onChange={(e) => setFormData({ ...formData, birthdate: e.target.value })}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Teaching Information Section for Teachers */}
-              {formData.role === 'Teacher' && editingUser && (
-                <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
-                  <h4 style={{ marginBottom: '15px', color: '#333' }}>Teaching Information</h4>
-                  <div className={styles.formRow}>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="learnerReferenceNo">Employee ID</label>
-                      <input
-                        type="text"
-                        id="learnerReferenceNo"
-                        name="learnerReferenceNo"
-                        value={formData.learnerReferenceNo}
-                        onChange={(e) => setFormData({ ...formData, learnerReferenceNo: e.target.value })}
-                        placeholder="Enter employee ID"
-                      />
-                    </div>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="status">Status</label>
-                      <select
-                        id="status"
-                        name="status"
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        required
-                      >
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Admin Information Section for Admins */}
-              {formData.role === 'Admin' && editingUser && (
+              {/* Admin Information Section */}
+              {editingUser && (
                 <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid #e0e0e0' }}>
                   <h4 style={{ marginBottom: '15px', color: '#333' }}>Admin Information</h4>
                   <div className={styles.formRow}>
@@ -686,19 +493,21 @@ function AdminAccountEdit() {
                     minLength="6"
                   />
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="status">Status</label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    required
-                  >
-                    <option value="Active">Active</option>
-                    <option value="Inactive">Inactive</option>
-                  </select>
-                </div>
+                {!editingUser && (
+                  <div className={styles.formGroup}>
+                    <label htmlFor="status">Status</label>
+                    <select
+                      id="status"
+                      name="status"
+                      value={formData.status}
+                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      required
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div className={styles.modalButtons}>
@@ -717,7 +526,7 @@ function AdminAccountEdit() {
                 >
                   {registerLoading || loading 
                     ? (editingUser ? 'Updating...' : 'Creating...') 
-                    : (editingUser ? 'Update User' : 'Add User')
+                    : (editingUser ? 'Update Admin' : 'Add Admin')
                   }
                 </button>
               </div>
@@ -768,5 +577,5 @@ function AdminAccountEdit() {
   );
 }
 
-export default AdminAccountEdit;
+export default AdminAccountAdminEdit;
 
