@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMasterlistGradeView.module.css';
 import { fetchMasterlists, clearError } from '../../store/slices/masterlistSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminMasterlistGradeView() {
@@ -14,13 +15,15 @@ function AdminMasterlistGradeView() {
   const [selectedSection, setSelectedSection] = useState('');
 
   const { masterlists, loading, error } = useSelector((state) => state.masterlists);
+  const { students, loading: studentsLoading } = useSelector((state) => state.students);
   const sections = useSelector((state) => state.section.data);
 
-  // Fetch masterlists and sections for this grade on mount / grade change
+  // Fetch masterlists, students, and sections for this grade on mount / grade change
   useEffect(() => {
     if (!Number.isNaN(gradeNumber)) {
       dispatch(fetchMasterlists({ grade: gradeNumber }));
-      dispatch(getAllSections({ grade: gradeNumber }));
+      dispatch(fetchAllStudents({ gradeLevel: gradeNumber }));
+      dispatch(getAllSections({ gradeLevel: gradeNumber }));
     }
   }, [gradeNumber, dispatch]);
 
@@ -29,8 +32,8 @@ function AdminMasterlistGradeView() {
   
   // Derive sections from API data
   const sectionsList = sections
-    .filter((s) => s.grade === gradeNumber)
-    .map((s) => s.name)
+    .filter((s) => s.gradeLevel === gradeNumber)
+    .map((s) => s.sectionName)
     .sort();
  
   // Initialize selected section when sections change
@@ -43,9 +46,44 @@ function AdminMasterlistGradeView() {
   const currentSectionName = selectedSection || sectionsList[0] || '';
   const currentMasterlist = gradeMasterlists.find((m) => m.section === currentSectionName) || null;
 
-  const currentStudents = currentMasterlist?.students || [];
+  // Get enrolled student IDs from masterlist
+  const enrolledIds = new Set(
+    (currentMasterlist?.students || []).map((s) => (typeof s === 'object' ? s._id : s))
+  );
 
-  const totalEnrolled = currentStudents.length;
+  // Get all students for current grade and section, mapping Student.userId to User data
+  const currentSectionObj = sections.find(
+    (s) => s.gradeLevel === gradeNumber && s.sectionName === currentSectionName
+  );
+  
+  // Display all students for the grade, regardless of masterlist status
+  const allStudentsForGrade = students
+    .filter((student) => student.gradeLevel === gradeNumber && student.userId)
+    .map((student) => {
+      const user = student.userId;
+      const isEnrolled = enrolledIds.has(user._id);
+      return {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        middleName: user.middleName,
+        learnerReferenceNo: student.lrn || user.learnerReferenceNo || '',
+        sex: user.sex || '',
+        isEnrolled,
+        sectionId: student.sectionId,
+      };
+    })
+    .sort((a, b) => {
+      // Sort by enrollment status (enrolled first), then by gender (Female first), then by last name
+      if (a.isEnrolled && !b.isEnrolled) return -1;
+      if (!a.isEnrolled && b.isEnrolled) return 1;
+      if (a.sex === 'Female' && b.sex !== 'Female') return -1;
+      if (a.sex !== 'Female' && b.sex === 'Female') return 1;
+      return (a.lastName || '').localeCompare(b.lastName || '');
+    });
+
+  const currentStudents = allStudentsForGrade;
+  const totalEnrolled = enrolledIds.size;
   const activeSections = sectionsList.length;
   const classAverage = 85; // Still a placeholder until backend provides this
 
@@ -100,7 +138,7 @@ function AdminMasterlistGradeView() {
         </div>
       )}
 
-      {loading ? (
+      {loading || studentsLoading ? (
         <div className={styles.loading}>Loading...</div>
       ) : (
         <>
@@ -144,7 +182,7 @@ function AdminMasterlistGradeView() {
                   {currentStudents.length === 0 ? (
                     <tr>
                       <td colSpan="4" style={{ textAlign: 'center', padding: '1rem' }}>
-                        No students found for this section.
+                        No students found for this grade.
                       </td>
                     </tr>
                   ) : (
@@ -153,7 +191,7 @@ function AdminMasterlistGradeView() {
                         <td>{student.learnerReferenceNo || ''}</td>
                         <td>{formatStudentName(student)}</td>
                         <td>{formatGender(student)}</td>
-                        <td></td>
+                        <td>{student.isEnrolled ? 'Enrolled' : 'Not Enrolled'}</td>
                       </tr>
                     ))
                   )}

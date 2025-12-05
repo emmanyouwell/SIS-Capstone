@@ -3,20 +3,26 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountView.module.css';
 import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins } from '../../store/slices/adminSlice';
 
 function AdminAccountView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const { teachers, loading, error } = useSelector((state) => state.teachers);
+  const { teachers, loading: teachersLoading, error: teachersError } = useSelector((state) => state.teachers);
+  const { admins, loading: adminsLoading, error: adminsError } = useSelector((state) => state.admins);
 
-  // Fetch teachers
+  // Fetch teachers and admins
   useEffect(() => {
     dispatch(fetchAllTeachers());
+    dispatch(fetchAllAdmins());
   }, [dispatch]);
 
-  // Format accounts for display
-  const accounts = teachers
+  const loading = teachersLoading || adminsLoading;
+  const error = teachersError || adminsError;
+
+  // Format accounts for display - combine teachers and admins
+  const teacherAccounts = teachers
     .filter(teacher => teacher.userId?.status === 'Active')
     .map(teacher => ({
       id: teacher._id,
@@ -27,11 +33,27 @@ function AdminAccountView() {
       avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
     }));
 
+  const adminAccounts = admins
+    .filter(admin => admin.userId?.status === 'Active')
+    .map(admin => ({
+      id: admin._id,
+      name: `${admin.userId?.firstName || ''} ${admin.userId?.lastName || ''}`.trim(),
+      role: 'Admin',
+      email: admin.userId?.email || '',
+      totalLogins: 0,
+      avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png'
+    }));
+
+  // Combine and sort by name
+  const accounts = [...teacherAccounts, ...adminAccounts].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  );
+
   const handleBack = () => {
     navigate('/admin/accounts');
   };
 
-  const title = 'Faculty Accounts';
+  const title = 'Faculty Accounts (Teachers & Admins)';
 
   return (
     <div className={styles.mainContent}>
@@ -53,7 +75,7 @@ function AdminAccountView() {
           <div className={styles.summaryRow}>
             <div className={styles.summaryCard}>
               <div className={styles.summaryHeader}>
-                Active Faculty Accounts:
+                Active Faculty Accounts (Teachers & Admins):
               </div>
               <div className={styles.summaryCount}>{accounts.length}</div>
             </div>
@@ -66,7 +88,7 @@ function AdminAccountView() {
           </div>
 
           <h2 className={styles.tableTitle}>
-            Faculty Table
+            Faculty Table (Teachers & Admins)
           </h2>
           <table className={styles.facultyTable}>
             <thead>

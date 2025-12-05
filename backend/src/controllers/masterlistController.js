@@ -15,8 +15,14 @@ export const getMasterlists = async (req, res) => {
     const masterlists = await Masterlist.find(filter)
       .populate('students', 'firstName lastName learnerReferenceNo grade section sex')
       .populate('adviser', 'firstName lastName email')
-      .populate('subjectTeachers.subject', 'name gradeLevel')
-      .populate('subjectTeachers.teacher', 'firstName lastName email')
+      .populate('subjectTeachers.subject', 'subjectName gradeLevel')
+      .populate({
+        path: 'subjectTeachers.teacher',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .sort({ grade: 1, section: 1 });
 
     res.json({
@@ -37,8 +43,14 @@ export const getMasterlist = async (req, res) => {
     const masterlist = await Masterlist.findById(req.params.id)
       .populate('students', 'firstName lastName learnerReferenceNo grade section')
       .populate('adviser', 'firstName lastName email')
-      .populate('subjectTeachers.subject', 'name gradeLevel')
-      .populate('subjectTeachers.teacher', 'firstName lastName email');
+      .populate('subjectTeachers.subject', 'subjectName gradeLevel')
+      .populate({
+        path: 'subjectTeachers.teacher',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      });
 
     if (!masterlist) {
       return res.status(404).json({ message: 'Masterlist not found' });
@@ -61,8 +73,14 @@ export const createMasterlist = async (req, res) => {
     const masterlist = await Masterlist.create(req.body);
     await masterlist.populate('students', 'firstName lastName learnerReferenceNo');
     await masterlist.populate('adviser', 'firstName lastName email');
-    await masterlist.populate('subjectTeachers.subject', 'name gradeLevel');
-    await masterlist.populate('subjectTeachers.teacher', 'firstName lastName email');
+    await masterlist.populate('subjectTeachers.subject', 'subjectName gradeLevel');
+    await masterlist.populate({
+      path: 'subjectTeachers.teacher',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email'
+      }
+    });
 
     res.status(201).json({
       success: true,
@@ -84,8 +102,14 @@ export const updateMasterlist = async (req, res) => {
     })
       .populate('students', 'firstName lastName learnerReferenceNo grade section')
       .populate('adviser', 'firstName lastName email')
-      .populate('subjectTeachers.subject', 'name gradeLevel')
-      .populate('subjectTeachers.teacher', 'firstName lastName email');
+      .populate('subjectTeachers.subject', 'subjectName gradeLevel')
+      .populate({
+        path: 'subjectTeachers.teacher',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      });
 
     if (!masterlist) {
       return res.status(404).json({ message: 'Masterlist not found' });

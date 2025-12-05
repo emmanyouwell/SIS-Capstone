@@ -28,14 +28,19 @@ function AdminAccounts() {
     contactNumber: '',
     address: '',
     dateOfBirth: '',
+    employeeId: '',
+    department: '',
+    position: '',
+    assignedOffice: '', // Admin only
   });
   const [formError, setFormError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
   // Calculate counts from role-specific arrays
-  const teacherCount = teachers.filter(t => t.userId?.status === 'Active' || !t.userId).length;
+  // Combine teachers and admins for faculty accounts
+  const facultyCount = teachers.filter(t => t.userId?.status === 'Active' || !t.userId).length + 
+                       admins.filter(a => a.userId?.status === 'Active' || !a.userId).length;
   const studentCount = students.filter(s => s.userId?.status === 'Active' || !s.userId).length;
-  const adminCount = admins.filter(a => a.userId?.status === 'Active' || !a.userId).length;
   const loading = studentsLoading || teachersLoading || adminsLoading;
 
   // Fetch role-specific data on mount
@@ -71,6 +76,10 @@ function AdminAccounts() {
         contactNumber: formData.contactNumber,
         address: formData.address,
         dateOfBirth: formData.dateOfBirth || undefined,
+        employeeId: formData.employeeId || undefined,
+        department: formData.department || undefined,
+        position: formData.position || undefined,
+        assignedOffice: formData.role === 'Admin' ? (formData.assignedOffice || undefined) : undefined,
       };
 
       const result = await dispatch(register(registerData));
@@ -88,6 +97,10 @@ function AdminAccounts() {
           contactNumber: '',
           address: '',
           dateOfBirth: '',
+          employeeId: '',
+          department: '',
+          position: '',
+          assignedOffice: '',
         });
         setShowAddModal(false);
         // Refresh role-specific lists
@@ -116,14 +129,6 @@ function AdminAccounts() {
 
   const handleEditStudents = () => {
     navigate('/admin/accounts/student/edit');
-  };
-
-  const handleViewAdmins = () => {
-    navigate('/admin/accounts/admin/view');
-  };
-
-  const handleEditAdmins = () => {
-    navigate('/admin/accounts/admin/edit');
   };
 
   if (loading) {
@@ -163,9 +168,9 @@ function AdminAccounts() {
           <div className={styles.accountSummaryOuter}>
             <div className={styles.accountSummaryCard}>
               <div className={styles.accountSummaryTop}>
-                <div className={styles.accountSummaryTitle}>Active Teacher Accounts:</div>
+                <div className={styles.accountSummaryTitle}>Active Faculty Accounts (Teachers & Admins):</div>
                 <div className={styles.accountSummaryCount}>
-                  <span>{teacherCount}</span>
+                  <span>{facultyCount}</span>
                 </div>
               </div>
               <div className={styles.accountSummaryBottom}>
@@ -202,30 +207,6 @@ function AdminAccounts() {
                 <button
                   className={`${styles.accountSummaryBtn} ${styles.edit}`}
                   onClick={handleEditStudents}
-                >
-                  EDIT
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className={styles.accountSummaryOuter}>
-            <div className={styles.accountSummaryCard}>
-              <div className={styles.accountSummaryTop}>
-                <div className={styles.accountSummaryTitle}>Active Admin Accounts:</div>
-                <div className={styles.accountSummaryCount}>
-                  <span>{adminCount}</span>
-                </div>
-              </div>
-              <div className={styles.accountSummaryBottom}>
-                <button
-                  className={`${styles.accountSummaryBtn} ${styles.view}`}
-                  onClick={handleViewAdmins}
-                >
-                  VIEW
-                </button>
-                <button
-                  className={`${styles.accountSummaryBtn} ${styles.edit}`}
-                  onClick={handleEditAdmins}
                 >
                   EDIT
                 </button>
@@ -327,10 +308,54 @@ function AdminAccounts() {
                 required
               >
                 <option value="">Select Role</option>
-                <option value="Admin">Admin</option>
                 <option value="Teacher">Teacher</option>
-                <option value="Student">Student</option>
+                <option value="Admin">Admin</option>
               </select>
+              {/* Role-specific fields */}
+              {(formData.role === 'Teacher' || formData.role === 'Admin') && (
+                <>
+                  <label htmlFor="account-employeeId">Employee ID</label>
+                  <input
+                    type="text"
+                    id="account-employeeId"
+                    name="account-employeeId"
+                    value={formData.employeeId}
+                    onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                    placeholder="Enter employee ID"
+                  />
+                  <label htmlFor="account-department">Department</label>
+                  <input
+                    type="text"
+                    id="account-department"
+                    name="account-department"
+                    value={formData.department}
+                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                    placeholder="Enter department"
+                  />
+                  <label htmlFor="account-position">Position</label>
+                  <input
+                    type="text"
+                    id="account-position"
+                    name="account-position"
+                    value={formData.position}
+                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                    placeholder="Enter position"
+                  />
+                </>
+              )}
+              {formData.role === 'Admin' && (
+                <>
+                  <label htmlFor="account-assignedOffice">Assigned Office</label>
+                  <input
+                    type="text"
+                    id="account-assignedOffice"
+                    name="account-assignedOffice"
+                    value={formData.assignedOffice}
+                    onChange={(e) => setFormData({ ...formData, assignedOffice: e.target.value })}
+                    placeholder="Enter assigned office"
+                  />
+                </>
+              )}
               <label htmlFor="account-status">Status</label>
               <select
                 id="account-status"
@@ -360,6 +385,10 @@ function AdminAccounts() {
                       contactNumber: '',
                       address: '',
                       dateOfBirth: '',
+                      employeeId: '',
+                      department: '',
+                      position: '',
+                      assignedOffice: '',
                     });
                   }}
                   disabled={registerLoading}

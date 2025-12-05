@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
 import { fetchAllTeachers, updateTeacher, deleteTeacher, createTeacher } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins, updateAdmin, deleteAdmin, createAdmin } from '../../store/slices/adminSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
@@ -11,7 +12,8 @@ function AdminAccountEdit() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   
-  const { teachers, loading, error } = useSelector((state) => state.teachers);
+  const { teachers, loading: teachersLoading, error: teachersError } = useSelector((state) => state.teachers);
+  const { admins, loading: adminsLoading, error: adminsError } = useSelector((state) => state.admins);
   const { users, loading: usersLoading } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
   const sections = useSelector((state) => state.section.data);
@@ -25,23 +27,30 @@ function AdminAccountEdit() {
     middleName: '',
     email: '',
     password: '',
-    role: 'Teacher',
+    role: '',
     status: 'Active',
     employeeId: '',
     department: '',
     position: '',
+    assignedOffice: '', // Admin only
     dateOfBirth: '',
     contactNumber: '',
     address: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
-  const [editingTeacher, setEditingTeacher] = useState(null);
+  const [editingAccount, setEditingAccount] = useState(null); // Can be teacher or admin
+  const [editingAccountType, setEditingAccountType] = useState(null); // 'Teacher' or 'Admin'
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [teacherToDelete, setTeacherToDelete] = useState(null);
+  const [accountToDelete, setAccountToDelete] = useState(null);
+  const [accountToDeleteType, setAccountToDeleteType] = useState(null);
 
-  // Fetch teachers and sections
+  const loading = teachersLoading || adminsLoading;
+  const error = teachersError || adminsError;
+
+  // Fetch teachers, admins and sections
   useEffect(() => {
     dispatch(fetchAllTeachers());
+    dispatch(fetchAllAdmins());
     dispatch(getAllSections());
   }, [dispatch]);
 
@@ -79,17 +88,35 @@ function AdminAccountEdit() {
     navigate('/admin/accounts');
   };
 
-  // Format accounts for display
-  const accounts = teachers.map(teacher => ({
+  // Format accounts for display - combine teachers and admins
+  const teacherAccounts = teachers.map(teacher => ({
     id: teacher._id,
     name: `${teacher.userId?.firstName || ''} ${teacher.userId?.lastName || ''}`.trim(),
     email: teacher.userId?.email || '',
     username: teacher.userId?.email ? teacher.userId.email.split('@')[0] : '',
-    totalLogins: 0, // This field doesn't exist in the models
+    totalLogins: 0,
     role: 'Teacher',
     _id: teacher._id,
-    teacher: teacher
+    account: teacher,
+    accountType: 'Teacher'
   }));
+
+  const adminAccounts = admins.map(admin => ({
+    id: admin._id,
+    name: `${admin.userId?.firstName || ''} ${admin.userId?.lastName || ''}`.trim(),
+    email: admin.userId?.email || '',
+    username: admin.userId?.email ? admin.userId.email.split('@')[0] : '',
+    totalLogins: 0,
+    role: 'Admin',
+    _id: admin._id,
+    account: admin,
+    accountType: 'Admin'
+  }));
+
+  // Combine and sort by name
+  const accounts = [...teacherAccounts, ...adminAccounts].sort((a, b) => 
+    a.name.localeCompare(b.name)
+  );
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -116,28 +143,31 @@ function AdminAccountEdit() {
         console.log('View:', account);
         break;
       case 'edit':
-        // Populate form with teacher data for editing
-        const teacher = account.teacher;
-        setEditingTeacher(teacher);
+        // Populate form with account data for editing (teacher or admin)
+        const accountData = account.account;
+        setEditingAccount(accountData);
+        setEditingAccountType(account.accountType);
         setFormData({
-          firstName: teacher.userId?.firstName || '',
-          lastName: teacher.userId?.lastName || '',
-          middleName: teacher.userId?.middleName || '',
-          email: teacher.userId?.email || '',
+          firstName: accountData.userId?.firstName || '',
+          lastName: accountData.userId?.lastName || '',
+          middleName: accountData.userId?.middleName || '',
+          email: accountData.userId?.email || '',
           password: '', // Don't pre-fill password
-          role: 'Teacher',
-          status: teacher.userId?.status || 'Active',
-          employeeId: teacher.employeeId || '',
-          department: teacher.department || '',
-          position: teacher.position || '',
-          dateOfBirth: teacher.userId?.dateOfBirth ? new Date(teacher.userId.dateOfBirth).toISOString().split('T')[0] : '',
-          contactNumber: teacher.userId?.contactNumber || '',
-          address: teacher.userId?.address || ''
+          role: account.accountType,
+          status: accountData.userId?.status || 'Active',
+          employeeId: accountData.employeeId || '',
+          department: accountData.department || '',
+          position: accountData.position || '',
+          assignedOffice: accountData.assignedOffice || '',
+          dateOfBirth: accountData.userId?.dateOfBirth ? new Date(accountData.userId.dateOfBirth).toISOString().split('T')[0] : '',
+          contactNumber: accountData.userId?.contactNumber || '',
+          address: accountData.userId?.address || ''
         });
         setShowAddModal(true);
         break;
       case 'delete':
-        setTeacherToDelete(account);
+        setAccountToDelete(account);
+        setAccountToDeleteType(account.accountType);
         setShowDeleteModal(true);
         break;
       default:
@@ -150,9 +180,14 @@ function AdminAccountEdit() {
     setFormError(null);
     setSuccessMessage(null);
 
+    if (!formData.role) {
+      setFormError('Please select a role');
+      return;
+    }
+
     try {
-      if (editingTeacher) {
-        // Update existing teacher - need to update both User and Teacher records
+      if (editingAccount) {
+        // Update existing account - need to update both User and role-specific records
         const userUpdateData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -168,45 +203,70 @@ function AdminAccountEdit() {
           userUpdateData.password = formData.password;
         }
 
-        const teacherUpdateData = {
-          employeeId: formData.employeeId || undefined,
-          department: formData.department || undefined,
-          position: formData.position || undefined
-        };
-
         // Update User first
         const userResult = await dispatch(updateUser({ 
-          id: editingTeacher.userId._id, 
+          id: editingAccount.userId._id, 
           data: userUpdateData 
         }));
 
         if (updateUser.fulfilled.match(userResult)) {
-          // Then update Teacher
-          const teacherResult = await dispatch(updateTeacher({ 
-            id: editingTeacher._id, 
-            data: teacherUpdateData 
-          }));
+          // Then update role-specific record
+          if (editingAccountType === 'Teacher') {
+            const teacherUpdateData = {
+              employeeId: formData.employeeId || undefined,
+              department: formData.department || undefined,
+              position: formData.position || undefined
+            };
 
-          if (updateTeacher.fulfilled.match(teacherResult)) {
-            setSuccessMessage('Teacher updated successfully!');
-            setShowAddModal(false);
-            setEditingTeacher(null);
-            dispatch(fetchAllTeachers());
-          } else {
-            setFormError(teacherResult.payload || 'Failed to update teacher details');
+            const teacherResult = await dispatch(updateTeacher({ 
+              id: editingAccount._id, 
+              data: teacherUpdateData 
+            }));
+
+            if (updateTeacher.fulfilled.match(teacherResult)) {
+              setSuccessMessage('Teacher updated successfully!');
+              setShowAddModal(false);
+              setEditingAccount(null);
+              setEditingAccountType(null);
+              dispatch(fetchAllTeachers());
+            } else {
+              setFormError(teacherResult.payload || 'Failed to update teacher details');
+            }
+          } else if (editingAccountType === 'Admin') {
+            const adminUpdateData = {
+              employeeId: formData.employeeId || undefined,
+              department: formData.department || undefined,
+              position: formData.position || undefined,
+              assignedOffice: formData.assignedOffice || undefined
+            };
+
+            const adminResult = await dispatch(updateAdmin({ 
+              id: editingAccount._id, 
+              data: adminUpdateData 
+            }));
+
+            if (updateAdmin.fulfilled.match(adminResult)) {
+              setSuccessMessage('Admin updated successfully!');
+              setShowAddModal(false);
+              setEditingAccount(null);
+              setEditingAccountType(null);
+              dispatch(fetchAllAdmins());
+            } else {
+              setFormError(adminResult.payload || 'Failed to update admin details');
+            }
           }
         } else {
           setFormError(userResult.payload || 'Failed to update user details');
         }
       } else {
-        // Create new teacher - first create User, then Teacher
+        // Create new account - first create User, then role-specific record
         const registerData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
           middleName: formData.middleName,
           email: formData.email,
           password: formData.password,
-          role: 'Teacher',
+          role: formData.role,
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
@@ -216,22 +276,42 @@ function AdminAccountEdit() {
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          // Create Teacher record
-          const teacherData = {
-            userId: result.payload.id,
-            employeeId: formData.employeeId || undefined,
-            department: formData.department || undefined,
-            position: formData.position || undefined
-          };
+          // Create role-specific record
+          if (formData.role === 'Teacher') {
+            const teacherData = {
+              userId: result.payload.id,
+              employeeId: formData.employeeId || undefined,
+              department: formData.department || undefined,
+              position: formData.position || undefined
+            };
 
-          const createTeacherResult = await dispatch(createTeacher(teacherData));
+            const createTeacherResult = await dispatch(createTeacher(teacherData));
 
-          if (createTeacherResult.type?.includes('fulfilled')) {
-            setSuccessMessage('Teacher created successfully!');
-            setShowAddModal(false);
-            dispatch(fetchAllTeachers());
-          } else {
-            setFormError('User created but failed to create teacher record');
+            if (createTeacherResult.type?.includes('fulfilled')) {
+              setSuccessMessage('Teacher created successfully!');
+              setShowAddModal(false);
+              dispatch(fetchAllTeachers());
+            } else {
+              setFormError('User created but failed to create teacher record');
+            }
+          } else if (formData.role === 'Admin') {
+            const adminData = {
+              userId: result.payload.id,
+              employeeId: formData.employeeId || undefined,
+              department: formData.department || undefined,
+              position: formData.position || undefined,
+              assignedOffice: formData.assignedOffice || undefined
+            };
+
+            const createAdminResult = await dispatch(createAdmin(adminData));
+
+            if (createAdminResult.type?.includes('fulfilled')) {
+              setSuccessMessage('Admin created successfully!');
+              setShowAddModal(false);
+              dispatch(fetchAllAdmins());
+            } else {
+              setFormError('User created but failed to create admin record');
+            }
           }
         } else {
           setFormError(result.payload || 'Failed to create user');
@@ -245,11 +325,12 @@ function AdminAccountEdit() {
         middleName: '',
         email: '',
         password: '',
-        role: 'Teacher',
+        role: '',
         status: 'Active',
         employeeId: '',
         department: '',
         position: '',
+        assignedOffice: '',
         dateOfBirth: '',
         contactNumber: '',
         address: ''
@@ -261,7 +342,8 @@ function AdminAccountEdit() {
 
   const handleCloseModal = () => {
     setShowAddModal(false);
-    setEditingTeacher(null);
+    setEditingAccount(null);
+    setEditingAccountType(null);
     setFormError(null);
     setFormData({
       firstName: '',
@@ -269,11 +351,12 @@ function AdminAccountEdit() {
       middleName: '',
       email: '',
       password: '',
-      role: 'Teacher',
+      role: '',
       status: 'Active',
       employeeId: '',
       department: '',
       position: '',
+      assignedOffice: '',
       dateOfBirth: '',
       contactNumber: '',
       address: ''
@@ -281,38 +364,63 @@ function AdminAccountEdit() {
   };
 
   const handleConfirmDelete = async () => {
-    if (!teacherToDelete) return;
+    if (!accountToDelete) return;
 
     try {
-      // Delete teacher record first, then user
-      const teacherResult = await dispatch(deleteTeacher(teacherToDelete._id));
-      if (deleteTeacher.fulfilled.match(teacherResult)) {
-        // Also delete the associated user
-        if (teacherToDelete.teacher?.userId?._id) {
-          await dispatch(deleteUser(teacherToDelete.teacher.userId._id));
+      if (accountToDeleteType === 'Teacher') {
+        // Delete teacher record first, then user
+        const teacherResult = await dispatch(deleteTeacher(accountToDelete._id));
+        if (deleteTeacher.fulfilled.match(teacherResult)) {
+          // Also delete the associated user
+          if (accountToDelete.account?.userId?._id) {
+            await dispatch(deleteUser(accountToDelete.account.userId._id));
+          }
+          setSuccessMessage('Teacher deleted successfully!');
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+          setAccountToDeleteType(null);
+          dispatch(fetchAllTeachers());
+        } else {
+          setFormError(teacherResult.payload || 'Failed to delete teacher');
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+          setAccountToDeleteType(null);
         }
-        setSuccessMessage('Teacher deleted successfully!');
-        setShowDeleteModal(false);
-        setTeacherToDelete(null);
-        dispatch(fetchAllTeachers());
-      } else {
-        setFormError(teacherResult.payload || 'Failed to delete teacher');
-        setShowDeleteModal(false);
-        setTeacherToDelete(null);
+      } else if (accountToDeleteType === 'Admin') {
+        // Delete admin record first, then user
+        const adminResult = await dispatch(deleteAdmin(accountToDelete._id));
+        if (deleteAdmin.fulfilled.match(adminResult)) {
+          // Also delete the associated user
+          if (accountToDelete.account?.userId?._id) {
+            await dispatch(deleteUser(accountToDelete.account.userId._id));
+          }
+          setSuccessMessage('Admin deleted successfully!');
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+          setAccountToDeleteType(null);
+          dispatch(fetchAllAdmins());
+        } else {
+          setFormError(adminResult.payload || 'Failed to delete admin');
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+          setAccountToDeleteType(null);
+        }
       }
     } catch (err) {
       setFormError('An unexpected error occurred');
       setShowDeleteModal(false);
-      setTeacherToDelete(null);
+      setAccountToDelete(null);
+      setAccountToDeleteType(null);
     }
   };
 
   const handleCancelDelete = () => {
     setShowDeleteModal(false);
-    setTeacherToDelete(null);
+    setAccountToDelete(null);
+    setAccountToDeleteType(null);
   };
 
-  const title = 'Faculty Table';
+  const title = 'Faculty Table (Teachers & Admins)';
 
   return (
     <div className={styles.mainContent}>
@@ -353,11 +461,11 @@ function AdminAccountEdit() {
             <line x1="12" y1="8" x2="12" y2="16"/>
             <line x1="8" y1="12" x2="16" y2="12"/>
           </svg>
-          Add new user
+          Add new faculty member
         </button>
       </div>
 
-      {loading || usersLoading ? (
+      {loading ? (
         <div className={styles.loading}>Loading...</div>
       ) : (
         <div className={styles.tableWrapper}>
@@ -447,38 +555,31 @@ function AdminAccountEdit() {
             <button className={styles.modalClose} onClick={handleCloseModal}>
               &times;
             </button>
-            <h3>{editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}</h3>
+            <h3>{editingAccount ? `Edit ${editingAccountType}` : 'Add New Faculty Member'}</h3>
             {formError && (
               <div style={{ padding: '10px', marginBottom: '15px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px', fontSize: '14px' }}>
                 {formError}
               </div>
             )}
             <form onSubmit={handleAddUser}>
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="employeeId">Employee ID</label>
-                  <input
-                    type="text"
-                    id="employeeId"
-                    name="employeeId"
-                    value={formData.employeeId}
-                    onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
-                    placeholder="Enter employee ID"
-                  />
+              {!editingAccount && (
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="role">Role</label>
+                    <select
+                      id="role"
+                      name="role"
+                      value={formData.role}
+                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                      required
+                    >
+                      <option value="">Select Role</option>
+                      <option value="Teacher">Teacher</option>
+                      <option value="Admin">Admin</option>
+                    </select>
+                  </div>
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="department">Department</label>
-                  <input
-                    type="text"
-                    id="department"
-                    name="department"
-                    value={formData.department}
-                    onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                    placeholder="Enter department"
-                  />
-                </div>
-              </div>
-
+              )}
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
                   <label htmlFor="firstName">First Name</label>
@@ -515,18 +616,65 @@ function AdminAccountEdit() {
                     required
                   />
                 </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="position">Position</label>
-                  <input
-                    type="text"
-                    id="position"
-                    name="position"
-                    value={formData.position}
-                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                    placeholder="Enter position"
-                  />
-                </div>
               </div>
+
+              {(formData.role === 'Teacher' || formData.role === 'Admin' || editingAccount) && (
+                <>
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="employeeId">Employee ID</label>
+                      <input
+                        type="text"
+                        id="employeeId"
+                        name="employeeId"
+                        value={formData.employeeId}
+                        onChange={(e) => setFormData({ ...formData, employeeId: e.target.value })}
+                        placeholder="Enter employee ID"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="department">Department</label>
+                      <input
+                        type="text"
+                        id="department"
+                        name="department"
+                        value={formData.department}
+                        onChange={(e) => setFormData({ ...formData, department: e.target.value })}
+                        placeholder="Enter department"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="position">Position</label>
+                      <input
+                        type="text"
+                        id="position"
+                        name="position"
+                        value={formData.position}
+                        onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                        placeholder="Enter position"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+              {(formData.role === 'Admin' || editingAccountType === 'Admin') && (
+                <div className={styles.formRow}>
+                  <div className={styles.formGroup}>
+                    <label htmlFor="assignedOffice">Assigned Office</label>
+                    <input
+                      type="text"
+                      id="assignedOffice"
+                      name="assignedOffice"
+                      value={formData.assignedOffice}
+                      onChange={(e) => setFormData({ ...formData, assignedOffice: e.target.value })}
+                      placeholder="Enter assigned office"
+                    />
+                  </div>
+                </div>
+              )}
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
@@ -579,14 +727,14 @@ function AdminAccountEdit() {
 
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="password">Password {editingTeacher && '(leave blank to keep current)'}</label>
+                  <label htmlFor="password">Password {editingAccount && '(leave blank to keep current)'}</label>
                   <input
                     type="password"
                     id="password"
                     name="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    required={!editingTeacher}
+                    required={!editingAccount}
                     minLength="6"
                   />
                 </div>
@@ -620,8 +768,8 @@ function AdminAccountEdit() {
                   disabled={registerLoading || loading}
                 >
                   {registerLoading || loading 
-                    ? (editingTeacher ? 'Updating...' : 'Creating...') 
-                    : (editingTeacher ? 'Update Teacher' : 'Add Teacher')
+                    ? (editingAccount ? 'Updating...' : 'Creating...') 
+                    : (editingAccount ? `Update ${editingAccountType}` : 'Add Faculty Member')
                   }
                 </button>
               </div>
@@ -631,12 +779,12 @@ function AdminAccountEdit() {
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteModal && userToDelete && (
+      {showDeleteModal && accountToDelete && (
         <div className={styles.modal} onClick={handleCancelDelete}>
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
             <h3>Confirm Delete</h3>
             <p>
-              Are you sure you want to delete <strong>{teacherToDelete?.name}</strong>?
+              Are you sure you want to delete <strong>{accountToDelete?.name}</strong> ({accountToDeleteType})?
             </p>
             <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
               This action cannot be undone.

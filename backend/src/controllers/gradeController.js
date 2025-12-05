@@ -39,7 +39,8 @@ export const getGrades = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        // teacherId is now an array, use $in operator
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } });
         const subjectIds = teacherSubjects.map((s) => s._id);
         filter['grades.subjectId'] = { $in: subjectIds };
       } else {
@@ -104,7 +105,8 @@ export const getGrade = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        // teacherId is now an array, use $in operator
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } });
         const subjectIds = teacherSubjects.map((s) => s._id.toString());
         const hasAuthorizedSubject = grade.grades.some((g) =>
           subjectIds.includes(g.subjectId._id.toString())
@@ -165,7 +167,8 @@ export const updateGrade = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        // teacherId is now an array, use $in operator
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } });
         const subjectIds = teacherSubjects.map((s) => s._id.toString());
         const hasAuthorizedSubject = grade.grades.some((g) =>
           subjectIds.includes(g.subjectId?.toString())
@@ -216,7 +219,8 @@ export const deleteGrade = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        // teacherId is now an array, use $in operator
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } });
         const subjectIds = teacherSubjects.map((s) => s._id.toString());
         const hasAuthorizedSubject = grade.grades.some((g) =>
           subjectIds.includes(g.subjectId?.toString())

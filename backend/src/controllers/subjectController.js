@@ -18,7 +18,8 @@ export const getSubjects = async (req, res) => {
       const Teacher = (await import('../models/Teacher.js')).default;
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        filter.teacherId = teacher._id;
+        // teacherId is now an array, use $in operator
+        filter.teacherId = { $in: [teacher._id] };
       } else {
         // If teacher not found, return empty
         return res.json({
@@ -128,7 +129,16 @@ export const updateSubject = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const Teacher = (await import('../models/Teacher.js')).default;
       const teacher = await Teacher.findOne({ userId: req.user.id });
-      if (!teacher || subject.teacherId.toString() !== teacher._id.toString()) {
+      if (!teacher) {
+        return res.status(403).json({ message: 'Teacher record not found' });
+      }
+      
+      // teacherId is now an array, check if teacher._id is in the array
+      const teacherIds = Array.isArray(subject.teacherId) 
+        ? subject.teacherId.map(id => id.toString())
+        : [subject.teacherId?.toString()].filter(Boolean);
+      
+      if (!teacherIds.includes(teacher._id.toString())) {
         return res.status(403).json({ message: 'Not authorized to update this subject' });
       }
     }

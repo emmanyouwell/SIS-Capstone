@@ -6,6 +6,7 @@ import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from
 import { fetchAllUsers } from '../../store/slices/userSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
 
 function AdminMasterlistAssignTeacher() {
   const navigate = useNavigate();
@@ -22,6 +23,7 @@ function AdminMasterlistAssignTeacher() {
     (state) => state.masterlists
   );
   const { users, loading: usersLoading } = useSelector((state) => state.users);
+  const { teachers, loading: teachersLoading } = useSelector((state) => state.teachers);
   const { subjects: allSubjects, loading: subjectsLoading } = useSelector(
     (state) => state.subjects
   );
@@ -29,13 +31,14 @@ function AdminMasterlistAssignTeacher() {
 
   // Derive sections from API data
   const gradeSections = sections
-    .filter((s) => s.grade === currentGrade)
-    .map((s) => s.name)
+    .filter((s) => s.gradeLevel === currentGrade)
+    .map((s) => s.sectionName)
     .sort();
 
-    const currentMasterlist = masterlists.find(
-      (m) => m.grade === currentGrade && m.section === selectedSection
-    );
+  const currentMasterlist = masterlists.find(
+    (m) => m.grade === currentGrade && m.section === selectedSection
+  );
+  
   // Get subjects for current grade level from database
   // Merge with subjects from masterlist.subjectTeachers to ensure all subjects appear
   const masterlistSubjectIds = new Set(
@@ -45,14 +48,14 @@ function AdminMasterlistAssignTeacher() {
   );
   const subjectsFromDB = allSubjects
     .filter((s) => s.gradeLevel === currentGrade)
-    .sort((a, b) => a.name.localeCompare(b.name));
-  
+    .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+
   // Merge: subjects from DB + subjects in masterlist that might not be in DB
   const allSubjectIds = new Set([
     ...subjectsFromDB.map((s) => s._id),
     ...Array.from(masterlistSubjectIds),
   ]);
-  
+
   const subjects = Array.from(allSubjectIds)
     .map((id) => {
       const fromDB = subjectsFromDB.find((s) => s._id === id);
@@ -64,23 +67,28 @@ function AdminMasterlistAssignTeacher() {
       if (fromMasterlist) {
         return {
           _id: id,
-          name: fromMasterlist.subject?.name || 'Unknown Subject',
+          subjectName: fromMasterlist.subject?.subjectName || fromMasterlist.subject?.name || 'Unknown Subject',
           gradeLevel: currentGrade,
         };
       }
       return null;
     })
     .filter(Boolean)
-    .sort((a, b) => a.name.localeCompare(b.name));
-  const allTeachers = users
-    .filter((u) => u.role === 'Teacher' && u.status === 'Active')
-    .map((u) => ({ id: u._id, name: `${u.firstName} ${u.lastName}` }));
+    .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+  // Use teachers from Teacher model (not User model)
+  const allTeachers = teachers
+    .filter((t) => t.userId && t.userId.status === 'Active')
+    .map((t) => ({ 
+      id: t._id, // Teacher ID, not User ID
+      name: `${t.userId?.firstName || ''} ${t.userId?.lastName || ''}`.trim() || 'Unknown Teacher'
+    }));
   // Fetch masterlists, teachers, subjects, and sections for current grade
   useEffect(() => {
     dispatch(fetchMasterlists({ grade: currentGrade }));
     dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
+    dispatch(fetchAllTeachers());
     dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
-    dispatch(getAllSections({ grade: currentGrade }));
+    dispatch(getAllSections({ gradeLevel: currentGrade }));
   }, [currentGrade, dispatch]);
 
   // Initialize selected section
@@ -103,10 +111,12 @@ function AdminMasterlistAssignTeacher() {
     if (currentMasterlist?.subjectTeachers && Array.isArray(currentMasterlist.subjectTeachers)) {
       const subjectTeacherMap = {};
       currentMasterlist.subjectTeachers.forEach((st) => {
+        
         if (st.subject && st.teacher) {
           subjectTeacherMap[st.subject._id || st.subject] = st.teacher._id || st.teacher;
         }
       });
+      
       setSubjectTeachers(subjectTeacherMap);
     } else {
       setSubjectTeachers({});
@@ -135,27 +145,35 @@ function AdminMasterlistAssignTeacher() {
     }));
   };
 
+  useEffect(()=>{
+    if (subjectTeachers){
+      console.log("subjectTeachers: ", subjectTeachers);
+    }
+  },[subjectTeachers])
   const handleSave = async () => {
     if (!selectedSection) {
       showAlert('Please select a section.', 'error');
       return;
     }
 
-    if (!adviserId || adviserId === 'Assign Teacher') {
-      showAlert('Please assign an adviser before saving.', 'error');
+    // Check if either adviser or at least one subject teacher is assigned
+    const hasAdviser = adviserId && adviserId !== 'Assign Teacher' && adviserId !== '';
+    const subjectTeachersArray = Object.entries(subjectTeachers)
+      .filter(([subjectId, teacherId]) => subjectId && teacherId && teacherId !== 'Assign Teacher')
+      .map(([subjectId, teacherId]) => ({
+        subject: subjectId,
+        teacher: teacherId,
+      }));
+      
+    const hasSubjectTeachers = subjectTeachersArray.length > 0;
+
+    if (!hasAdviser && !hasSubjectTeachers) {
+      showAlert('Please assign an adviser or at least one subject teacher before saving.', 'error');
       return;
     }
 
     try {
       setSaving(true);
-
-      // Build subjectTeachers array from state
-      const subjectTeachersArray = Object.entries(subjectTeachers)
-        .filter(([subjectId, teacherId]) => subjectId && teacherId && teacherId !== 'Assign Teacher')
-        .map(([subjectId, teacherId]) => ({
-          subject: subjectId,
-          teacher: teacherId,
-        }));
 
       // Get current school year (default to current year format)
       const currentYear = new Date().getFullYear();
@@ -163,30 +181,41 @@ function AdminMasterlistAssignTeacher() {
       const schoolYear = `${currentYear}-${nextYear}`;
 
       if (!currentMasterlist) {
-        // Create new masterlist
+        // Create new masterlist when adviser or subject teachers are assigned
         const newMasterlist = await dispatch(
           createMasterlist({
             grade: currentGrade,
             section: selectedSection,
-            adviser: adviserId,
+            adviser: hasAdviser ? adviserId : null,
             subjectTeachers: subjectTeachersArray,
             schoolYear,
             students: [],
           })
         ).unwrap();
         showAlert('Masterlist created and teachers assigned successfully!', 'success');
+        // Refresh masterlists to update the UI
+        dispatch(fetchMasterlists({ grade: currentGrade }));
       } else {
         // Update existing masterlist
+        const updateData = {};
+        if (hasAdviser) {
+          updateData.adviser = adviserId;
+        } else if (adviserId === '') {
+          // Explicitly set to null if cleared
+          updateData.adviser = null;
+        }
+        // Always include subjectTeachers to ensure it replaces the existing array
+        updateData.subjectTeachers = subjectTeachersArray;
+        
         await dispatch(
           updateMasterlist({
             id: currentMasterlist._id,
-            data: {
-              adviser: adviserId,
-              subjectTeachers: subjectTeachersArray,
-            },
+            data: updateData,
           })
         ).unwrap();
         showAlert('Adviser and subject teachers updated successfully!', 'success');
+        // Refresh masterlists to update the UI
+        dispatch(fetchMasterlists({ grade: currentGrade }));
       }
     } catch (err) {
       showAlert(err || 'Failed to save changes.', 'error');
@@ -289,25 +318,25 @@ function AdminMasterlistAssignTeacher() {
             </div>
           ) : (
             subjects.map((subject) => {
-              // Get teachers assigned to this subject (backend populates with firstName, lastName)
+              // Get teachers assigned to this subject (backend populates with Teacher objects)
               const subjectTeachersList =
-                subject.teachers && Array.isArray(subject.teachers)
-                  ? subject.teachers
+                subject.teacherId && Array.isArray(subject.teacherId)
+                  ? subject.teacherId
                     .filter((teacher) => teacher != null)
                     .map((teacher) => {
                       // Handle populated teacher object or ObjectId
                       if (typeof teacher === 'object' && teacher._id) {
                         return {
-                          id: teacher._id,
-                          name: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() || 'Unknown Teacher',
+                          id: teacher._id, // Teacher ID
+                          name: `${teacher.userId?.firstName || ''} ${teacher.userId?.lastName || ''}`.trim() || 'Unknown Teacher',
                         };
                       }
-                      // If it's just an ObjectId, try to find in users list
-                      const foundUser = users.find((u) => u._id === teacher);
+                      // If it's just an ObjectId, try to find in teachers list
+                      const foundTeacher = teachers.find((t) => t._id === teacher);
                       return {
                         id: typeof teacher === 'object' ? teacher._id : teacher,
-                        name: foundUser
-                          ? `${foundUser.firstName} ${foundUser.lastName}`
+                        name: foundTeacher?.userId
+                          ? `${foundTeacher.userId.firstName} ${foundTeacher.userId.lastName}`
                           : 'Unknown Teacher',
                       };
                     })
@@ -315,7 +344,7 @@ function AdminMasterlistAssignTeacher() {
 
               return (
                 <div key={subject._id} className={styles.subjectRow}>
-                  <span>{subject.name}</span>
+                  <span>{subject.subjectName}</span>
                   <select
                     className={styles.select}
                     value={subjectTeachers[subject._id] || ''}

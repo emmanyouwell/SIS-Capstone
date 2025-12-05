@@ -13,10 +13,10 @@ const subjectSchema = new mongoose.Schema(
       min: 7,
       max: 10,
     },
-    teacherId: {
+    teacherId: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Teacher',
-    },
+    }],
     sectionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Section',

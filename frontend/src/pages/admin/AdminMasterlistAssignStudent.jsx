@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMasterlistAssignStudent.module.css';
-import { fetchMasterlists, updateMasterlist, clearError } from '../../store/slices/masterlistSlice';
-import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from '../../store/slices/masterlistSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminMasterlistAssignStudent() {
@@ -22,21 +22,21 @@ function AdminMasterlistAssignStudent() {
   const { masterlists, loading: masterlistLoading, error } = useSelector(
     (state) => state.masterlists
   );
-  const { users, loading: usersLoading } = useSelector((state) => state.users);
+  const { students, loading: studentsLoading } = useSelector((state) => state.students);
   const sections = useSelector((state) => state.section.data);
 
   // Fetch masterlists, students, and sections for current grade
   useEffect(() => {
     dispatch(fetchMasterlists({ grade: currentGrade }));
-    dispatch(fetchAllUsers({ role: 'Student', grade: currentGrade }));
-    dispatch(getAllSections({ grade: currentGrade }));
+    dispatch(fetchAllStudents({ gradeLevel: currentGrade }));
+    dispatch(getAllSections({ gradeLevel: currentGrade }));
   }, [currentGrade, dispatch]);
 
   const gradeMasterlists = masterlists.filter((m) => m.grade === currentGrade);
   // Derive sections from API data
   const gradeSections = sections
-    .filter((s) => s.grade === currentGrade)
-    .map((s) => s.name)
+    .filter((s) => s.gradeLevel === currentGrade)
+    .map((s) => s.sectionName)
     .sort();
 
   // Initialize selected section
@@ -51,7 +51,22 @@ function AdminMasterlistAssignStudent() {
     (currentMasterlist?.students || []).map((s) => (typeof s === 'object' ? s._id : s))
   );
 
-  const allStudents = users.filter((u) => u.role === 'Student' && u.grade === currentGrade);
+  // Get all students for current grade, mapping Student.userId to User data
+  const allStudents = students
+    .filter((student) => student.gradeLevel === currentGrade && student.userId)
+    .map((student) => {
+      const user = student.userId;
+      return {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        middleName: user.middleName,
+        learnerReferenceNo: student.lrn || user.learnerReferenceNo || '',
+        sex: user.sex || '',
+        sectionId: student.sectionId,
+        studentId: student._id, // Keep reference to Student document
+      };
+    });
 
   // Format student name helper
   const formatStudentName = (student) => {
@@ -105,10 +120,38 @@ function AdminMasterlistAssignStudent() {
     // Find or create masterlist for this section
     let masterlistToUpdate = currentMasterlist;
     
-    // If no masterlist exists, we need to create one or handle it
+    // Get current school year
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+    const schoolYear = `${currentYear}-${nextYear}`;
+
+    // If no masterlist exists, create one
     if (!masterlistToUpdate) {
-      alert('Masterlist not found for this section. Please ensure the section exists.');
-      return;
+      try {
+        setSaving(true);
+        const newMasterlist = await dispatch(
+          createMasterlist({
+            grade: currentGrade,
+            section: selectedSection,
+            schoolYear,
+            students: Array.from(checkedStudents),
+            adviser: null,
+            subjectTeachers: [],
+          })
+        ).unwrap();
+        masterlistToUpdate = newMasterlist;
+        setCheckedStudents(new Set());
+        alert(`Masterlist created and students successfully added to ${selectedSection}!`);
+        // Refresh masterlists
+        dispatch(fetchMasterlists({ grade: currentGrade }));
+      } catch (err) {
+        alert(err || 'Failed to create masterlist and add students');
+        setSaving(false);
+        return;
+      } finally {
+        setSaving(false);
+        return;
+      }
     }
 
     const existingIds = masterlistToUpdate.students.map((s) =>

@@ -16,7 +16,8 @@ export const getMaterials = async (req, res) => {
     if (req.user.role === 'Teacher') {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
-        const teacherSubjects = await Subject.find({ teacherId: teacher._id });
+        // teacherId is now an array, use $in operator
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } });
         const subjectIds = teacherSubjects.map((s) => s._id);
         filter.subjectId = { $in: subjectIds };
       } else {
@@ -61,7 +62,14 @@ export const getMaterial = async (req, res) => {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
         const subject = await Subject.findById(material.subjectId);
-        if (!subject || subject.teacherId.toString() !== teacher._id.toString()) {
+        if (!subject) {
+          return res.status(403).json({ message: 'Not authorized' });
+        }
+        // teacherId is now an array, check if teacher._id is in the array
+        const teacherIds = Array.isArray(subject.teacherId) 
+          ? subject.teacherId.map(id => id.toString())
+          : [subject.teacherId?.toString()].filter(Boolean);
+        if (!teacherIds.includes(teacher._id.toString())) {
           return res.status(403).json({ message: 'Not authorized' });
         }
       }
@@ -90,7 +98,14 @@ export const createMaterial = async (req, res) => {
       const teacher = await Teacher.findOne({ userId: req.user.id });
       if (teacher) {
         const subject = await Subject.findById(req.body.subjectId);
-        if (!subject || subject.teacherId.toString() !== teacher._id.toString()) {
+        if (!subject) {
+          return res.status(403).json({ message: 'Not authorized to upload material for this subject' });
+        }
+        // teacherId is now an array, check if teacher._id is in the array
+        const teacherIds = Array.isArray(subject.teacherId) 
+          ? subject.teacherId.map(id => id.toString())
+          : [subject.teacherId?.toString()].filter(Boolean);
+        if (!teacherIds.includes(teacher._id.toString())) {
           return res.status(403).json({ message: 'Not authorized to upload material for this subject' });
         }
       } else {
@@ -128,7 +143,14 @@ export const updateMaterial = async (req, res) => {
       if (teacher) {
         const subject = await Subject.findById(material.subjectId);
         const isOwnMaterial = material.uploadedById.toString() === req.user.id;
-        const isOwnSubject = subject && subject.teacherId.toString() === teacher._id.toString();
+        // teacherId is now an array, check if teacher._id is in the array
+        let isOwnSubject = false;
+        if (subject) {
+          const teacherIds = Array.isArray(subject.teacherId) 
+            ? subject.teacherId.map(id => id.toString())
+            : [subject.teacherId?.toString()].filter(Boolean);
+          isOwnSubject = teacherIds.includes(teacher._id.toString());
+        }
 
         if (!isOwnMaterial && !isOwnSubject) {
           return res.status(403).json({ message: 'Not authorized to update this material' });
@@ -171,7 +193,14 @@ export const deleteMaterial = async (req, res) => {
       if (teacher) {
         const subject = await Subject.findById(material.subjectId);
         const isOwnMaterial = material.uploadedById.toString() === req.user.id;
-        const isOwnSubject = subject && subject.teacherId.toString() === teacher._id.toString();
+        // teacherId is now an array, check if teacher._id is in the array
+        let isOwnSubject = false;
+        if (subject) {
+          const teacherIds = Array.isArray(subject.teacherId) 
+            ? subject.teacherId.map(id => id.toString())
+            : [subject.teacherId?.toString()].filter(Boolean);
+          isOwnSubject = teacherIds.includes(teacher._id.toString());
+        }
 
         if (!isOwnMaterial && !isOwnSubject) {
           return res.status(403).json({ message: 'Not authorized to delete this material' });

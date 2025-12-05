@@ -151,10 +151,14 @@ function AdminSchedule() {
     }
   }, [dispatch, currentSectionId, sectionStudents.length]);
 
-  // Update UI schedules when transformed schedules change
+  // Update UI schedules when transformed schedules change (only when not in edit mode)
   useEffect(() => {
-    setUiSchedules(transformSchedulesToUI);
-  }, [transformSchedulesToUI]);
+    // Only update if we're not in edit mode and sectionSchedules changed
+    if (!editMode) {
+      setUiSchedules(transformSchedulesToUI);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sectionSchedules, editMode]); // Depend on sectionSchedules, not the memoized object
 
   // Clear error after 5 seconds
   useEffect(() => {

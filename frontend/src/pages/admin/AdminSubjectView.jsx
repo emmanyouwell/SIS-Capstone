@@ -98,6 +98,7 @@ function AdminSubjectView() {
         createSubject({
           subjectName: subjectName,
           gradeLevel,
+          teacherId: [],
           status: 'Active',
         })
       ).unwrap();
@@ -163,9 +164,15 @@ function AdminSubjectView() {
   const handleAddTeacher = () => {
     if (!selectedTeacherId || !editingSubject) return;
 
+    // Get current teacher IDs (handle both array and single value, populated and non-populated)
+    const currentTeacherIds = Array.isArray(editingSubject.teacherId)
+      ? editingSubject.teacherId.map((t) => (typeof t === 'object' ? t._id : t))
+      : editingSubject.teacherId
+      ? [typeof editingSubject.teacherId === 'object' ? editingSubject.teacherId._id : editingSubject.teacherId]
+      : [];
+
     // Check if teacher is already assigned
-    const currentTeacherId = editingSubject.teacherId?._id || editingSubject.teacherId;
-    if (currentTeacherId === selectedTeacherId) {
+    if (currentTeacherIds.includes(selectedTeacherId)) {
       alert('Teacher is already assigned to this subject');
       return;
     }
@@ -173,9 +180,10 @@ function AdminSubjectView() {
     // Optimistic local update
     const teacher = teachers.find((t) => t._id === selectedTeacherId);
     if (teacher) {
+      const updatedTeacherIds = [...currentTeacherIds, teacher];
       const updatedSubject = {
         ...editingSubject,
-        teacherId: teacher,
+        teacherId: updatedTeacherIds,
       };
       setEditingSubject(updatedSubject);
       setLocalSubjects(
@@ -185,13 +193,26 @@ function AdminSubjectView() {
     setSelectedTeacherId('');
   };
 
-  const handleRemoveTeacher = () => {
+  const handleRemoveTeacher = (teacherIdToRemove) => {
     if (!editingSubject) return;
 
-    // Optimistic local update - clear teacher
+    // Get current teacher IDs (handle both array and single value, populated and non-populated)
+    const currentTeacherIds = Array.isArray(editingSubject.teacherId)
+      ? editingSubject.teacherId
+      : editingSubject.teacherId
+      ? [editingSubject.teacherId]
+      : [];
+
+    // Remove the specific teacher
+    const updatedTeacherIds = currentTeacherIds.filter((t) => {
+      const tId = typeof t === 'object' ? t._id : t;
+      return tId !== teacherIdToRemove;
+    });
+
+    // Optimistic local update
     const updatedSubject = {
       ...editingSubject,
-      teacherId: null,
+      teacherId: updatedTeacherIds,
     };
     setEditingSubject(updatedSubject);
     setLocalSubjects(
@@ -202,14 +223,19 @@ function AdminSubjectView() {
   const handleUpdateTeachers = async () => {
     if (!editingSubject) return;
 
-    // Extract teacher ID (handle both populated and non-populated)
-    const teacherId = editingSubject.teacherId?._id || editingSubject.teacherId || null;
+    // Extract teacher IDs as array (handle both populated and non-populated, array and single value)
+    let teacherIds = [];
+    if (Array.isArray(editingSubject.teacherId)) {
+      teacherIds = editingSubject.teacherId.map((t) => (typeof t === 'object' ? t._id : t));
+    } else if (editingSubject.teacherId) {
+      teacherIds = [typeof editingSubject.teacherId === 'object' ? editingSubject.teacherId._id : editingSubject.teacherId];
+    }
 
     try {
       await dispatch(
         updateSubject({
           id: editingSubject._id,
-          data: { teacherId },
+          data: { teacherId: teacherIds },
         })
       ).unwrap();
 
@@ -285,24 +311,58 @@ function AdminSubjectView() {
   const getAvailableTeachers = () => {
     if (!editingSubject) return teachers;
 
-    const assignedTeacherId = editingSubject.teacherId?._id || editingSubject.teacherId;
+    // Get current teacher IDs (handle both array and single value, populated and non-populated)
+    const currentTeacherIds = Array.isArray(editingSubject.teacherId)
+      ? editingSubject.teacherId.map((t) => (typeof t === 'object' ? t._id : t))
+      : editingSubject.teacherId
+      ? [typeof editingSubject.teacherId === 'object' ? editingSubject.teacherId._id : editingSubject.teacherId]
+      : [];
 
-    return teachers.filter((t) => t._id !== assignedTeacherId);
+    return teachers.filter((t) => !currentTeacherIds.includes(t._id));
   };
 
   // Format teacher name for display
   const formatTeacherName = (teacher) => {
     if (!teacher) return 'No teacher assigned';
-    if (typeof teacher === 'object') {
-      // Handle populated teacher with userId
-      if (teacher.userId) {
-        return `${teacher.userId.firstName} ${teacher.userId.lastName}`;
+    
+    // Handle string ID (shouldn't happen in normal flow, but handle gracefully)
+    if (typeof teacher === 'string') {
+      // Try to find the teacher in the teachers array
+      const foundTeacher = teachers.find((t) => t._id === teacher);
+      if (foundTeacher) {
+        return formatTeacherName(foundTeacher);
       }
-      // Handle direct teacher object
+      return 'Unknown Teacher';
+    }
+    
+    // Handle teacher object
+    if (typeof teacher === 'object') {
+      // Handle populated teacher with userId (from backend/subjects)
+      if (teacher.userId) {
+        if (typeof teacher.userId === 'object') {
+          const firstName = teacher.userId.firstName || '';
+          const lastName = teacher.userId.lastName || '';
+          if (firstName || lastName) {
+            return `${firstName} ${lastName}`.trim();
+          }
+        }
+      }
+      
+      // Handle direct teacher object (from Redux teachers array)
+      // Teachers from Redux should have userId populated, but handle both cases
       if (teacher.firstName && teacher.lastName) {
         return `${teacher.firstName} ${teacher.lastName}`;
       }
+      
+      // If we have an _id but no name, try to find it in the teachers array
+      if (teacher._id) {
+        const foundTeacher = teachers.find((t) => t._id === teacher._id);
+        if (foundTeacher) {
+          return formatTeacherName(foundTeacher);
+        }
+      }
     }
+    
     return 'Unknown Teacher';
   };
 
@@ -375,13 +435,28 @@ function AdminSubjectView() {
                   <tr key={subject._id}>
                     <td>{subject.subjectName}</td>
                     <td className={styles.teacherCell}>
-                      {subject.teacherId ? (
-                        <button className={styles.teacherPill}>
-                          {formatTeacherName(subject.teacherId)}
-                        </button>
-                      ) : (
-                        <span style={{ color: '#999', fontStyle: 'italic' }}>No teacher assigned</span>
-                      )}
+                      {(() => {
+                        // Handle both array and single value, populated and non-populated
+                        const teacherIds = Array.isArray(subject.teacherId)
+                          ? subject.teacherId
+                          : subject.teacherId
+                          ? [subject.teacherId]
+                          : [];
+
+                        if (teacherIds.length === 0) {
+                          return <span style={{ color: '#999', fontStyle: 'italic' }}>No teacher assigned</span>;
+                        }
+
+                        return (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            {teacherIds.map((teacher, index) => (
+                              <button key={index} className={styles.teacherPill}>
+                                {formatTeacherName(teacher)}
+                              </button>
+                            ))}
+                          </div>
+                        );
+                      })()}
                     </td>
                     <td>
                       <button
@@ -467,7 +542,7 @@ function AdminSubjectView() {
         <div className={styles.modalOverlay} onClick={handleCloseEditTeachersModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span>Edit Teacher for {editingSubject.subjectName}</span>
+              <span>Edit Teachers for {editingSubject.subjectName}</span>
               <button className={styles.modalClose} onClick={handleCloseEditTeachersModal}>
                 &times;
               </button>
@@ -497,21 +572,35 @@ function AdminSubjectView() {
                     </div>
                   </div>
                   <div className={styles.teachersListSection}>
-                    <label>Current Teacher:</label>
+                    <label>Current Teachers:</label>
                     <div className={styles.teachersPillsContainer}>
-                      {editingSubject.teacherId ? (
-                        <div className={styles.teacherPillEdit}>
-                          {formatTeacherName(editingSubject.teacherId)}
-                          <button
-                            className={styles.removeTeacherBtn}
-                            onClick={handleRemoveTeacher}
-                          >
-                            &#10060;
-                          </button>
-                        </div>
-                      ) : (
-                        <p style={{ color: '#999', fontStyle: 'italic' }}>No teacher assigned</p>
-                      )}
+                      {(() => {
+                        // Handle both array and single value, populated and non-populated
+                        const teacherIds = Array.isArray(editingSubject.teacherId)
+                          ? editingSubject.teacherId
+                          : editingSubject.teacherId
+                          ? [editingSubject.teacherId]
+                          : [];
+
+                        if (teacherIds.length === 0) {
+                          return <p style={{ color: '#999', fontStyle: 'italic' }}>No teachers assigned</p>;
+                        }
+
+                        return teacherIds.map((teacher, index) => {
+                          const teacherId = typeof teacher === 'object' ? teacher._id : teacher;
+                          return (
+                            <div key={index} className={styles.teacherPillEdit}>
+                              {formatTeacherName(teacher)}
+                              <button
+                                className={styles.removeTeacherBtn}
+                                onClick={() => handleRemoveTeacher(teacherId)}
+                              >
+                                &#10060;
+                              </button>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   </div>
                 </>
