@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchGrades, updateGrade, createGrade } from '../../store/slices/gradeSlice';
 import styles from './AdminGradeView.module.css';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
 
 const ADMIN_PASSWORD = '12345';
 
@@ -13,6 +14,7 @@ function AdminGradeView() {
   const dispatch = useDispatch();
   const { grades, loading, error } = useSelector((state) => state.grades);
   const { subjects: subjectList } = useSelector((state) => state.subjects);
+  const { students: allStudents } = useSelector((state) => state.students);
   const [availableSubjects, setAvailableSubjects] = useState([]);
   const [activeTab, setActiveTab] = useState('students');
   const [searchTerm, setSearchTerm] = useState('');
@@ -30,9 +32,10 @@ function AdminGradeView() {
 
   useEffect(() => {
     if (!Number.isNaN(gradeNumber)) {
-      // Backend getGrades now returns an array of { student, gradeRecord }
+      // Fetch grades, subjects, and all students for this grade level
       dispatch(fetchGrades({ gradeLevel: gradeNumber }));
-      dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }))
+      dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }));
+      dispatch(fetchAllStudents({ gradeLevel: gradeNumber }));
     }
   }, [dispatch, gradeNumber]);
 
@@ -42,10 +45,29 @@ function AdminGradeView() {
     }
   }, [subjectList])
  
-  // Build per-student rows from grades array (new structure: grade has studentId ref)
+  // Build a map of student IDs to their grade records for quick lookup
+  const gradeMap = useMemo(() => {
+    const map = new Map();
+    grades.forEach((gradeRecord) => {
+      const studentId = gradeRecord.studentId?._id?.toString() || gradeRecord.studentId?.toString();
+      if (studentId) {
+        map.set(studentId, gradeRecord);
+      }
+    });
+    return map;
+  }, [grades]);
+
+  // Build per-student rows: merge all students with their grade records (if any)
   const students = useMemo(() => {
-    return grades.map((gradeRecord) => {
-      const student = gradeRecord.studentId;
+    // Get all students for this grade level
+    const studentsForGrade = allStudents.filter(
+      (student) => student.gradeLevel === gradeNumber && student.userId
+    );
+
+    // Map each student to a row, including grade record if it exists
+    return studentsForGrade.map((student) => {
+      const studentId = student._id?.toString();
+      const gradeRecord = gradeMap.get(studentId) || null;
       const studentUser = student?.userId || {};
 
       const name = studentUser.firstName && studentUser.lastName
@@ -61,7 +83,7 @@ function AdminGradeView() {
       const gradeLevelValue = student?.gradeLevel || gradeNumber;
 
       return {
-        id: student?._id || gradeRecord?._id,
+        id: student._id,
         name,
         lrn: student?.lrn || '-',
         grade: gradeLevelValue,
@@ -71,7 +93,7 @@ function AdminGradeView() {
         gradeRecord,
       };
     });
-  }, [grades, gradeNumber]);
+  }, [allStudents, gradeMap, gradeNumber]);
 
   const filteredStudents = useMemo(() => {
     let list = students;
@@ -100,6 +122,24 @@ function AdminGradeView() {
     });
   };
   const subjects = useMemo(() => {
+    if (!selectedGrade?.student) return [];
+
+    const student = selectedGrade.student;
+    const studentSectionId = student?.sectionId?._id?.toString() || student?.sectionId?.toString();
+    const studentGradeLevel = student?.gradeLevel || gradeNumber;
+
+    // Filter subjects by grade level and section (if section is available)
+    let relevantSubjects = availableSubjects.filter((subj) => {
+      if (subj.gradeLevel !== studentGradeLevel) return false;
+      // If student has a section, filter by section; otherwise show all subjects for grade level
+      if (studentSectionId && subj.sectionId) {
+        const subjectSectionId = subj.sectionId?._id?.toString() || subj.sectionId?.toString();
+        return subjectSectionId === studentSectionId;
+      }
+      // If no section filter, show all subjects for the grade level
+      return true;
+    });
+
     // Extract existing grade entries (new structure: grades is array with subjectId)
     const existingGrades = selectedGrade?.gradeRecord?.grades || [];
 
@@ -108,8 +148,36 @@ function AdminGradeView() {
       existingGrades.map((g) => [g.subjectId?._id?.toString() || g.subjectId?.toString(), g])
     );
 
-    // Always return ALL available subjects
-    return availableSubjects.map((subj) => {
+    // Build a set of subject IDs that have grades
+    const gradedSubjectIds = new Set(
+      existingGrades.map((g) => g.subjectId?._id?.toString() || g.subjectId?.toString())
+    );
+
+    // Get all subject IDs from the relevant subjects
+    const relevantSubjectIds = new Set(
+      relevantSubjects.map((subj) => subj._id?.toString())
+    );
+
+    // Find subjects that have grades but are not in the relevant subjects list (from different section)
+    // These should be included to show partial grades
+    const gradedSubjectsNotInRelevant = existingGrades
+      .filter((g) => {
+        const subjectId = g.subjectId?._id?.toString() || g.subjectId?.toString();
+        return !relevantSubjectIds.has(subjectId);
+      })
+      .map((g) => {
+        const subject = g.subjectId;
+        return {
+          subject: subject,
+          q1: g.q1 ?? 0,
+          q2: g.q2 ?? 0,
+          q3: g.q3 ?? 0,
+          q4: g.q4 ?? 0,
+        };
+      });
+
+    // Map relevant subjects: merge with grades if they exist, otherwise use placeholder
+    const mappedRelevantSubjects = relevantSubjects.map((subj) => {
       const id = subj._id?.toString();
 
       // If this subject already has a grade entry, merge it
@@ -124,7 +192,7 @@ function AdminGradeView() {
         };
       }
 
-      // Otherwise return a placeholder row for new subjects
+      // Otherwise return a placeholder row for new subjects (default to 0)
       return {
         subject: subj,
         q1: 0,
@@ -133,17 +201,21 @@ function AdminGradeView() {
         q4: 0,
       };
     });
-  }, [selectedGrade, availableSubjects]);
+
+    // Combine: relevant subjects (with or without grades) + graded subjects from other sections
+    return [...mappedRelevantSubjects, ...gradedSubjectsNotInRelevant];
+  }, [selectedGrade, availableSubjects, gradeNumber]);
 
 
   const handleEditSubject = (index) => {
     const subjectGrade = subjects[index];
     setEditingSubjectIndex(index);
+    // Convert to string for input fields, use empty string if null/undefined, but keep 0 as '0'
     setEditGrades({
-      q1: subjectGrade?.q1 ?? '',
-      q2: subjectGrade?.q2 ?? '',
-      q3: subjectGrade?.q3 ?? '',
-      q4: subjectGrade?.q4 ?? '',
+      q1: subjectGrade?.q1 !== undefined && subjectGrade?.q1 !== null ? String(subjectGrade.q1) : '',
+      q2: subjectGrade?.q2 !== undefined && subjectGrade?.q2 !== null ? String(subjectGrade.q2) : '',
+      q3: subjectGrade?.q3 !== undefined && subjectGrade?.q3 !== null ? String(subjectGrade.q3) : '',
+      q4: subjectGrade?.q4 !== undefined && subjectGrade?.q4 !== null ? String(subjectGrade.q4) : '',
     });
     setShowPasswordModal(true);
     setPassword('');
@@ -162,7 +234,7 @@ function AdminGradeView() {
     }
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const q1 = parseInt(editGrades.q1, 10);
     const q2 = parseInt(editGrades.q2, 10);
     const q3 = parseInt(editGrades.q3, 10);
@@ -205,33 +277,49 @@ function AdminGradeView() {
         q4: s.q4,
       }));
 
-    // If there is already a gradeRecord, update it; otherwise create a new one
-    if (selectedGrade.gradeRecord) {
-      dispatch(
-        updateGrade({
-          id: selectedGrade.gradeRecord._id,
-          data: {
+    try {
+      let updatedGradeRecord;
+      
+      // If there is already a gradeRecord, update it; otherwise create a new one
+      if (selectedGrade.gradeRecord) {
+        const result = await dispatch(
+          updateGrade({
+            id: selectedGrade.gradeRecord._id,
+            data: {
+              grades: gradesPayload,
+            },
+          })
+        ).unwrap();
+        updatedGradeRecord = result;
+      } else {
+        // Create new grade record with studentId
+        const result = await dispatch(
+          createGrade({
+            studentId: selectedGrade.student._id,
             grades: gradesPayload,
-          },
-        })
-      );
-    } else {
-      // Create new grade record with studentId
-      dispatch(
-        createGrade({
-          studentId: selectedGrade.student._id,
-          grades: gradesPayload,
-        })
-      );
-    }
+          })
+        ).unwrap();
+        updatedGradeRecord = result;
+      }
 
-    setShowEditModal(false);
-    setEditingSubjectIndex(null);
-    setEditError('');
-    if (!Number.isNaN(gradeNumber)) {
-      // Backend getGrades now returns an array of { student, gradeRecord }
-      dispatch(fetchGrades({ gradeLevel: gradeNumber }));
-      dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }))
+      // Update the modal with the new grade record
+      setSelectedGrade({
+        student: selectedGrade.student,
+        gradeRecord: updatedGradeRecord,
+      });
+
+      setShowEditModal(false);
+      setEditingSubjectIndex(null);
+      setEditError('');
+
+      // Refresh grades, subjects, and students after saving
+      if (!Number.isNaN(gradeNumber)) {
+        dispatch(fetchGrades({ gradeLevel: gradeNumber }));
+        dispatch(fetchAllSubjects({ gradeLevel: gradeNumber }));
+        dispatch(fetchAllStudents({ gradeLevel: gradeNumber }));
+      }
+    } catch (error) {
+      setEditError(error.message || 'Failed to save grades. Please try again.');
     }
   };
 
@@ -246,9 +334,11 @@ function AdminGradeView() {
 
   const calculateOverallFinal = () => {
     if (!selectedGrade || !selectedGrade.gradeRecord) return null;
+    // Use the saved finalGrade from database if available (it's calculated by backend)
     if (typeof selectedGrade.gradeRecord.finalGrade === 'number') {
       return Math.round(selectedGrade.gradeRecord.finalGrade);
     }
+    // Fallback: calculate from current subjects if finalGrade is not set
     const finals = subjects
       .map((s) => calculateSubjectFinal(s))
       .filter((v) => typeof v === 'number');
@@ -419,13 +509,19 @@ function AdminGradeView() {
               <tbody>
                 {subjects.map((s, index) => {
                   const final = calculateSubjectFinal(s);
+                  const subjectName = s.subject?.subjectName || s.subject?.name || 'N/A';
+                  // Display 0 as placeholder, '-' only if truly undefined/null
+                  const displayQ1 = s.q1 !== undefined && s.q1 !== null ? s.q1 : '-';
+                  const displayQ2 = s.q2 !== undefined && s.q2 !== null ? s.q2 : '-';
+                  const displayQ3 = s.q3 !== undefined && s.q3 !== null ? s.q3 : '-';
+                  const displayQ4 = s.q4 !== undefined && s.q4 !== null ? s.q4 : '-';
                   return (
-                    <tr key={s._id || index}>
-                      <td>{s.subject?.name || 'N/A'}</td>
-                      <td>{s.q1 ?? '-'}</td>
-                      <td>{s.q2 ?? '-'}</td>
-                      <td>{s.q3 ?? '-'}</td>
-                      <td>{s.q4 ?? '-'}</td>
+                    <tr key={s.subject?._id || index}>
+                      <td>{subjectName}</td>
+                      <td>{displayQ1}</td>
+                      <td>{displayQ2}</td>
+                      <td>{displayQ3}</td>
+                      <td>{displayQ4}</td>
                       <td>{final !== null ? final : '-'}</td>
                       <td>
                         <button

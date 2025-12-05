@@ -182,18 +182,29 @@ export const updateGrade = async (req, res) => {
       }
     }
 
-    grade = await Grade.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
-      .populate({
-        path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email',
-        },
-      })
-      .populate('grades.subjectId', 'subjectName gradeLevel');
+    // Update the grade document fields
+    if (req.body.grades !== undefined) {
+      grade.grades = req.body.grades;
+    }
+    if (req.body.remarks !== undefined) {
+      grade.remarks = req.body.remarks;
+    }
+    if (req.body.comment !== undefined) {
+      grade.comment = req.body.comment;
+    }
+
+    // Save the document to trigger pre('save') hook which recalculates finalGrade
+    await grade.save();
+
+    // Populate and return the updated grade
+    await grade.populate({
+      path: 'studentId',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName middleName email',
+      },
+    });
+    await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
     res.json({
       success: true,
