@@ -2,11 +2,6 @@ import mongoose from 'mongoose';
 
 const scheduleSchema = new mongoose.Schema(
   {
-    studentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Student',
-      required: true,
-    },
     sectionId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Section',
@@ -15,6 +10,7 @@ const scheduleSchema = new mongoose.Schema(
     subjectId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Subject',
+      required: true,
     },
     day: {
       type: String,
@@ -36,10 +32,10 @@ const scheduleSchema = new mongoose.Schema(
 );
 
 // Indexes for better query performance
-scheduleSchema.index({ studentId: 1 });
 scheduleSchema.index({ sectionId: 1 });
 scheduleSchema.index({ subjectId: 1 });
 scheduleSchema.index({ day: 1 });
+scheduleSchema.index({ sectionId: 1, subjectId: 1, day: 1 }); // Compound index for efficient queries
 
 export default mongoose.model('Schedule', scheduleSchema);
 

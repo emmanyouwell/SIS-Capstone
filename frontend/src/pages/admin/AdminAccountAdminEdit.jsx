@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
-import { fetchAllAdmins, updateAdmin, deleteAdmin, createAdmin } from '../../store/slices/adminSlice';
+import { fetchAllAdmins, updateAdmin, deleteAdmin } from '../../store/slices/adminSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 
@@ -189,7 +189,7 @@ function AdminAccountAdminEdit() {
           setFormError(userResult.payload || 'Failed to update user details');
         }
       } else {
-        // Create new admin - first create User, then Admin
+        // Create new admin - register handles User and Admin record creation atomically
         const registerData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -200,32 +200,22 @@ function AdminAccountAdminEdit() {
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
-          address: formData.address || undefined
+          address: formData.address || undefined,
+          // Role-specific data (register controller handles creation of Admin document)
+          employeeId: formData.employeeId || undefined,
+          position: formData.position || undefined,
+          department: formData.department || undefined,
+          assignedOffice: formData.assignedOffice || undefined
         };
 
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          // Create Admin record
-          const adminData = {
-            userId: result.payload.id,
-            employeeId: formData.employeeId || undefined,
-            position: formData.position || undefined,
-            department: formData.department || undefined,
-            assignedOffice: formData.assignedOffice || undefined
-          };
-
-          const createAdminResult = await dispatch(createAdmin(adminData));
-
-          if (createAdmin.fulfilled.match(createAdminResult)) {
-            setSuccessMessage('Admin created successfully!');
-            setShowAddModal(false);
-            dispatch(fetchAllAdmins());
-          } else {
-            setFormError('User created but failed to create admin record');
-          }
+          setSuccessMessage('Admin created successfully!');
+          setShowAddModal(false);
+          dispatch(fetchAllAdmins());
         } else {
-          setFormError(result.payload || 'Failed to create user');
+          setFormError(result.payload || 'Failed to create admin');
         }
       }
 

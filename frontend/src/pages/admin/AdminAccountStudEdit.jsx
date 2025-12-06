@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudEdit.module.css';
-import { fetchAllStudents, updateStudent, deleteStudent, createStudent } from '../../store/slices/studentSlice';
+import { fetchAllStudents, updateStudent, deleteStudent } from '../../store/slices/studentSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
@@ -268,7 +268,7 @@ function AdminAccountStudEdit() {
           setFormError(userResult.payload || 'Failed to update user details');
         }
       } else {
-        // Create new student - first create User, then Student
+        // Create new student - register handles User and Student record creation atomically
         const registerData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -279,34 +279,24 @@ function AdminAccountStudEdit() {
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
-          address: formData.address || undefined
+          address: formData.address || undefined,
+          // Role-specific data (register controller handles creation of Student document)
+          lrn: formData.lrn || undefined,
+          gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
+          sectionId: formData.sectionId || undefined,
+          guardianName: formData.guardianName || undefined,
+          guardianContact: formData.guardianContact || undefined
         };
 
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          // Create Student record
-          const studentData = {
-            userId: result.payload.id,
-            lrn: formData.lrn || undefined,
-            gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
-            sectionId: formData.sectionId || undefined,
-            guardianName: formData.guardianName || undefined,
-            guardianContact: formData.guardianContact || undefined
-          };
-
-          const createStudentResult = await dispatch(createStudent(studentData));
-
-          if (createStudent.fulfilled.match(createStudentResult)) {
-            setSuccessMessage('Student created successfully!');
-            setShowModal(false);
-            resetForm();
-            dispatch(fetchAllStudents());
-          } else {
-            setFormError('User created but failed to create student record');
-          }
+          setSuccessMessage('Student created successfully!');
+          setShowModal(false);
+          resetForm();
+          dispatch(fetchAllStudents());
         } else {
-          setFormError(result.payload || 'Failed to create user');
+          setFormError(result.payload || 'Failed to create student');
         }
       }
     } catch (err) {

@@ -14,7 +14,13 @@ export const getMasterlists = async (req, res) => {
 
     const masterlists = await Masterlist.find(filter)
       .populate('students', 'firstName lastName learnerReferenceNo grade section sex')
-      .populate('adviser', 'firstName lastName email')
+      .populate({
+        path: 'adviser',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .populate('subjectTeachers.subject', 'subjectName gradeLevel')
       .populate({
         path: 'subjectTeachers.teacher',
@@ -42,7 +48,13 @@ export const getMasterlist = async (req, res) => {
   try {
     const masterlist = await Masterlist.findById(req.params.id)
       .populate('students', 'firstName lastName learnerReferenceNo grade section')
-      .populate('adviser', 'firstName lastName email')
+      .populate({
+        path: 'adviser',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .populate('subjectTeachers.subject', 'subjectName gradeLevel')
       .populate({
         path: 'subjectTeachers.teacher',
@@ -72,7 +84,13 @@ export const createMasterlist = async (req, res) => {
   try {
     const masterlist = await Masterlist.create(req.body);
     await masterlist.populate('students', 'firstName lastName learnerReferenceNo');
-    await masterlist.populate('adviser', 'firstName lastName email');
+    await masterlist.populate({
+      path: 'adviser',
+      populate: {
+        path: 'userId',
+        select: 'firstName lastName email'
+      }
+    });
     await masterlist.populate('subjectTeachers.subject', 'subjectName gradeLevel');
     await masterlist.populate({
       path: 'subjectTeachers.teacher',
@@ -101,7 +119,13 @@ export const updateMasterlist = async (req, res) => {
       runValidators: true,
     })
       .populate('students', 'firstName lastName learnerReferenceNo grade section')
-      .populate('adviser', 'firstName lastName email')
+      .populate({
+        path: 'adviser',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName email'
+        }
+      })
       .populate('subjectTeachers.subject', 'subjectName gradeLevel')
       .populate({
         path: 'subjectTeachers.teacher',

@@ -87,8 +87,8 @@ function AdminMasterlistGradeView() {
   const activeSections = sectionsList.length;
   const classAverage = 85; // Still a placeholder until backend provides this
 
-  const currentAdviser = currentMasterlist?.adviser
-    ? `${currentMasterlist.adviser.lastName}, ${currentMasterlist.adviser.firstName}`
+  const currentAdviser = currentMasterlist?.adviser?.userId
+    ? `${currentMasterlist.adviser.userId.lastName}, ${currentMasterlist.adviser.userId.firstName}`
     : 'N/A';
 
   const handleSectionChange = (e) => {

@@ -20,7 +20,7 @@ const masterlistSchema = new mongoose.Schema(
     ],
     adviser: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Teacher',
     },
     schoolYear: {
       type: String,

@@ -1,23 +1,64 @@
 import Schedule from '../models/Schedule.js';
 import Student from '../models/Student.js';
+import Teacher from '../models/Teacher.js';
+import Subject from '../models/Subject.js';
 
 // @desc    Get all schedules
 // @route   GET /api/v1/schedules
 // @access  Private
 export const getSchedules = async (req, res) => {
   try {
-    const { studentId, sectionId, day } = req.query;
+    const { sectionId, subjectId, day } = req.query;
     const filter = {};
 
-    if (studentId) filter.studentId = studentId;
     if (sectionId) filter.sectionId = sectionId;
+    if (subjectId) filter.subjectId = subjectId;
     if (day) filter.day = day;
 
-    // Students see only their own schedule
+    // Students see schedules for their section and enrolled subjects
     if (req.user.role === 'Student') {
-      const student = await Student.findOne({ userId: req.user.id });
-      if (student) {
-        filter.studentId = student._id;
+      const student = await Student.findOne({ userId: req.user.id }).populate('subjects.subjectId');
+      if (student && student.sectionId) {
+        filter.sectionId = student.sectionId;
+        // Filter by subjects the student is enrolled in
+        if (student.subjects && student.subjects.length > 0) {
+          const enrolledSubjectIds = student.subjects.map((s) => s.subjectId._id || s.subjectId);
+          filter.subjectId = { $in: enrolledSubjectIds };
+        } else {
+          // If student has no enrolled subjects, return empty
+          return res.json({
+            success: true,
+            count: 0,
+            data: [],
+          });
+        }
+      } else {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
+    }
+
+    // Teachers see schedules for subjects they teach
+    if (req.user.role === 'Teacher') {
+      const teacher = await Teacher.findOne({ userId: req.user.id });
+      if (teacher) {
+        // Get all subjects taught by this teacher (teacherId is an array)
+        const teacherSubjects = await Subject.find({ teacherId: { $in: [teacher._id] } }).select('_id');
+        const subjectIds = teacherSubjects.map((s) => s._id);
+        
+        if (subjectIds.length > 0) {
+          filter.subjectId = { $in: subjectIds };
+        } else {
+          // If teacher has no subjects, return empty
+          return res.json({
+            success: true,
+            count: 0,
+            data: [],
+          });
+        }
       } else {
         return res.json({
           success: true,
@@ -28,13 +69,6 @@ export const getSchedules = async (req, res) => {
     }
 
     const schedules = await Schedule.find(filter)
-      .populate({
-        path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email',
-        },
-      })
       .populate('sectionId', 'sectionName gradeLevel')
       .populate({
         path: 'subjectId',
@@ -64,13 +98,6 @@ export const getSchedules = async (req, res) => {
 export const getSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.findById(req.params.id)
-      .populate({
-        path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email',
-        },
-      })
       .populate('sectionId', 'sectionName gradeLevel')
       .populate({
         path: 'subjectId',
@@ -102,13 +129,6 @@ export const getSchedule = async (req, res) => {
 export const createSchedule = async (req, res) => {
   try {
     const schedule = await Schedule.create(req.body);
-    await schedule.populate({
-      path: 'studentId',
-      populate: {
-        path: 'userId',
-        select: 'firstName lastName middleName email',
-      },
-    });
     await schedule.populate('sectionId', 'sectionName gradeLevel');
     await schedule.populate({
       path: 'subjectId',
@@ -139,13 +159,6 @@ export const updateSchedule = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate({
-        path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email',
-        },
-      })
       .populate('sectionId', 'sectionName gradeLevel')
       .populate({
         path: 'subjectId',

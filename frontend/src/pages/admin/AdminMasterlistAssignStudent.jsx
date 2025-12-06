@@ -214,8 +214,8 @@ function AdminMasterlistAssignStudent() {
   });
 
   const currentSections = gradeSections || [];
-  const currentAdviser = currentMasterlist?.adviser
-    ? `${currentMasterlist.adviser.lastName}, ${currentMasterlist.adviser.firstName}`
+  const currentAdviser = currentMasterlist?.adviser?.userId
+    ? `${currentMasterlist.adviser.userId.lastName}, ${currentMasterlist.adviser.userId.firstName}`
     : 'N/A';
 
   const handleShare = async () => {

@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
-import { fetchAllTeachers, updateTeacher, deleteTeacher, createTeacher } from '../../store/slices/teacherSlice';
-import { fetchAllAdmins, updateAdmin, deleteAdmin, createAdmin } from '../../store/slices/adminSlice';
+import { fetchAllTeachers, updateTeacher, deleteTeacher } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins, updateAdmin, deleteAdmin } from '../../store/slices/adminSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
@@ -33,6 +33,9 @@ function AdminAccountEdit() {
     department: '',
     position: '',
     assignedOffice: '', // Admin only
+    teachingLoad: '', // Teacher only
+    emergencyContactName: '', // Teacher only
+    emergencyContactNumber: '', // Teacher only
     dateOfBirth: '',
     contactNumber: '',
     address: ''
@@ -159,6 +162,9 @@ function AdminAccountEdit() {
           department: accountData.department || '',
           position: accountData.position || '',
           assignedOffice: accountData.assignedOffice || '',
+          teachingLoad: accountData.teachingLoad || '',
+          emergencyContactName: accountData.emergencyContactName || '',
+          emergencyContactNumber: accountData.emergencyContactNumber || '',
           dateOfBirth: accountData.userId?.dateOfBirth ? new Date(accountData.userId.dateOfBirth).toISOString().split('T')[0] : '',
           contactNumber: accountData.userId?.contactNumber || '',
           address: accountData.userId?.address || ''
@@ -215,7 +221,10 @@ function AdminAccountEdit() {
             const teacherUpdateData = {
               employeeId: formData.employeeId || undefined,
               department: formData.department || undefined,
-              position: formData.position || undefined
+              position: formData.position || undefined,
+              teachingLoad: formData.teachingLoad ? parseInt(formData.teachingLoad, 10) : undefined,
+              emergencyContactName: formData.emergencyContactName || undefined,
+              emergencyContactNumber: formData.emergencyContactNumber || undefined
             };
 
             const teacherResult = await dispatch(updateTeacher({ 
@@ -259,7 +268,7 @@ function AdminAccountEdit() {
           setFormError(userResult.payload || 'Failed to update user details');
         }
       } else {
-        // Create new account - first create User, then role-specific record
+        // Create new account - register handles User and role-specific record creation atomically
         const registerData = {
           firstName: formData.firstName,
           lastName: formData.lastName,
@@ -270,51 +279,30 @@ function AdminAccountEdit() {
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
-          address: formData.address || undefined
+          address: formData.address || undefined,
+          // Role-specific data (register controller handles creation of Teacher/Admin documents)
+          employeeId: formData.employeeId || undefined,
+          department: formData.department || undefined,
+          position: formData.position || undefined,
+          assignedOffice: formData.role === 'Admin' ? (formData.assignedOffice || undefined) : undefined,
+          teachingLoad: formData.role === 'Teacher' && formData.teachingLoad ? parseInt(formData.teachingLoad, 10) : undefined,
+          emergencyContactName: formData.role === 'Teacher' ? (formData.emergencyContactName || undefined) : undefined,
+          emergencyContactNumber: formData.role === 'Teacher' ? (formData.emergencyContactNumber || undefined) : undefined
         };
 
         const result = await dispatch(register(registerData));
 
         if (register.fulfilled.match(result)) {
-          // Create role-specific record
+          setSuccessMessage(`${formData.role} created successfully!`);
+          setShowAddModal(false);
+          // Refresh the appropriate list
           if (formData.role === 'Teacher') {
-            const teacherData = {
-              userId: result.payload.id,
-              employeeId: formData.employeeId || undefined,
-              department: formData.department || undefined,
-              position: formData.position || undefined
-            };
-
-            const createTeacherResult = await dispatch(createTeacher(teacherData));
-
-            if (createTeacherResult.type?.includes('fulfilled')) {
-              setSuccessMessage('Teacher created successfully!');
-              setShowAddModal(false);
-              dispatch(fetchAllTeachers());
-            } else {
-              setFormError('User created but failed to create teacher record');
-            }
+            dispatch(fetchAllTeachers());
           } else if (formData.role === 'Admin') {
-            const adminData = {
-              userId: result.payload.id,
-              employeeId: formData.employeeId || undefined,
-              department: formData.department || undefined,
-              position: formData.position || undefined,
-              assignedOffice: formData.assignedOffice || undefined
-            };
-
-            const createAdminResult = await dispatch(createAdmin(adminData));
-
-            if (createAdminResult.type?.includes('fulfilled')) {
-              setSuccessMessage('Admin created successfully!');
-              setShowAddModal(false);
-              dispatch(fetchAllAdmins());
-            } else {
-              setFormError('User created but failed to create admin record');
-            }
+            dispatch(fetchAllAdmins());
           }
         } else {
-          setFormError(result.payload || 'Failed to create user');
+          setFormError(result.payload || 'Failed to create account');
         }
       }
 
@@ -331,6 +319,9 @@ function AdminAccountEdit() {
         department: '',
         position: '',
         assignedOffice: '',
+        teachingLoad: '',
+        emergencyContactName: '',
+        emergencyContactNumber: '',
         dateOfBirth: '',
         contactNumber: '',
         address: ''
@@ -357,6 +348,9 @@ function AdminAccountEdit() {
       department: '',
       position: '',
       assignedOffice: '',
+      teachingLoad: '',
+      emergencyContactName: '',
+      emergencyContactNumber: '',
       dateOfBirth: '',
       contactNumber: '',
       address: ''
@@ -655,6 +649,43 @@ function AdminAccountEdit() {
                         value={formData.position}
                         onChange={(e) => setFormData({ ...formData, position: e.target.value })}
                         placeholder="Enter position"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="teachingLoad">Teaching Load</label>
+                      <input
+                        type="number"
+                        id="teachingLoad"
+                        name="teachingLoad"
+                        value={formData.teachingLoad}
+                        onChange={(e) => setFormData({ ...formData, teachingLoad: e.target.value })}
+                        placeholder="Enter teaching load"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="emergencyContactName">Emergency Contact Name</label>
+                      <input
+                        type="text"
+                        id="emergencyContactName"
+                        name="emergencyContactName"
+                        value={formData.emergencyContactName}
+                        onChange={(e) => setFormData({ ...formData, emergencyContactName: e.target.value })}
+                        placeholder="Enter emergency contact name"
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label htmlFor="emergencyContactNumber">Emergency Contact Number</label>
+                      <input
+                        type="text"
+                        id="emergencyContactNumber"
+                        name="emergencyContactNumber"
+                        value={formData.emergencyContactNumber}
+                        onChange={(e) => setFormData({ ...formData, emergencyContactNumber: e.target.value })}
+                        placeholder="Enter emergency contact number"
                       />
                     </div>
                   </div>

@@ -156,6 +156,20 @@
   font-size: 1.1rem;
 }
 
+.subjectName {
+  font-weight: 600;
+  color: #184d27;
+  margin-bottom: 4px;
+}
+
+.teacherName {
+  font-size: 0.85rem;
+  color: #666;
+  font-weight: 400;
+  font-style: italic;
+  margin-top: 2px;
+}
+
 .subjectDropdown,
 .teacherDropdown {
   width: 100%;

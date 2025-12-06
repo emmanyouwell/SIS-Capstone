@@ -11,6 +11,7 @@ import {
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchMasterlists } from '../../store/slices/masterlistSlice';
 
 function AdminSchedule() {
   const dispatch = useDispatch();
@@ -20,6 +21,7 @@ function AdminSchedule() {
   const { subjects } = useSelector((state) => state.subjects);
   const { students } = useSelector((state) => state.students);
   const { data: sections } = useSelector((state) => state.section);
+  const { masterlists } = useSelector((state) => state.masterlists);
 
   const times = [
     '7:00-8:00 AM',
@@ -55,19 +57,22 @@ function AdminSchedule() {
     return sections.find((s) => s._id?.toString() === currentSectionId?.toString());
   }, [sections, currentSectionId]);
 
-  // Get schedules for current section students
+  // Get masterlist for current section
+  const currentMasterlist = useMemo(() => {
+    if (!currentSection) return null;
+    return masterlists.find(
+      (m) => m.grade === currentGrade && m.section === currentSection.sectionName
+    );
+  }, [masterlists, currentGrade, currentSection]);
+
+  // Get schedules for current section
   const sectionSchedules = useMemo(() => {
-    if (!currentSectionId || sectionStudents.length === 0) return [];
-    const studentIds = sectionStudents.map((s) => s._id.toString());
+    if (!currentSectionId) return [];
     return allSchedules.filter((schedule) => {
-      const scheduleStudentId = schedule.studentId?._id?.toString() || schedule.studentId?.toString();
       const scheduleSectionId = schedule.sectionId?._id?.toString() || schedule.sectionId?.toString();
-      return (
-        studentIds.includes(scheduleStudentId) &&
-        scheduleSectionId === currentSectionId.toString()
-      );
+      return scheduleSectionId === currentSectionId.toString();
     });
-  }, [allSchedules, sectionStudents, currentSectionId]);
+  }, [allSchedules, currentSectionId]);
 
   // Transform schedules to UI structure (grouped by time and day)
   const transformSchedulesToUI = useMemo(() => {
@@ -88,21 +93,37 @@ function AdminSchedule() {
 
         if (matchingSchedule) {
           const subject = matchingSchedule.subjectId;
-          const teacher = subject?.teacherId?.userId;
+          const subjectId = subject?._id || subject;
+          
+          // Find teacher from masterlist for this subject
+          let teacherName = '';
+          let teacherId = '';
+          if (currentMasterlist?.subjectTeachers && subjectId) {
+            const subjectTeacher = currentMasterlist.subjectTeachers.find(
+              (st) => (st.subject?._id || st.subject)?.toString() === subjectId.toString()
+            );
+            if (subjectTeacher?.teacher?.userId) {
+              const teacher = subjectTeacher.teacher.userId;
+              teacherName = `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim();
+              teacherId = subjectTeacher.teacher._id || subjectTeacher.teacher;
+            }
+          }
+          
           uiStructure[time][day] = {
-            subjectId: subject?._id || '',
+            subjectId: subjectId || '',
             subjectName: subject?.subjectName || '',
-            teacherId: teacher?._id || '',
-            teacherName: teacher ? `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() : '',
+            teacherId: teacherId || '',
+            teacherName: teacherName,
             scheduleIds: sectionSchedules
               .filter((s) => {
                 const scheduleDay = s.day;
                 const scheduleTime = `${s.startTime}-${s.endTime}`;
                 const timeMatch = time.includes(s.startTime) || scheduleTime === time;
+                const scheduleSubjectId = s.subjectId?._id?.toString() || s.subjectId?.toString();
                 return (
                   scheduleDay === day &&
                   timeMatch &&
-                  (s.subjectId?._id?.toString() === subject?._id?.toString() || !s.subjectId)
+                  scheduleSubjectId === (subjectId?.toString() || '')
                 );
               })
               .map((s) => s._id),
@@ -124,7 +145,7 @@ function AdminSchedule() {
     });
 
     return uiStructure;
-  }, [sectionSchedules, times, days]);
+  }, [sectionSchedules, times, days, currentMasterlist]);
 
   // Update section when grade changes
   useEffect(() => {
@@ -139,26 +160,26 @@ function AdminSchedule() {
       dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
       dispatch(fetchAllStudents({ gradeLevel: currentGrade }));
       dispatch(getAllSections({ gradeLevel: currentGrade }));
+      dispatch(fetchMasterlists({ grade: currentGrade }));
     }
   }, [dispatch, currentGrade]);
 
   // Fetch schedules when section changes
   useEffect(() => {
-    if (currentSectionId && sectionStudents.length > 0) {
-      const studentIds = sectionStudents.map((s) => s._id);
-      // Fetch schedules for all students in section
+    if (currentSectionId) {
+      // Fetch schedules for the section (even if no students yet)
       dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
     }
-  }, [dispatch, currentSectionId, sectionStudents.length]);
+  }, [dispatch, currentSectionId]);
 
   // Update UI schedules when transformed schedules change (only when not in edit mode)
   useEffect(() => {
     // Only update if we're not in edit mode and sectionSchedules changed
-    if (!editMode) {
+    if (!editMode && currentSectionId) {
       setUiSchedules(transformSchedulesToUI);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sectionSchedules, editMode]); // Depend on sectionSchedules, not the memoized object
+  }, [sectionSchedules, editMode, currentSectionId]); // Depend on sectionSchedules, not the memoized object
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -170,28 +191,52 @@ function AdminSchedule() {
     }
   }, [error, dispatch]);
 
-  // Get available subjects for current grade
+  // Get available subjects from masterlist for current section
   const availableSubjects = useMemo(() => {
-    return subjects.filter((subject) => subject.gradeLevel === currentGrade);
-  }, [subjects, currentGrade]);
+    if (!currentMasterlist?.subjectTeachers) {
+      // Fallback to subjects if no masterlist
+      return subjects.filter((subject) => subject.gradeLevel === currentGrade);
+    }
+    
+    // Use subjects from masterlist.subjectTeachers
+    return currentMasterlist.subjectTeachers
+      .map((st) => {
+        const subject = st.subject;
+        if (!subject) return null;
+        return {
+          _id: subject._id || subject,
+          subjectName: subject.subjectName || subject.name || 'Unknown Subject',
+          gradeLevel: subject.gradeLevel || currentGrade,
+          teacher: st.teacher, // Teacher from masterlist
+        };
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+  }, [currentMasterlist, subjects, currentGrade]);
 
-  // Get available teachers from subjects
+  // Get available teachers from masterlist
   const availableTeachers = useMemo(() => {
+    if (!currentMasterlist?.subjectTeachers) {
+      return [];
+    }
+    
     const teacherMap = new Map();
-    availableSubjects.forEach((subject) => {
-      if (subject.teacherId?.userId) {
-        const teacher = subject.teacherId.userId;
-        const teacherId = teacher._id;
-        if (!teacherMap.has(teacherId)) {
+    currentMasterlist.subjectTeachers.forEach((st) => {
+      if (st.teacher) {
+        const teacher = st.teacher;
+        // Handle populated teacher object
+        const teacherId = teacher._id || teacher;
+        const userId = teacher.userId;
+        if (userId && !teacherMap.has(teacherId)) {
           teacherMap.set(teacherId, {
             id: teacherId,
-            name: `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim(),
+            name: `${userId.firstName || ''} ${userId.lastName || ''}`.trim() || 'Unknown Teacher',
           });
         }
       }
     });
     return Array.from(teacherMap.values());
-  }, [availableSubjects]);
+  }, [currentMasterlist]);
 
   // Handle grade change
   const handleGradeChange = (e) => {
@@ -217,13 +262,27 @@ function AdminSchedule() {
     const updatedSchedules = { ...uiSchedules };
     if (updatedSchedules[time] && updatedSchedules[time][day]) {
       const subject = availableSubjects.find((s) => s._id === subjectId);
-      const teacher = subject?.teacherId?.userId;
+      
+      // Get teacher from masterlist for this subject
+      let teacherName = '';
+      let teacherId = '';
+      if (currentMasterlist?.subjectTeachers && subjectId) {
+        const subjectTeacher = currentMasterlist.subjectTeachers.find(
+          (st) => (st.subject?._id || st.subject)?.toString() === subjectId.toString()
+        );
+        if (subjectTeacher?.teacher?.userId) {
+          const teacher = subjectTeacher.teacher.userId;
+          teacherName = `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim();
+          teacherId = subjectTeacher.teacher._id || subjectTeacher.teacher;
+        }
+      }
+      
       updatedSchedules[time][day] = {
         ...updatedSchedules[time][day],
         subjectId: subjectId || '',
         subjectName: subject?.subjectName || '',
-        teacherId: teacher?._id || '',
-        teacherName: teacher ? `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim() : '',
+        teacherId: teacherId || '',
+        teacherName: teacherName,
       };
       setUiSchedules(updatedSchedules);
     }
@@ -231,8 +290,8 @@ function AdminSchedule() {
 
   // Transform UI structure to backend format and save
   const handleSave = async () => {
-    if (!currentSectionId || sectionStudents.length === 0) {
-      alert('Please select a section with students');
+    if (!currentSectionId) {
+      alert('Please select a section');
       return;
     }
 
@@ -258,40 +317,36 @@ function AdminSchedule() {
             return;
           }
 
-          // Update or create schedules for all students in section
-          sectionStudents.forEach((student) => {
-            // Check if schedule already exists for this student/time/day
-            const existingSchedule = sectionSchedules.find((s) => {
-              const scheduleStudentId = s.studentId?._id?.toString() || s.studentId?.toString();
-              const scheduleDay = s.day;
-              const scheduleTime = `${s.startTime}-${s.endTime}`;
-              const timeMatch = time.includes(s.startTime) || scheduleTime === time;
-              return (
-                scheduleStudentId === student._id.toString() &&
-                scheduleDay === day &&
-                timeMatch
-              );
-            });
-
-            const scheduleData = {
-              studentId: student._id,
-              sectionId: currentSectionId,
-              subjectId: subjectId,
-              day: day,
-              startTime: startTime,
-              endTime: endTime,
-            };
-
-            if (existingSchedule) {
-              // Update existing schedule
-              operations.push(
-                dispatch(updateSchedule({ id: existingSchedule._id, data: scheduleData }))
-              );
-            } else {
-              // Create new schedule
-              operations.push(dispatch(createSchedule(scheduleData)));
-            }
+          // Check if schedule already exists for this section/subject/time/day
+          const existingSchedule = sectionSchedules.find((s) => {
+            const scheduleDay = s.day;
+            const scheduleTime = `${s.startTime}-${s.endTime}`;
+            const timeMatch = time.includes(s.startTime) || scheduleTime === time;
+            const scheduleSubjectId = s.subjectId?._id?.toString() || s.subjectId?.toString();
+            return (
+              scheduleSubjectId === subjectId &&
+              scheduleDay === day &&
+              timeMatch
+            );
           });
+
+          const scheduleData = {
+            sectionId: currentSectionId,
+            subjectId: subjectId,
+            day: day,
+            startTime: startTime,
+            endTime: endTime,
+          };
+
+          if (existingSchedule) {
+            // Update existing schedule
+            operations.push(
+              dispatch(updateSchedule({ id: existingSchedule._id, data: scheduleData }))
+            );
+          } else {
+            // Create new schedule
+            operations.push(dispatch(createSchedule(scheduleData)));
+          }
         });
       });
 
@@ -332,10 +387,10 @@ function AdminSchedule() {
         return;
       }
 
-      // Subject row
+      // Subject row with teacher displayed below
       const subjectRow = (
         <tr key={`subject-${time}`}>
-          <td className={styles.timeCol} rowSpan="2">
+          <td className={styles.timeCol}>
             {time}
           </td>
           {days.map((day) => {
@@ -361,34 +416,30 @@ function AdminSchedule() {
                       </option>
                     ))}
                   </select>
+                  {scheduleData.subjectId && scheduleData.teacherName && (
+                    <div className={styles.teacherName}>
+                      {scheduleData.teacherName}
+                    </div>
+                  )}
                 </td>
               );
             }
             return (
-              <td key={`subject-${time}-${day}`}>{scheduleData.subjectName || ''}</td>
+              <td key={`subject-${time}-${day}`}>
+                {scheduleData.subjectName && (
+                  <>
+                    <div className={styles.subjectName}>{scheduleData.subjectName}</div>
+                    {scheduleData.teacherName && (
+                      <div className={styles.teacherName}>{scheduleData.teacherName}</div>
+                    )}
+                  </>
+                )}
+              </td>
             );
           })}
         </tr>
       );
       rows.push(subjectRow);
-
-      // Teacher row
-      const teacherRow = (
-        <tr key={`teacher-${time}`}>
-          {days.map((day) => {
-            const scheduleData = uiSchedules[time]?.[day] || {
-              subjectId: '',
-              subjectName: '',
-              teacherId: '',
-              teacherName: '',
-            };
-            return (
-              <td key={`teacher-${time}-${day}`}>{scheduleData.teacherName || ''}</td>
-            );
-          })}
-        </tr>
-      );
-      rows.push(teacherRow);
     });
 
     return rows;

@@ -12,7 +12,6 @@ export const getSections = async (req, res) => {
     if (status) filter.status = status;
 
     const sections = await Section.find(filter)
-      .populate('adviserId', 'userId')
       .populate({
         path: 'adviserId',
         populate: {
@@ -38,7 +37,6 @@ export const getSections = async (req, res) => {
 export const getSection = async (req, res) => {
   try {
     const section = await Section.findById(req.params.id)
-      .populate('adviserId', 'userId')
       .populate({
         path: 'adviserId',
         populate: {

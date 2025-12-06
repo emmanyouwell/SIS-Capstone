@@ -8,7 +8,7 @@ import Admin from '../models/Admin.js';
 // @access  Public (or Admin only in production)
 export const register = async (req, res) => {
   try {
-    const { firstName, lastName, middleName, email, password, role, contactNumber, address, dateOfBirth, ...roleSpecificData } = req.body;
+    const { firstName, lastName, middleName, email, password, role, status, contactNumber, address, dateOfBirth, ...roleSpecificData } = req.body;
 
     // Check if user exists
     const existingUser = await User.findOne({ email });
@@ -24,6 +24,7 @@ export const register = async (req, res) => {
       email,
       password,
       role,
+      status: status || 'Active',
       contactNumber,
       address,
       dateOfBirth,

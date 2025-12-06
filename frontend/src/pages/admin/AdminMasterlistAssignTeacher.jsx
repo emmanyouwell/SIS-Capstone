@@ -5,7 +5,7 @@ import styles from './AdminMasterlistAssignTeacher.module.css';
 import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from '../../store/slices/masterlistSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
-import { getAllSections } from '../../store/slices/sectionSlice';
+import { getAllSections, updateSection } from '../../store/slices/sectionSlice';
 import { fetchAllTeachers } from '../../store/slices/teacherSlice';
 
 function AdminMasterlistAssignTeacher() {
@@ -102,7 +102,11 @@ function AdminMasterlistAssignTeacher() {
   // Sync adviser and subjectTeachers from current masterlist
   useEffect(() => {
     if (currentMasterlist?.adviser) {
-      setAdviserId(currentMasterlist.adviser._id || '');
+      // Handle both populated object and ObjectId string
+      const adviserId = typeof currentMasterlist.adviser === 'object' 
+        ? (currentMasterlist.adviser._id || currentMasterlist.adviser)
+        : currentMasterlist.adviser;
+      setAdviserId(adviserId || '');
     } else {
       setAdviserId('');
     }
@@ -174,6 +178,44 @@ function AdminMasterlistAssignTeacher() {
 
     try {
       setSaving(true);
+
+      // Find the section object based on gradeLevel and sectionName
+      const sectionToUpdate = sections.find(
+        (s) => s.gradeLevel === currentGrade && s.sectionName === selectedSection
+      );
+
+      // Update section's adviserId if section exists
+      if (sectionToUpdate && hasAdviser) {
+        try {
+          await dispatch(
+            updateSection({
+              id: sectionToUpdate._id,
+              data: { adviserId: adviserId },
+            })
+          ).unwrap();
+        } catch (sectionErr) {
+          console.error('Failed to update section adviser:', sectionErr);
+          // Continue with masterlist update even if section update fails
+        }
+      } else if (sectionToUpdate && adviserId === '') {
+        // Clear adviserId if adviser is cleared
+        try {
+          await dispatch(
+            updateSection({
+              id: sectionToUpdate._id,
+              data: { adviserId: null },
+            })
+          ).unwrap();
+        } catch (sectionErr) {
+          console.error('Failed to clear section adviser:', sectionErr);
+          // Continue with masterlist update even if section update fails
+        }
+      }
+
+      // Refresh sections to update the UI
+      if (sectionToUpdate) {
+        dispatch(getAllSections({ gradeLevel: currentGrade }));
+      }
 
       // Get current school year (default to current year format)
       const currentYear = new Date().getFullYear();
