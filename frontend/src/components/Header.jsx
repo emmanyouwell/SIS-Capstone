@@ -6,28 +6,31 @@ import { logout } from '../store/slices/authSlice';
 function Header({ userName, userRole, notificationCount = 3 }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const handleLogout = async () => {
-    
+  const handleLogout = () => {
     const btn = document.querySelector(`.${styles.logoutBtn}`);
     const btnText = btn?.querySelector('span');
     const progressBar = document.querySelector(`.${styles.logoutProgress}`);
     
+    // Clear auth state immediately
+    dispatch(logout());
+    
+    // Navigate immediately to prevent any redirect issues
+    // Use setTimeout to ensure state update is processed first
+    setTimeout(() => {
+      navigate('/', { replace: true });
+    }, 0);
+    
+    // Show animation if elements exist
     if (btn && btnText && progressBar) {
       btn.classList.add(styles.btnLoading);
       btnText.textContent = 'Logging out...';
       progressBar.classList.add(styles.start);
-      await dispatch(logout());
+      
       setTimeout(() => {
         btn.classList.remove(styles.btnLoading);
         btn.classList.add(styles.btnSuccess, styles.animate);
         btnText.textContent = 'Goodbye!';
-        
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
       }, 1500);
-    } else {
-      navigate('/');
     }
   };
 
