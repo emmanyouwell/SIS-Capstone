@@ -1,11 +1,15 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherDashboard.module.css';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store/slices/announcementSlice';
+import { fetchAllMessages } from '../../store/slices/messageSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
-const calendarIcon = (
+const announcementIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" />
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 
@@ -22,49 +26,61 @@ const unreadIcon = (
 );
 
 function TeacherDashboard() {
-  const [announcements, setAnnouncements] = useState([
-    {
-      id: 1,
-      subject: "School Reopening",
-      date: "August 1, 2025",
-      sender: "Admin",
-      recipient: "All",
-      message: "Ang Sto. Niño National High School ay magsasagawa ng Early Registration simula Enero 25, 2025 hanggang Pebrero 28, 2025.\n\nMagtungo lamang sa paaralan at dalhin ang mga sumusunod na REQUIREMENTS:\n✅ PSA BIRTH CERTIFICATE (PHOTOCOPY)\n✅ COPY OF SF9 O REPORT CARD (LATEST)\n✅ BALLPEN\nPara sa pagpaparehistro:\n1. Dalhin ang mga requirement sa araw ng pagpapatala.\n2. Hanapin lamang ang mga naka-assign na focal person para maipasa ang inyong mga requirement at para makapagpatala.\n\nFocal Persons:\nMorning:\nMr. Dunstan Glorioso\nMrs. Glaiza Madridano\nAfternoon:\nMrs. Pia Shodhnani\nMr. Rolando Gading\n#EngagingtheHeartof21stCenturyLearners"
-    },
-    {
-      id: 2,
-      subject: "Official List of Grade 7 Students",
-      date: "June 1, 2025",
-      sender: "Admin",
-      recipient: "All",
-      message: "Official List of Grade 7 Students",
-      image: "/images/mamamo.png"
-    },
-    {
-      id: 3,
-      subject: "IMPORTANT",
-      date: "June 1, 2025",
-      sender: "Sir JP",
-      recipient: "All",
-      message: "Greetings, Admin! I have a student named James Trio. He said he already passed the soft copy of his form 138. Can you please check whether he passed it already?"
-    }
-  ]);
+  const dispatch = useDispatch();
+  const { announcements, loading: announcementsLoading, error: announcementsError } = useSelector((state) => state.announcements);
+  const { messages, loading: messagesLoading } = useSelector((state) => state.messages);
+  const { user } = useSelector((state) => state.auth);
+  const sections = useSelector((state) => state.section.data);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewEditModal, setShowViewEditModal] = useState(false);
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
   const [viewingAnnouncement, setViewingAnnouncement] = useState(null);
   const [formData, setFormData] = useState({
-    subject: '',
-    recipient: '',
-    message: '',
-    image: null
+    title: '',
+    audience: 'All',
+    content: '',
   });
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const dropdownRefs = useRef({});
 
-  const currentUser = "Angelica Nanas";
+  // Fetch announcements, messages, and sections on component mount
+  useEffect(() => {
+    dispatch(fetchAnnouncements());
+    dispatch(fetchAllMessages());
+    dispatch(getAllSections({ status: 'Active' }));
+  }, [dispatch]);
 
-  const formatDate = (date) => {
+  // Calculate statistics
+  const stats = useMemo(() => {
+    // Count announcements
+    const announcementCount = announcements.length;
+
+    // Filter messages relevant to the current user
+    const userMessages = messages.filter((msg) => {
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    // Count read messages (viewed)
+    const readCount = userMessages.filter((m) => m.status === 'read').length;
+
+    // Count unread messages
+    const unreadCount = userMessages.filter((m) => m.status === 'sent').length;
+
+    return {
+      announcements: announcementCount,
+      viewed: readCount,
+      unread: unreadCount,
+    };
+  }, [announcements, messages, user]);
+
+  // Format date helper
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
@@ -72,20 +88,65 @@ function TeacherDashboard() {
     });
   };
 
-  const handleAddAnnouncement = (e) => {
+  // Get poster name helper
+  const getPosterName = (postedBy) => {
+    if (!postedBy) return 'Unknown';
+    if (typeof postedBy === 'object') {
+      return `${postedBy.firstName || ''} ${postedBy.lastName || ''}`.trim() || 'Admin';
+    }
+    return 'Admin';
+  };
+
+  // Group sections by grade level - only include sections from database
+  const sectionsByGrade = useMemo(() => {
+    const grouped = {};
+    // Filter to only include sections that exist in the database and have required fields
+    sections
+      .filter((section) => 
+        section && 
+        section.gradeLevel && 
+        section.sectionName && 
+        (section.status === 'Active' || !section.status) // Include Active sections or sections without status
+      )
+      .forEach((section) => {
+        const grade = section.gradeLevel;
+        if (!grouped[grade]) {
+          grouped[grade] = [];
+        }
+        grouped[grade].push(section);
+      });
+    // Sort sections within each grade
+    Object.keys(grouped).forEach((grade) => {
+      grouped[grade].sort((a, b) => a.sectionName.localeCompare(b.sectionName));
+    });
+    return grouped;
+  }, [sections]);
+
+  const handleAddAnnouncement = async (e) => {
     e.preventDefault();
-    const newAnnouncement = {
-      id: announcements.length + 1,
-      subject: formData.subject,
-      date: formatDate(new Date()),
-      sender: currentUser,
-      recipient: formData.recipient,
-      message: formData.message,
-      image: formData.image ? URL.createObjectURL(formData.image) : ""
-    };
-    setAnnouncements([newAnnouncement, ...announcements]);
-    setFormData({ subject: '', recipient: '', message: '', image: null });
-    setShowAddModal(false);
+    try {
+      // If audience is a grade-section format, use "Specific" as the audience value
+      let audienceValue = formData.audience;
+      
+      if (formData.audience.startsWith('Grade ')) {
+        audienceValue = 'Specific';
+      }
+
+      await dispatch(
+        createAnnouncement({
+          title: formData.title,
+          content: formData.content,
+          audience: audienceValue,
+        })
+      ).unwrap();
+      setFormData({ title: '', audience: 'All', content: '' });
+      setShowAddModal(false);
+      // Refresh announcements list
+      dispatch(fetchAnnouncements());
+    } catch (error) {
+      console.error('Failed to create announcement:', error);
+      // You could add error handling UI here if needed
+    }
   };
 
   const handleView = (announcement) => {
@@ -99,10 +160,9 @@ function TeacherDashboard() {
     setEditingAnnouncement(announcement);
     setViewingAnnouncement(null);
     setFormData({
-      subject: announcement.subject,
-      recipient: announcement.recipient || '',
-      message: announcement.message,
-      image: null
+      title: announcement.title || '',
+      audience: announcement.audience || 'All',
+      content: announcement.content || '',
     });
     setShowViewEditModal(true);
     setDropdownOpen(null);
@@ -117,24 +177,50 @@ function TeacherDashboard() {
     setDropdownOpen(null);
   };
 
-  const handleDelete = () => {
-    if (deleteTargetId) {
-      setAnnouncements(announcements.filter(a => a.id !== deleteTargetId));
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    try {
+      await dispatch(deleteAnnouncement(deleteTargetId)).unwrap();
+      setShowConfirmModal(false);
+      setDeleteTargetId(null);
+      // Refresh announcements list
+      dispatch(fetchAnnouncements());
+    } catch (error) {
+      console.error('Failed to delete announcement:', error);
       setShowConfirmModal(false);
       setDeleteTargetId(null);
     }
   };
 
-  const handleSaveEdit = (e) => {
+  const handleSaveEdit = async (e) => {
     e.preventDefault();
-    setAnnouncements(announcements.map(a =>
-      a.id === editingAnnouncement.id
-        ? { ...a, subject: formData.subject, message: formData.message }
-        : a
-    ));
-    setEditingAnnouncement(null);
-    setShowViewEditModal(false);
-    setFormData({ subject: '', recipient: '', message: '', image: null });
+    if (!editingAnnouncement) return;
+    try {
+      // If audience is a grade-section format, use "Specific" as the audience value
+      let audienceValue = formData.audience;
+      
+      if (formData.audience.startsWith('Grade ')) {
+        audienceValue = 'Specific';
+      }
+
+      await dispatch(
+        updateAnnouncement({
+          id: editingAnnouncement._id,
+          data: {
+            title: formData.title,
+            content: formData.content,
+            audience: audienceValue,
+          },
+        })
+      ).unwrap();
+      setEditingAnnouncement(null);
+      setShowViewEditModal(false);
+      setFormData({ title: '', audience: 'All', content: '' });
+      // Refresh announcements list
+      dispatch(fetchAnnouncements());
+    } catch (error) {
+      console.error('Failed to update announcement:', error);
+    }
   };
 
   const toggleDropdown = (id) => {
@@ -152,7 +238,11 @@ function TeacherDashboard() {
   }, [dropdownOpen]);
 
   const canEditDelete = (announcement) => {
-    return announcement.sender === currentUser;
+    if (!announcement.postedBy || !user) return false;
+    const posterId = typeof announcement.postedBy === 'object' 
+      ? announcement.postedBy._id?.toString() 
+      : announcement.postedBy.toString();
+    return posterId === user.id?.toString();
   };
 
   return (
@@ -163,9 +253,9 @@ function TeacherDashboard() {
             <h2>Announcements</h2>
           </div>
           <div className={styles.infoCards}>
-            <InfoCard icon={calendarIcon} title="Events" number="0" subtext="Upcoming" />
-            <InfoCard icon={viewedIcon} title="Viewed" number="27" subtext="Today" />
-            <InfoCard icon={unreadIcon} title="Unread" number="6" subtext="Messages" />
+            <InfoCard icon={announcementIcon} title="Announcements" number={stats.announcements.toString()} subtext="Total" />
+            <InfoCard icon={viewedIcon} title="Viewed" number={stats.viewed.toString()} subtext="Read Messages" />
+            <InfoCard icon={unreadIcon} title="Unread" number={stats.unread.toString()} subtext="Messages" />
           </div>
           <button
             className={styles.addAnnouncementBtn}
@@ -174,46 +264,50 @@ function TeacherDashboard() {
             Add Announcement
           </button>
           <div className={styles.announcementsList}>
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className={styles.announcementCard}>
-                <div className={styles.announcementHeader}>
-                  <div>
-                    <div className={styles.announcementSubject}>{announcement.subject}</div>
-                    <div className={styles.announcementDate}>{announcement.date}</div>
-                    <div className={styles.announcementSender}>From: {announcement.sender}</div>
+            {announcementsLoading ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>Loading announcements...</div>
+            ) : announcements.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>No announcements available</div>
+            ) : (
+              announcements.map((announcement) => (
+                <div key={announcement._id} className={styles.announcementCard}>
+                  <div className={styles.announcementHeader}>
+                    <div>
+                      <div className={styles.announcementSubject}>{announcement.title}</div>
+                      <div className={styles.announcementDate}>{formatDate(announcement.datePosted)}</div>
+                      <div className={styles.announcementSender}>From: {getPosterName(announcement.postedBy)}</div>
+                      <div className={styles.announcementSender}>To: {announcement.audience}</div>
+                    </div>
+                    <div className={styles.dropdownContainer} ref={el => dropdownRefs.current[announcement._id] = el}>
+                      <button
+                        type="button"
+                        className={styles.dotsBtn}
+                        onClick={() => toggleDropdown(announcement._id)}
+                        aria-label="More options"
+                      >
+                        ⋮
+                      </button>
+                      {dropdownOpen === announcement._id && (
+                        <div className={styles.dropdownMenu}>
+                          <button type="button" onClick={() => handleView(announcement)}>View</button>
+                          {canEditDelete(announcement) && (
+                            <>
+                              <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
+                              <button type="button" onClick={() => handleDeleteClick(announcement._id)}>Delete</button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.dropdownContainer} ref={el => dropdownRefs.current[announcement.id] = el}>
-                    <button
-                      type="button"
-                      className={styles.dotsBtn}
-                      onClick={() => toggleDropdown(announcement.id)}
-                      aria-label="More options"
-                    >
-                      ⋮
-                    </button>
-                    {dropdownOpen === announcement.id && (
-                      <div className={styles.dropdownMenu}>
-                        <button type="button" onClick={() => handleView(announcement)}>View</button>
-                        {canEditDelete(announcement) && (
-                          <>
-                            <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
-                            <button type="button" onClick={() => handleDeleteClick(announcement.id)}>Delete</button>
-                          </>
-                        )}
-                      </div>
-                    )}
+                  <div className={styles.announcementMessage}>
+                    {announcement.content.length > 100 
+                      ? announcement.content.substring(0, 100) + '...' 
+                      : announcement.content}
                   </div>
                 </div>
-                {announcement.image && (
-                  <div className={styles.announcementImage}>
-                    <img src={announcement.image} alt="Announcement" />
-                  </div>
-                )}
-                <div className={styles.announcementMessage}>
-                  {announcement.message.length > 25 ? announcement.message.substring(0, 25) + ' See more...' : announcement.message}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
         <div className={styles.announcementsRight}>
@@ -266,47 +360,50 @@ function TeacherDashboard() {
             <button className={styles.modalClose} onClick={() => setShowAddModal(false)}>&times;</button>
             <h3>Add Announcement</h3>
             <form onSubmit={handleAddAnnouncement}>
-              <label htmlFor="subject">Subject</label>
+              <label htmlFor="title">Title</label>
               <input
                 type="text"
-                id="subject"
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                id="title"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 required
               />
-              <label htmlFor="recipient">To / Year Level</label>
+              <label htmlFor="audience">To / Audience</label>
               <select
-                id="recipient"
-                value={formData.recipient}
-                onChange={(e) => setFormData({ ...formData, recipient: e.target.value })}
+                id="audience"
+                value={formData.audience}
+                onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
                 required
               >
-                <option value="">Select Year Level and Section</option>
                 <option value="All">All</option>
-                <optgroup label="Grade 8">
-                  <option value="Grade 8 - Tulip">Grade 8 - Tulip</option>
-                  <option value="Grade 8 - Iris">Grade 8 - Iris</option>
-                  <option value="Grade 8 - Lilac">Grade 8 - Lilac</option>
-                </optgroup>
-                <optgroup label="Grade 9">
-                  <option value="Grade 9 - Daisy">Grade 9 - Daisy</option>
-                </optgroup>
+                <option value="Students">All Students</option>
+                <option value="Teachers">All Teachers</option>
+                <option value="Admin">All Admins</option>
+                {Object.keys(sectionsByGrade).length > 0 && (
+                  <>
+                    <option value="Specific">Specific Grade/Section</option>
+                    {Object.keys(sectionsByGrade)
+                      .sort((a, b) => parseInt(a) - parseInt(b))
+                      .map((grade) => (
+                        <optgroup key={grade} label={`Grade ${grade}`}>
+                          {sectionsByGrade[grade].map((section) => (
+                            <option key={section._id} value={`Grade ${grade} - ${section.sectionName}`}>
+                              Grade {grade} - {section.sectionName}
+                            </option>
+                          ))}
+                        </optgroup>
+                      ))}
+                  </>
+                )}
               </select>
-              <label htmlFor="message">Message</label>
+              <label htmlFor="content">Content</label>
               <textarea
-                id="message"
+                id="content"
                 rows="4"
-                value={formData.message}
-                onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                value={formData.content}
+                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
               ></textarea>
-              <label htmlFor="image">Image (optional)</label>
-              <input
-                type="file"
-                id="image"
-                accept="image/*"
-                onChange={(e) => setFormData({ ...formData, image: e.target.files[0] })}
-              />
               <div className={styles.modalButtons}>
                 <button type="button" className={styles.btnSecondary} onClick={() => setShowAddModal(false)}>
                   Cancel
@@ -334,27 +431,55 @@ function TeacherDashboard() {
             <h3>{editingAnnouncement ? 'Edit Announcement' : 'Announcement Details'}</h3>
             {editingAnnouncement ? (
               <form onSubmit={handleSaveEdit}>
-                <label htmlFor="edit-subject">Subject</label>
+                <label htmlFor="edit-title">Title</label>
                 <input
                   type="text"
-                  id="edit-subject"
-                  value={formData.subject}
-                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  id="edit-title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
                 />
+                <label htmlFor="edit-audience">To / Audience</label>
+                <select
+                  id="edit-audience"
+                  value={formData.audience}
+                  onChange={(e) => setFormData({ ...formData, audience: e.target.value })}
+                  required
+                >
+                  <option value="All">All</option>
+                  <option value="Students">All Students</option>
+                  <option value="Teachers">All Teachers</option>
+                  <option value="Admin">All Admins</option>
+                  {Object.keys(sectionsByGrade).length > 0 && (
+                    <>
+                      <option value="Specific">Specific Grade/Section</option>
+                      {Object.keys(sectionsByGrade)
+                        .sort((a, b) => parseInt(a) - parseInt(b))
+                        .map((grade) => (
+                          <optgroup key={grade} label={`Grade ${grade}`}>
+                            {sectionsByGrade[grade].map((section) => (
+                              <option key={section._id} value={`Grade ${grade} - ${section.sectionName}`}>
+                                Grade {grade} - {section.sectionName}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                    </>
+                  )}
+                </select>
                 <label htmlFor="edit-date">Date</label>
                 <input
                   type="text"
                   id="edit-date"
-                  value={editingAnnouncement.date}
+                  value={formatDate(editingAnnouncement.datePosted)}
                   readOnly
                 />
-                <label htmlFor="edit-message">Message</label>
+                <label htmlFor="edit-content">Content</label>
                 <textarea
-                  id="edit-message"
+                  id="edit-content"
                   rows="4"
-                  value={formData.message}
-                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   required
                 ></textarea>
                 <div className={styles.modalButtons}>
@@ -368,20 +493,20 @@ function TeacherDashboard() {
             ) : viewingAnnouncement ? (
               <div className={styles.viewDetails}>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Subject:</span> <span>{viewingAnnouncement.subject}</span>
+                  <span className={styles.viewLabel}>Title:</span> <span>{viewingAnnouncement.title}</span>
                 </div>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Date:</span> <span>{viewingAnnouncement.date}</span>
+                  <span className={styles.viewLabel}>Date Posted:</span> <span>{formatDate(viewingAnnouncement.datePosted)}</span>
                 </div>
                 <div className={styles.viewRow}>
-                  <span className={styles.viewLabel}>Message:</span> <span className={styles.viewMessage}>{viewingAnnouncement.message}</span>
+                  <span className={styles.viewLabel}>Posted By:</span> <span>{getPosterName(viewingAnnouncement.postedBy)}</span>
                 </div>
-                {viewingAnnouncement.image && (
-                  <div className={styles.viewRow}>
-                    <span className={styles.viewLabel}>Image:</span><br />
-                    <img src={viewingAnnouncement.image} alt="Announcement" className={styles.viewImage} />
-                  </div>
-                )}
+                <div className={styles.viewRow}>
+                  <span className={styles.viewLabel}>Audience:</span> <span>{viewingAnnouncement.audience}</span>
+                </div>
+                <div className={styles.viewRow}>
+                  <span className={styles.viewLabel}>Content:</span> <span className={styles.viewMessage}>{viewingAnnouncement.content}</span>
+                </div>
               </div>
             ) : null}
           </div>

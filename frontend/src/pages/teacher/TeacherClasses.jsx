@@ -140,7 +140,8 @@ function TeacherClasses() {
 
   const getClassPillClassName = (type) => {
     const baseClass = styles.classPill;
-    const typeClass = styles[`class${type.charAt(0).toUpperCase() + type.slice(1)}`];
+    const capitalizedType = type.charAt(0).toUpperCase() + type.slice(1);
+    const typeClass = styles[`class${capitalizedType}`] || styles.classDefault;
     return `${baseClass} ${typeClass}`;
   };
 
