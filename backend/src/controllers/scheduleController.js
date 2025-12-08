@@ -2,6 +2,7 @@ import Schedule from '../models/Schedule.js';
 import Student from '../models/Student.js';
 import Teacher from '../models/Teacher.js';
 import Subject from '../models/Subject.js';
+import { canAssignLoad, updateTeacherLoad, calculateHoursBetween } from '../utils/teachingLoadCalculator.js';
 
 // @desc    Get schedule by section ID (helper function)
 // @access  Private
@@ -185,6 +186,32 @@ export const createSchedule = async (req, res) => {
       return res.status(400).json({ message: 'Schedule already exists for this section' });
     }
 
+    // Validate teaching load before creating schedule
+    const teacherLoadChecks = {};
+    for (const entry of schedule) {
+      if (entry.subjectId) {
+        const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+        if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+          for (const teacher of subject.teacherId) {
+            const teacherId = teacher._id?.toString() || teacher.toString();
+            if (!teacherLoadChecks[teacherId]) {
+              const hours = calculateHoursBetween(entry.startTime, entry.endTime);
+              const loadCheck = await canAssignLoad(teacherId, hours);
+              if (!loadCheck.canAssign) {
+                const teacherName = teacher.userId
+                  ? `${teacher.userId.firstName} ${teacher.userId.lastName}`
+                  : 'Teacher';
+                return res.status(400).json({
+                  message: `${teacherName}: ${loadCheck.message}`,
+                });
+              }
+              teacherLoadChecks[teacherId] = true;
+            }
+          }
+        }
+      }
+    }
+
     const scheduleDoc = await Schedule.create({
       sectionId,
       schedule,
@@ -201,6 +228,23 @@ export const createSchedule = async (req, res) => {
         },
       },
     });
+
+    // Update teaching load for all affected teachers
+    const affectedTeachers = new Set();
+    for (const entry of schedule) {
+      if (entry.subjectId) {
+        const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+        if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+          for (const teacher of subject.teacherId) {
+            const teacherId = teacher._id?.toString() || teacher.toString();
+            affectedTeachers.add(teacherId);
+          }
+        }
+      }
+    }
+    for (const teacherId of affectedTeachers) {
+      await updateTeacherLoad(teacherId);
+    }
 
     res.status(201).json({
       success: true,
@@ -223,6 +267,26 @@ export const addScheduleEntry = async (req, res) => {
       return res.status(400).json({ 
         message: 'subjectId, day, startTime, and endTime are required' 
       });
+    }
+
+    // Validate teaching load before adding entry
+    if (entry.subjectId) {
+      const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+      if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+        for (const teacher of subject.teacherId) {
+          const teacherId = teacher._id?.toString() || teacher.toString();
+          const hours = calculateHoursBetween(entry.startTime, entry.endTime);
+          const loadCheck = await canAssignLoad(teacherId, hours);
+          if (!loadCheck.canAssign) {
+            const teacherName = teacher.userId
+              ? `${teacher.userId.firstName} ${teacher.userId.lastName}`
+              : 'Teacher';
+            return res.status(400).json({
+              message: `${teacherName}: ${loadCheck.message}`,
+            });
+          }
+        }
+      }
     }
 
     let scheduleDoc = await Schedule.findOne({ sectionId });
@@ -250,6 +314,17 @@ export const addScheduleEntry = async (req, res) => {
         },
       },
     });
+
+    // Update teaching load for affected teachers
+    if (entry.subjectId) {
+      const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+      if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+        for (const teacher of subject.teacherId) {
+          const teacherId = teacher._id?.toString() || teacher.toString();
+          await updateTeacherLoad(teacherId);
+        }
+      }
+    }
 
     res.json({
       success: true,
@@ -279,6 +354,34 @@ export const updateScheduleEntry = async (req, res) => {
       return res.status(400).json({ message: 'Invalid entry index' });
     }
 
+    // Get old entry for teaching load calculation
+    const oldEntry = scheduleDoc.schedule[index];
+    const affectedTeachers = new Set();
+
+    // If subject is being changed, validate new teaching load
+    if (entry.subjectId && entry.subjectId.toString() !== oldEntry.subjectId?.toString()) {
+      const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+      if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+        for (const teacher of subject.teacherId) {
+          const teacherId = teacher._id?.toString() || teacher.toString();
+          const hours = calculateHoursBetween(
+            entry.startTime || oldEntry.startTime,
+            entry.endTime || oldEntry.endTime
+          );
+          const loadCheck = await canAssignLoad(teacherId, hours);
+          if (!loadCheck.canAssign) {
+            const teacherName = teacher.userId
+              ? `${teacher.userId.firstName} ${teacher.userId.lastName}`
+              : 'Teacher';
+            return res.status(400).json({
+              message: `${teacherName}: ${loadCheck.message}`,
+            });
+          }
+          affectedTeachers.add(teacherId);
+        }
+      }
+    }
+
     // Update the entry
     if (entry.subjectId) scheduleDoc.schedule[index].subjectId = entry.subjectId;
     if (entry.day) scheduleDoc.schedule[index].day = entry.day;
@@ -298,6 +401,20 @@ export const updateScheduleEntry = async (req, res) => {
         },
       },
     });
+
+    // Update teaching load for affected teachers (both old and new)
+    if (oldEntry.subjectId) {
+      const oldSubject = await Subject.findById(oldEntry.subjectId).populate('teacherId');
+      if (oldSubject && oldSubject.teacherId && Array.isArray(oldSubject.teacherId)) {
+        for (const teacher of oldSubject.teacherId) {
+          const teacherId = teacher._id?.toString() || teacher.toString();
+          affectedTeachers.add(teacherId);
+        }
+      }
+    }
+    for (const teacherId of affectedTeachers) {
+      await updateTeacherLoad(teacherId);
+    }
 
     res.json({
       success: true,
@@ -326,6 +443,20 @@ export const removeScheduleEntry = async (req, res) => {
       return res.status(400).json({ message: 'Invalid entry index' });
     }
 
+    // Get entry before removing to update teaching load
+    const entry = scheduleDoc.schedule[index];
+    const affectedTeachers = new Set();
+
+    if (entry.subjectId) {
+      const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+      if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+        for (const teacher of subject.teacherId) {
+          const teacherId = teacher._id?.toString() || teacher.toString();
+          affectedTeachers.add(teacherId);
+        }
+      }
+    }
+
     // Remove the entry
     scheduleDoc.schedule.splice(index, 1);
     await scheduleDoc.save();
@@ -341,6 +472,11 @@ export const removeScheduleEntry = async (req, res) => {
         },
       },
     });
+
+    // Update teaching load for affected teachers
+    for (const teacherId of affectedTeachers) {
+      await updateTeacherLoad(teacherId);
+    }
 
     res.json({
       success: true,
@@ -363,7 +499,34 @@ export const setFullSchedule = async (req, res) => {
       return res.status(400).json({ message: 'schedule must be an array' });
     }
 
+    // Validate teaching load before setting schedule
+    const teacherLoadChecks = {};
+    for (const entry of schedule) {
+      if (entry.subjectId) {
+        const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+        if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+          for (const teacher of subject.teacherId) {
+            const teacherId = teacher._id?.toString() || teacher.toString();
+            if (!teacherLoadChecks[teacherId]) {
+              const hours = calculateHoursBetween(entry.startTime, entry.endTime);
+              const loadCheck = await canAssignLoad(teacherId, hours);
+              if (!loadCheck.canAssign) {
+                const teacherName = teacher.userId
+                  ? `${teacher.userId.firstName} ${teacher.userId.lastName}`
+                  : 'Teacher';
+                return res.status(400).json({
+                  message: `${teacherName}: ${loadCheck.message}`,
+                });
+              }
+              teacherLoadChecks[teacherId] = true;
+            }
+          }
+        }
+      }
+    }
+
     let scheduleDoc = await Schedule.findOne({ sectionId });
+    const oldSchedule = scheduleDoc ? [...(scheduleDoc.schedule || [])] : [];
 
     if (!scheduleDoc) {
       // Create new schedule document if it doesn't exist
@@ -388,6 +551,40 @@ export const setFullSchedule = async (req, res) => {
         },
       },
     });
+
+    // Update teaching load for all affected teachers (both old and new schedules)
+    const affectedTeachers = new Set();
+    
+    // Add teachers from new schedule
+    for (const entry of schedule) {
+      if (entry.subjectId) {
+        const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+        if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+          for (const teacher of subject.teacherId) {
+            const teacherId = teacher._id?.toString() || teacher.toString();
+            affectedTeachers.add(teacherId);
+          }
+        }
+      }
+    }
+    
+    // Also add teachers from old schedule (to handle load reduction when schedule is removed)
+    for (const entry of oldSchedule) {
+      if (entry.subjectId) {
+        const subject = await Subject.findById(entry.subjectId).populate('teacherId');
+        if (subject && subject.teacherId && Array.isArray(subject.teacherId)) {
+          for (const teacher of subject.teacherId) {
+            const teacherId = teacher._id?.toString() || teacher.toString();
+            affectedTeachers.add(teacherId);
+          }
+        }
+      }
+    }
+    
+    // Update teaching load for all affected teachers
+    for (const teacherId of affectedTeachers) {
+      await updateTeacherLoad(teacherId);
+    }
 
     res.json({
       success: true,

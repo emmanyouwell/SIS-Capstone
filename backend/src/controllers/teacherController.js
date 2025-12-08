@@ -1,5 +1,6 @@
 import Teacher from '../models/Teacher.js';
 import User from '../models/User.js';
+import { calculateTeachingLoad } from '../utils/teachingLoadCalculator.js';
 
 // @desc    Get all teachers
 // @route   GET /api/v1/teachers
@@ -15,10 +16,23 @@ export const getTeachers = async (req, res) => {
       .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status')
       .sort({ createdAt: -1 });
 
+    // Calculate and include teaching load for each teacher
+    const teachersWithLoad = await Promise.all(
+      teachers.map(async (teacher) => {
+        const loadData = await calculateTeachingLoad(teacher._id);
+        const teacherObj = teacher.toObject();
+        teacherObj.calculatedTeachingLoad = loadData.dailyHours; // Keep for backward compatibility (max hours in a day)
+        teacherObj.weeklyTeachingLoad = loadData.weeklyHours;
+        teacherObj.dailyBreakdown = loadData.dailyBreakdown;
+        teacherObj.isNearLimit = loadData.weeklyHours >= 25; // Warning if >= 25 hours/week
+        return teacherObj;
+      })
+    );
+
     res.json({
       success: true,
-      count: teachers.length,
-      data: teachers,
+      count: teachersWithLoad.length,
+      data: teachersWithLoad,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -37,9 +51,17 @@ export const getTeacher = async (req, res) => {
       return res.status(404).json({ message: 'Teacher not found' });
     }
 
+    // Calculate and include teaching load
+    const loadData = await calculateTeachingLoad(teacher._id);
+    const teacherObj = teacher.toObject();
+    teacherObj.calculatedTeachingLoad = loadData.dailyHours; // Keep for backward compatibility (max hours in a day)
+    teacherObj.weeklyTeachingLoad = loadData.weeklyHours;
+    teacherObj.dailyBreakdown = loadData.dailyBreakdown;
+    teacherObj.isNearLimit = loadData.weeklyHours >= 25; // Warning if >= 25 hours/week
+
     res.json({
       success: true,
-      data: teacher,
+      data: teacherObj,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

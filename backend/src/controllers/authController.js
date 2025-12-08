@@ -62,7 +62,7 @@ export const register = async (req, res) => {
         employeeId: roleSpecificData.employeeId,
         department: roleSpecificData.department,
         position: roleSpecificData.position,
-        teachingLoad: roleSpecificData.teachingLoad || 0,
+        // teachingLoad is now automatically calculated from schedules, not set during registration
         emergencyContactName: roleSpecificData.emergencyContactName,
         emergencyContactNumber: roleSpecificData.emergencyContactNumber,
       });

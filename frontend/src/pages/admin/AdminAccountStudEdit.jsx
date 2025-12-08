@@ -36,6 +36,8 @@ function AdminAccountStudEdit() {
   const [editingStudent, setEditingStudent] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingStudent, setViewingStudent] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAllStudents());
@@ -159,7 +161,9 @@ function AdminAccountStudEdit() {
 
     switch (action) {
       case 'view':
-        navigate(`/admin/accounts/student/view/${account.id}`);
+        // Show view modal with student details
+        setViewingStudent(account.student);
+        setShowViewModal(true);
         break;
       case 'edit':
         openEditForAccount(account);
@@ -752,6 +756,124 @@ function AdminAccountStudEdit() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Student Modal */}
+      {showViewModal && viewingStudent && (
+        <div className={styles.modal} onClick={() => setShowViewModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button className={styles.modalClose} onClick={() => setShowViewModal(false)}>
+              &times;
+            </button>
+            <h3>Student Information</h3>
+            <div style={{ padding: '20px 0' }}>
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ marginBottom: '10px', color: '#333' }}>Personal Information</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                  <div>
+                    <strong>Name:</strong>
+                    <p>
+                      {viewingStudent.userId?.firstName || ''} {viewingStudent.userId?.middleName || ''} {viewingStudent.userId?.lastName || ''} {viewingStudent.userId?.extensionName || ''}
+                    </p>
+                  </div>
+                  <div>
+                    <strong>Email:</strong>
+                    <p>{viewingStudent.userId?.email || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <strong>LRN:</strong>
+                    <p>{viewingStudent.lrn || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <strong>Grade Level:</strong>
+                    <p>{viewingStudent.gradeLevel || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <strong>Section:</strong>
+                    <p>
+                      {viewingStudent.sectionId?.sectionName 
+                        ? `${viewingStudent.sectionId.gradeLevel || ''} - ${viewingStudent.sectionId.sectionName}`
+                        : 'Not assigned'}
+                    </p>
+                  </div>
+                  <div>
+                    <strong>Status:</strong>
+                    <p>{viewingStudent.userId?.status || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <strong>Enrollment Status:</strong>
+                    <p>{viewingStudent.enrollmentStatus ? 'Enrolled' : 'Not Enrolled'}</p>
+                  </div>
+                  {viewingStudent.userId?.sex && (
+                    <div>
+                      <strong>Sex:</strong>
+                      <p>{viewingStudent.userId.sex}</p>
+                    </div>
+                  )}
+                  {viewingStudent.userId?.dateOfBirth && (
+                    <div>
+                      <strong>Date of Birth:</strong>
+                      <p>{new Date(viewingStudent.userId.dateOfBirth).toLocaleDateString()}</p>
+                    </div>
+                  )}
+                  {viewingStudent.userId?.contactNumber && (
+                    <div>
+                      <strong>Contact Number:</strong>
+                      <p>{viewingStudent.userId.contactNumber}</p>
+                    </div>
+                  )}
+                  {viewingStudent.userId?.address && (
+                    <div style={{ gridColumn: '1 / -1' }}>
+                      <strong>Address:</strong>
+                      <p>{viewingStudent.userId.address}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {viewingStudent.guardianName && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ marginBottom: '10px', color: '#333' }}>Guardian Information</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                    <div>
+                      <strong>Guardian Name:</strong>
+                      <p>{viewingStudent.guardianName}</p>
+                    </div>
+                    <div>
+                      <strong>Guardian Contact:</strong>
+                      <p>{viewingStudent.guardianContact || 'N/A'}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              {viewingStudent.subjects && viewingStudent.subjects.length > 0 && (
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ marginBottom: '10px', color: '#333' }}>Enrolled Subjects</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {viewingStudent.subjects.map((subject, index) => (
+                      <div key={index} style={{ padding: '8px', backgroundColor: '#f5f5f5', borderRadius: '4px' }}>
+                        <strong>{subject.subjectId?.subjectName || 'Unknown Subject'}</strong>
+                        {subject.dateJoined && (
+                          <span style={{ marginLeft: '10px', fontSize: '0.9em', color: '#666' }}>
+                            (Joined: {new Date(subject.dateJoined).toLocaleDateString()})
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className={styles.modalButtons} style={{ marginTop: '20px' }}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

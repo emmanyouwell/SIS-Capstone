@@ -20,6 +20,8 @@ const teacherSchema = new mongoose.Schema(
       type: Number,
       default: 0,
       min: 0,
+      // Teaching load is now automatically calculated from schedules
+      // This field is kept for backward compatibility and quick access
     },
     emergencyContactName: {
       type: String,

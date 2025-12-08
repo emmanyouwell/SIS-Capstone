@@ -94,13 +94,23 @@
   color: #222;
 }
 
+.tableWrapper {
+  background: #fff;
+  border-radius: 10px;
+  overflow: visible;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
 .facultyTable {
   width: 100%;
   border-collapse: collapse;
   margin-top: 0;
   background: #fff;
   border-radius: 10px;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .facultyTable th {
@@ -118,6 +128,8 @@
   color: #222;
   border-bottom: 1px solid #f1f1f1;
   vertical-align: middle;
+  overflow: visible;
+  position: relative;
 }
 
 .facultyTable tr:last-child td {
@@ -186,6 +198,159 @@
   padding: 2rem;
   color: #666;
   font-size: 1.1rem;
+}
+
+.actionCell {
+  position: relative;
+  z-index: 1;
+}
+
+.actionCell:hover {
+  z-index: 10001;
+}
+
+.dotsBtn {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  font-size: 1.3rem;
+  width: 2.2rem;
+  height: 2.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s, border 0.2s;
+}
+
+.dotsBtn:hover {
+  background: #e6f0ea;
+  border: 1px solid #39916f;
+}
+
+.dropdownMenu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  min-width: 120px;
+  padding: 0.5rem 0;
+  overflow: visible;
+}
+
+.dropdownItem {
+  display: block;
+  width: 100%;
+  padding: 0.6rem 1rem;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #222;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 9999;
+}
+
+.dropdownItem:hover {
+  background: #f0f0f0;
+}
+
+.dropdownItem:first-child {
+  border-radius: 6px 6px 0 0;
+}
+
+.dropdownItem:last-child {
+  border-radius: 0 0 6px 6px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(44, 62, 80, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modalContent {
+  background: #fff;
+  border-radius: 14px;
+  max-width: 900px;
+  width: 95vw;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(44, 62, 80, 0.18);
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalContent h3 {
+  margin-bottom: 1.5rem;
+  color: #184d27;
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.modalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #184d27;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background 0.2s;
+}
+
+.modalClose:hover {
+  background: #f0f0f0;
+}
+
+.modalButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btnSecondary {
+  background: #e2e8f0;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #4a5568;
+  transition: all 0.3s ease;
+}
+
+.btnSecondary:hover {
+  background: #cbd5e0;
+}
+
+.facultyNameCell a {
+  color: #222;
+  text-decoration: none;
+}
+
+.facultyNameCell a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 1200px) {

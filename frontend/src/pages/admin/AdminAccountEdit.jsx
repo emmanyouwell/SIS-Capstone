@@ -33,7 +33,7 @@ function AdminAccountEdit() {
     department: '',
     position: '',
     assignedOffice: '', // Admin only
-    teachingLoad: '', // Teacher only
+    // teachingLoad is now automatically calculated from schedules
     emergencyContactName: '', // Teacher only
     emergencyContactNumber: '', // Teacher only
     dateOfBirth: '',
@@ -48,6 +48,8 @@ function AdminAccountEdit() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState(null);
   const [accountToDeleteType, setAccountToDeleteType] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingAccount, setViewingAccount] = useState(null);
 
   const loading = teachersLoading || adminsLoading;
   const error = teachersError || adminsError;
@@ -144,8 +146,9 @@ function AdminAccountEdit() {
 
     switch (action) {
       case 'view':
-        // Navigate to view page or show details
-        console.log('View:', account);
+        // Show view modal with account details
+        setViewingAccount(account);
+        setShowViewModal(true);
         break;
       case 'edit':
         // Populate form with account data for editing (teacher or admin)
@@ -164,7 +167,7 @@ function AdminAccountEdit() {
           department: accountData.department || '',
           position: accountData.position || '',
           assignedOffice: accountData.assignedOffice || '',
-          teachingLoad: accountData.teachingLoad || '',
+          // teachingLoad is now automatically calculated from schedules
           emergencyContactName: accountData.emergencyContactName || '',
           emergencyContactNumber: accountData.emergencyContactNumber || '',
           dateOfBirth: accountData.userId?.dateOfBirth ? new Date(accountData.userId.dateOfBirth).toISOString().split('T')[0] : '',
@@ -228,7 +231,7 @@ function AdminAccountEdit() {
               employeeId: formData.employeeId || undefined,
               department: formData.department || undefined,
               position: formData.position || undefined,
-              teachingLoad: formData.teachingLoad ? parseInt(formData.teachingLoad, 10) : undefined,
+              // teachingLoad is now automatically calculated from schedules
               emergencyContactName: formData.emergencyContactName || undefined,
               emergencyContactNumber: formData.emergencyContactNumber || undefined
             };
@@ -293,7 +296,7 @@ function AdminAccountEdit() {
           department: formData.department || undefined,
           position: formData.position || undefined,
           assignedOffice: formData.role === 'Admin' ? (formData.assignedOffice || undefined) : undefined,
-          teachingLoad: formData.role === 'Teacher' && formData.teachingLoad ? parseInt(formData.teachingLoad, 10) : undefined,
+          // teachingLoad is now automatically calculated from schedules
           emergencyContactName: formData.role === 'Teacher' ? (formData.emergencyContactName || undefined) : undefined,
           emergencyContactNumber: formData.role === 'Teacher' ? (formData.emergencyContactNumber || undefined) : undefined
         };
@@ -327,7 +330,7 @@ function AdminAccountEdit() {
         department: '',
         position: '',
         assignedOffice: '',
-        teachingLoad: '',
+        // teachingLoad is now automatically calculated from schedules
         emergencyContactName: '',
         emergencyContactNumber: '',
         dateOfBirth: '',
@@ -687,18 +690,6 @@ function AdminAccountEdit() {
                         placeholder="Enter position"
                       />
                     </div>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="teachingLoad">Teaching Load</label>
-                      <input
-                        type="number"
-                        id="teachingLoad"
-                        name="teachingLoad"
-                        value={formData.teachingLoad}
-                        onChange={(e) => setFormData({ ...formData, teachingLoad: e.target.value })}
-                        placeholder="Enter teaching load"
-                        min="0"
-                      />
-                    </div>
                   </div>
 
                   <div className={styles.formRow}>
@@ -841,6 +832,200 @@ function AdminAccountEdit() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Account Modal */}
+      {showViewModal && viewingAccount && (
+        <div className={styles.modal} onClick={() => setShowViewModal(false)}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()} style={{ maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <button className={styles.modalClose} onClick={() => setShowViewModal(false)}>
+              &times;
+            </button>
+            <h3>{viewingAccount.accountType} Information</h3>
+            <div style={{ padding: '20px 0' }}>
+              {viewingAccount.accountType === 'Teacher' && (
+                <>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ marginBottom: '10px', color: '#333' }}>Personal Information</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                      <div>
+                        <strong>Name:</strong>
+                        <p>{viewingAccount.name}</p>
+                      </div>
+                      <div>
+                        <strong>Email:</strong>
+                        <p>{viewingAccount.email}</p>
+                      </div>
+                      <div>
+                        <strong>Employee ID:</strong>
+                        <p>{viewingAccount.account.employeeId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Department:</strong>
+                        <p>{viewingAccount.account.department || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Position:</strong>
+                        <p>{viewingAccount.account.position || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Status:</strong>
+                        <p>{viewingAccount.account.userId?.status || 'N/A'}</p>
+                      </div>
+                      {viewingAccount.account.userId?.contactNumber && (
+                        <div>
+                          <strong>Contact Number:</strong>
+                          <p>{viewingAccount.account.userId.contactNumber}</p>
+                        </div>
+                      )}
+                      {viewingAccount.account.userId?.address && (
+                        <div>
+                          <strong>Address:</strong>
+                          <p>{viewingAccount.account.userId.address}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ marginBottom: '10px', color: '#333' }}>Emergency Contact</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                      <div>
+                        <strong>Contact Name:</strong>
+                        <p>{viewingAccount.account.emergencyContactName || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Contact Number:</strong>
+                        <p>{viewingAccount.account.emergencyContactNumber || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ marginBottom: '10px', color: '#333' }}>Teaching Load</h4>
+                    <div style={{ 
+                      padding: '15px', 
+                      borderRadius: '8px',
+                      backgroundColor: viewingAccount.account.calculatedTeachingLoad >= 25 
+                        ? '#fff3cd' 
+                        : viewingAccount.account.calculatedTeachingLoad >= 30
+                        ? '#f8d7da'
+                        : '#d1ecf1',
+                      border: `2px solid ${
+                        viewingAccount.account.calculatedTeachingLoad >= 30
+                          ? '#dc3545'
+                          : viewingAccount.account.calculatedTeachingLoad >= 25
+                          ? '#ffc107'
+                          : '#0dcaf0'
+                      }`
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                        <div>
+                          <strong>Daily Teaching Load:</strong>
+                          <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0' }}>
+                            {viewingAccount.account.calculatedTeachingLoad?.toFixed(2) || viewingAccount.account.teachingLoad || 0} hours/day
+                          </p>
+                        </div>
+                        <div>
+                          <strong>Weekly Teaching Load:</strong>
+                          <p style={{ fontSize: '18px', fontWeight: 'bold', margin: '5px 0' }}>
+                            {viewingAccount.account.weeklyTeachingLoad?.toFixed(2) || 'N/A'} hours/week
+                          </p>
+                        </div>
+                      </div>
+                      {viewingAccount.account.calculatedTeachingLoad >= 30 && (
+                        <div style={{ 
+                          padding: '10px', 
+                          backgroundColor: '#f8d7da', 
+                          color: '#721c24', 
+                          borderRadius: '4px',
+                          marginTop: '10px',
+                          fontWeight: 'bold'
+                        }}>
+                          ⚠️ WARNING: Teacher has reached the maximum teaching load limit (30 hours/day). Cannot assign additional load.
+                        </div>
+                      )}
+                      {viewingAccount.account.calculatedTeachingLoad >= 25 && viewingAccount.account.calculatedTeachingLoad < 30 && (
+                        <div style={{ 
+                          padding: '10px', 
+                          backgroundColor: '#fff3cd', 
+                          color: '#856404', 
+                          borderRadius: '4px',
+                          marginTop: '10px',
+                          fontWeight: 'bold'
+                        }}>
+                          ⚠️ WARNING: Teacher is approaching the maximum teaching load limit (30 hours/day). Current load: {viewingAccount.account.calculatedTeachingLoad?.toFixed(2)} hours/day.
+                        </div>
+                      )}
+                      {viewingAccount.account.dailyBreakdown && (
+                        <div style={{ marginTop: '15px' }}>
+                          <strong>Daily Breakdown:</strong>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '5px', marginTop: '10px' }}>
+                            {Object.entries(viewingAccount.account.dailyBreakdown).map(([day, hours]) => (
+                              <div key={day} style={{ fontSize: '14px' }}>
+                                <strong>{day}:</strong> {hours.toFixed(2)} hrs
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+              {viewingAccount.accountType === 'Admin' && (
+                <>
+                  <div style={{ marginBottom: '20px' }}>
+                    <h4 style={{ marginBottom: '10px', color: '#333' }}>Personal Information</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                      <div>
+                        <strong>Name:</strong>
+                        <p>{viewingAccount.name}</p>
+                      </div>
+                      <div>
+                        <strong>Email:</strong>
+                        <p>{viewingAccount.email}</p>
+                      </div>
+                      <div>
+                        <strong>Employee ID:</strong>
+                        <p>{viewingAccount.account.employeeId || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Department:</strong>
+                        <p>{viewingAccount.account.department || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Position:</strong>
+                        <p>{viewingAccount.account.position || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Assigned Office:</strong>
+                        <p>{viewingAccount.account.assignedOffice || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <strong>Status:</strong>
+                        <p>{viewingAccount.account.userId?.status || 'N/A'}</p>
+                      </div>
+                      {viewingAccount.account.userId?.contactNumber && (
+                        <div>
+                          <strong>Contact Number:</strong>
+                          <p>{viewingAccount.account.userId.contactNumber}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className={styles.modalButtons}>
+              <button
+                type="button"
+                className={styles.btnSecondary}
+                onClick={() => setShowViewModal(false)}
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

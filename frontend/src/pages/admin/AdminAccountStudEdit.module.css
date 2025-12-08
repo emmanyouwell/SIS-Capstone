@@ -176,6 +176,11 @@
 
 .actionCell {
   position: relative;
+  z-index: 1;
+}
+
+.actionCell:hover {
+  z-index: 10001;
 }
 
 .dotsBtn {
@@ -204,7 +209,7 @@
   background: #fff;
   border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
+  z-index: 10000;
   min-width: 120px;
   padding: 0.5rem 0;
   overflow: visible;

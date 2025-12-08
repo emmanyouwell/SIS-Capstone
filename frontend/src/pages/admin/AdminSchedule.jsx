@@ -317,7 +317,17 @@ function AdminSchedule() {
       });
 
       // Save the entire schedule array
-      await dispatch(setFullSchedule({ sectionId: currentSectionId, schedule: scheduleArray }));
+      const result = await dispatch(setFullSchedule({ sectionId: currentSectionId, schedule: scheduleArray }));
+
+      // Check if the action was rejected (e.g., teaching load exceeded)
+      if (setFullSchedule.rejected.match(result)) {
+        setMessageModalContent({
+          type: 'error',
+          message: result.payload || 'Failed to save schedule. Please check that no teacher exceeds 30 hours/day of teaching load.',
+        });
+        setShowMessageModal(true);
+        return;
+      }
 
       // Refresh schedule
       await dispatch(getScheduleBySection(currentSectionId));
@@ -331,7 +341,7 @@ function AdminSchedule() {
     } catch (error) {
       setMessageModalContent({
         type: 'error',
-        message: error || 'Failed to save schedule',
+        message: error?.message || error || 'Failed to save schedule. Please check that no teacher exceeds 30 hours/day of teaching load.',
       });
       setShowMessageModal(true);
     } finally {
