@@ -40,26 +40,8 @@ export const getMasterlists = async (req, res) => {
     if (section) filter.section = section;
     if (schoolYear) filter.schoolYear = schoolYear;
 
-    // If user is a Teacher, filter masterlists where they are adviser or subject teacher
-    if (req.user.role === 'Teacher') {
-      const Teacher = (await import('../models/Teacher.js')).default;
-      const teacher = await Teacher.findOne({ userId: req.user._id });
-      
-      if (teacher) {
-        // Filter masterlists where teacher is adviser OR subject teacher
-        filter.$or = [
-          { adviser: teacher._id },
-          { 'subjectTeachers.teacher': teacher._id }
-        ];
-      } else {
-        // Teacher document not found, return empty array
-        return res.json({
-          success: true,
-          count: 0,
-          data: [],
-        });
-      }
-    }
+    // Teachers can now view all masterlists for all sections
+    // (Previously filtered to only show advisory or subject teacher masterlists)
 
     const masterlists = await Masterlist.find(filter)
       .populate('students', 'firstName lastName middleName extensionName sex')

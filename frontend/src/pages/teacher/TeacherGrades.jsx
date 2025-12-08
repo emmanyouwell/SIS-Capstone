@@ -1,62 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './TeacherGrades.module.css';
+import { fetchAllSubjects } from '../../store/slices/subjectSlice';
+import { fetchMasterlists } from '../../store/slices/masterlistSlice';
+import { fetchGrades, updateGrade, createGrade } from '../../store/slices/gradeSlice';
+import { fetchAllStudents } from '../../store/slices/studentSlice';
+import { getAllSections } from '../../store/slices/sectionSlice';
 
 function TeacherGrades() {
-  // Sample students for each section
-  const studentsBySection = {
-    'g7-dahlia': [
-      { grade: 7, name: 'Kiana Mae Alvarez', status: '', lrn: '00000001', final: null, comment: '' },
-      { grade: 7, name: 'Jerica May Galve', status: '', lrn: '00000002', final: null, comment: '' },
-      { grade: 7, name: 'Haven Joy Dayola', status: '', lrn: '00000003', final: null, comment: '' },
-      { grade: 7, name: 'Khaleed James Forteza', status: '', lrn: '00000004', final: null, comment: '' },
-      { grade: 7, name: 'Jandel Grower', status: '', lrn: '00000005', final: null, comment: '' },
-    ],
-    'g8-lilac': [
-      { grade: 8, name: 'Maria Santos', status: '', lrn: '00000006', final: null, comment: '' },
-      { grade: 8, name: 'John Dela Cruz', status: '', lrn: '00000007', final: null, comment: '' },
-      { grade: 8, name: 'Sarah Johnson', status: '', lrn: '00000008', final: null, comment: '' },
-      { grade: 8, name: 'Michael Tan', status: '', lrn: '00000009', final: null, comment: '' },
-      { grade: 8, name: 'Lisa Wong', status: '', lrn: '00000010', final: null, comment: '' },
-    ],
-    'g8-tulip': [
-      { grade: 8, name: 'David Lee', status: '', lrn: '00000011', final: null, comment: '' },
-      { grade: 8, name: 'Anna Garcia', status: '', lrn: '00000012', final: null, comment: '' },
-      { grade: 8, name: 'Robert Chen', status: '', lrn: '00000013', final: null, comment: '' },
-      { grade: 8, name: 'Emily Martinez', status: '', lrn: '00000014', final: null, comment: '' },
-      { grade: 8, name: 'James Wilson', status: '', lrn: '00000015', final: null, comment: '' },
-    ],
-    'g9-daisy': [
-      { grade: 9, name: 'Sophia Kim', status: '', lrn: '00000016', final: null, comment: '' },
-      { grade: 9, name: 'Daniel Park', status: '', lrn: '00000017', final: null, comment: '' },
-      { grade: 9, name: 'Olivia Brown', status: '', lrn: '00000018', final: null, comment: '' },
-      { grade: 9, name: 'William Davis', status: '', lrn: '00000019', final: null, comment: '' },
-      { grade: 9, name: 'Emma Taylor', status: '', lrn: '00000020', final: null, comment: '' },
-    ],
-  };
+  const dispatch = useDispatch();
+  const { subjects, loading: subjectsLoading } = useSelector((state) => state.subjects);
+  const { masterlists, loading: masterlistsLoading } = useSelector((state) => state.masterlists);
+  const { grades, loading: gradesLoading } = useSelector((state) => state.grades);
+  const { students: allStudents } = useSelector((state) => state.students);
+  const { data: allSections, loading: sectionsLoading } = useSelector((state) => state.section);
 
-  // Function to clone students for each quarter
-  const cloneStudents = (students) => {
-    return students.map(s => ({ ...s }));
-  };
-
-  // Initialize gradesData with students from the default section
-  const initializeGradesData = (sectionKey) => {
-    const students = studentsBySection[sectionKey] || [];
-    return {
-      q1: cloneStudents(students),
-      q2: cloneStudents(students),
-      q3: cloneStudents(students),
-      q4: cloneStudents(students),
-    };
-  };
-
-  const [currentSection, setCurrentSection] = useState('g7-dahlia');
-  const [gradesData, setGradesData] = useState(() => initializeGradesData('g7-dahlia'));
+  const [selectedSectionId, setSelectedSectionId] = useState(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(null);
   const [currentTab, setCurrentTab] = useState('q1');
   const [searchQuery, setSearchQuery] = useState('');
   const [showGradeInputModal, setShowGradeInputModal] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [currentStudentName, setCurrentStudentName] = useState('');
+  const [currentStudent, setCurrentStudent] = useState(null);
+  const [currentGradeRecord, setCurrentGradeRecord] = useState(null);
   const [gradeInput, setGradeInput] = useState('');
   const [gradeComment, setGradeComment] = useState('');
   const [gradeInputError, setGradeInputError] = useState('');
@@ -65,27 +31,219 @@ function TeacherGrades() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [fadeClass, setFadeClass] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // Update gradesData when section changes
+  // Fetch subjects, masterlists, students, and sections on mount
   useEffect(() => {
-    setGradesData(initializeGradesData(currentSection));
-    setSearchQuery('');
-  }, [currentSection]);
+    dispatch(fetchAllSubjects());
+    dispatch(fetchMasterlists());
+    dispatch(fetchAllStudents());
+    dispatch(getAllSections());
+  }, [dispatch]);
+
+  // Fetch grades when subjects or masterlists change
+  useEffect(() => {
+    if (subjects.length > 0) {
+      dispatch(fetchGrades());
+    }
+  }, [dispatch, subjects.length]);
+
+  // Get grade levels from subjects the teacher teaches
+  const teacherGradeLevels = useMemo(() => {
+    const gradeLevels = new Set();
+    subjects.forEach((subject) => {
+      if (subject.gradeLevel) {
+        gradeLevels.add(subject.gradeLevel);
+      }
+    });
+    return Array.from(gradeLevels).sort();
+  }, [subjects]);
+
+  // Get sections from database for grade levels where teacher has subjects
+  const sections = useMemo(() => {
+    return allSections
+      .filter((section) => teacherGradeLevels.includes(section.gradeLevel))
+      .map((section) => ({
+        _id: section._id,
+        sectionName: section.sectionName,
+        gradeLevel: section.gradeLevel,
+      }))
+      .sort((a, b) => {
+        if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
+        return a.sectionName.localeCompare(b.sectionName);
+      });
+  }, [allSections, teacherGradeLevels]);
+
+  // Get subjects for selected section (filter by grade level of the section)
+  const sectionSubjects = useMemo(() => {
+    if (!selectedSectionId) return [];
+    const selectedIdStr = selectedSectionId.toString();
+    const selectedSection = sections.find((s) => {
+      const sectionId = s._id?.toString();
+      return sectionId === selectedIdStr;
+    });
+    
+    if (!selectedSection) return [];
+    
+    // Get all subjects for the grade level of the selected section
+    return subjects
+      .filter((subject) => subject.gradeLevel === selectedSection.gradeLevel)
+      .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
+  }, [subjects, selectedSectionId, sections]);
+
+  // Get masterlist for selected section
+  const currentMasterlist = useMemo(() => {
+    if (!selectedSectionId) return null;
+    const selectedIdStr = selectedSectionId.toString();
+    const section = sections.find((s) => {
+      const sectionId = s._id?.toString();
+      return sectionId === selectedIdStr;
+    });
+    if (!section) return null;
+    return masterlists.find(
+      (ml) => ml.grade === section.gradeLevel && ml.section === section.sectionName
+    );
+  }, [masterlists, sections, selectedSectionId]);
+
+  // Create mapping from User ID to Student ID using grades and students
+  const userIdToStudentIdMap = useMemo(() => {
+    const map = new Map();
+    
+    // First, add mappings from grades
+    grades.forEach((grade) => {
+      const studentId = grade.studentId?._id || grade.studentId;
+      const userId = grade.studentId?.userId?._id || grade.studentId?.userId;
+      if (studentId && userId) {
+        map.set(userId.toString(), studentId.toString());
+      }
+    });
+    
+    // Then, add mappings from students list (for students without grades yet)
+    allStudents.forEach((student) => {
+      const studentId = student._id;
+      const userId = student.userId?._id || student.userId;
+      if (studentId && userId && !map.has(userId.toString())) {
+        map.set(userId.toString(), studentId.toString());
+      }
+    });
+    
+    return map;
+  }, [grades, allStudents]);
+
+  // Get students for current section
+  const students = useMemo(() => {
+    if (!currentMasterlist) return [];
+    return (currentMasterlist.students || []).map((student) => {
+      const userId = student._id || student;
+      const userIdStr = userId?.toString();
+      // Find Student ID from mapping or grade record
+      let studentModelId = userIdToStudentIdMap.get(userIdStr);
+      
+      // Find grade record for this student
+      const gradeRecord = grades.find((g) => {
+        const gUserId = g.studentId?.userId?._id || g.studentId?.userId;
+        return gUserId?.toString() === userIdStr;
+      });
+      
+      // If we found a grade record but no mapping, use the studentId from grade
+      if (gradeRecord && !studentModelId) {
+        studentModelId = gradeRecord.studentId?._id || gradeRecord.studentId;
+        if (studentModelId) {
+          userIdToStudentIdMap.set(userIdStr, studentModelId.toString());
+        }
+      }
+      
+      return {
+        ...student,
+        userId: userIdStr,
+        studentId: studentModelId, // Student model _id (for grade creation)
+        gradeRecord,
+      };
+    });
+  }, [currentMasterlist, grades, userIdToStudentIdMap]);
+
+  // Set default section when sections load
+  useEffect(() => {
+    if (sections.length > 0 && !selectedSectionId) {
+      const firstSectionId = sections[0]._id?.toString() || sections[0]._id;
+      setSelectedSectionId(firstSectionId);
+    }
+  }, [sections, selectedSectionId]);
+
+  // Set default subject when section subjects load
+  useEffect(() => {
+    if (sectionSubjects.length > 0 && !selectedSubjectId) {
+      setSelectedSubjectId(sectionSubjects[0]._id);
+    }
+  }, [sectionSubjects, selectedSubjectId]);
 
   // Get section display name
   const getSectionDisplayName = () => {
-    const sectionMap = {
-      'g7-dahlia': 'Grade 7 - Dahlia',
-      'g8-lilac': 'Grade 8 - Lilac',
-      'g8-tulip': 'Grade 8 - Tulip',
-      'g9-daisy': 'Grade 9 - Daisy',
-    };
-    return sectionMap[currentSection] || 'Grade 7 - Dahlia';
+    if (!selectedSectionId) return 'Select Section';
+    const selectedIdStr = selectedSectionId.toString();
+    const section = sections.find((s) => {
+      const sectionId = s._id?.toString();
+      return sectionId === selectedIdStr;
+    });
+    if (!section) return 'Select Section';
+    return `Grade ${section.gradeLevel} - ${section.sectionName}`;
+  };
+
+  // Format student name
+  const formatStudentName = (student) => {
+    if (!student) return '';
+    const lastName = student.lastName || '';
+    const firstName = student.firstName || '';
+    const middleName = student.middleName || '';
+    const extensionName = student.extensionName || '';
+    
+    let name = lastName;
+    if (firstName) name += `, ${firstName}`;
+    if (middleName) name += ` ${middleName.charAt(0)}.`;
+    if (extensionName) name += ` ${extensionName}`;
+    return name;
+  };
+
+  // Get grade for current student, subject, and quarter
+  const getStudentGrade = (student) => {
+    if (!student.gradeRecord || !selectedSubjectId) return null;
+    const subjectGrade = student.gradeRecord.grades?.find((g) => {
+      const subjId = g.subjectId?._id || g.subjectId;
+      return subjId?.toString() === selectedSubjectId?.toString();
+    });
+    if (!subjectGrade) return null;
+    return subjectGrade[currentTab] || null;
+  };
+
+  // Get final grade for student
+  const getStudentFinalGrade = (student) => {
+    if (!student.gradeRecord) return null;
+    return student.gradeRecord.finalGrade || null;
+  };
+
+  // Get remarks for student
+  const getStudentRemarks = (student) => {
+    if (!student.gradeRecord) return '';
+    return student.gradeRecord.remarks || '';
+  };
+
+  // Get comment for student
+  const getStudentComment = (student) => {
+    if (!student.gradeRecord) return '';
+    return student.gradeRecord.comment || '';
   };
 
   // Handle section change
   const handleSectionChange = (e) => {
-    setCurrentSection(e.target.value);
+    setSelectedSectionId(e.target.value);
+    setSelectedSubjectId(null);
+    setSearchQuery('');
+  };
+
+  // Handle subject change
+  const handleSubjectChange = (e) => {
+    setSelectedSubjectId(e.target.value);
+    setSearchQuery('');
   };
 
   // Handle tab change
@@ -106,10 +264,12 @@ function TeacherGrades() {
   };
 
   // Open grade input modal
-  const handleViewGrade = (studentName) => {
-    setCurrentStudentName(studentName);
-    setGradeInput('');
-    setGradeComment('');
+  const handleViewGrade = (student) => {
+    setCurrentStudent(student);
+    setCurrentGradeRecord(student.gradeRecord);
+    const currentGrade = getStudentGrade(student);
+    setGradeInput(currentGrade !== null && currentGrade !== undefined ? currentGrade.toString() : '');
+    setGradeComment(getStudentComment(student));
     setGradeInputError('');
     setShowGradeInputModal(true);
   };
@@ -117,6 +277,8 @@ function TeacherGrades() {
   // Close grade input modal
   const closeGradeInputModal = () => {
     setShowGradeInputModal(false);
+    setCurrentStudent(null);
+    setCurrentGradeRecord(null);
     setGradeInput('');
     setGradeComment('');
     setGradeInputError('');
@@ -128,10 +290,10 @@ function TeacherGrades() {
     const commentValue = gradeComment.trim();
 
     if (gradeValue === '') {
-      setPendingGrade('');
+      setPendingGrade(null);
       setPendingComment(commentValue);
     } else {
-      const gradeNum = parseInt(gradeValue);
+      const gradeNum = parseFloat(gradeValue);
       if (isNaN(gradeNum) || gradeNum < 60 || gradeNum > 100) {
         setGradeInputError('Please enter a grade between 60 and 100.');
         return;
@@ -150,32 +312,95 @@ function TeacherGrades() {
   };
 
   // Submit grade
-  const submitGrade = () => {
-    const student = gradesData[currentTab].find(row => row.name === currentStudentName);
-    if (student) {
-      if (pendingGrade === '') {
-        student.final = null;
-        student.status = '';
-        student.comment = pendingComment;
-      } else if (pendingGrade >= 75) {
-        student.final = pendingGrade;
-        student.status = 'PASSED';
-        student.comment = pendingComment;
-      } else if (pendingGrade >= 60 && pendingGrade <= 74) {
-        student.final = pendingGrade;
-        student.status = 'FAILED';
-        student.comment = pendingComment;
-      }
-    }
+  const submitGrade = async () => {
+    if (!currentStudent || !selectedSubjectId) return;
 
-    setGradesData({ ...gradesData });
-    closeConfirmationModal();
-    closeGradeInputModal();
-    setToastMessage(`Grade posted successfully for ${currentStudentName}.`);
-    setShowSuccessToast(true);
-    setTimeout(() => {
-      setShowSuccessToast(false);
-    }, 2200);
+    setSubmitting(true);
+    try {
+      const gradeValue = pendingGrade;
+      const commentValue = pendingComment.trim();
+
+      // Find or create grade record
+      let gradeRecord = currentGradeRecord;
+      let updatedGrades = [];
+
+      if (gradeRecord && gradeRecord.grades) {
+        // Update existing grade record
+        updatedGrades = gradeRecord.grades.map((g) => {
+          const subjId = g.subjectId?._id || g.subjectId;
+          if (subjId?.toString() === selectedSubjectId?.toString()) {
+            return {
+              ...g,
+              [currentTab]: gradeValue !== null ? gradeValue : undefined,
+            };
+          }
+          return g;
+        });
+
+        // Check if subject grade entry exists
+        const hasSubject = updatedGrades.some((g) => {
+          const subjId = g.subjectId?._id || g.subjectId;
+          return subjId?.toString() === selectedSubjectId?.toString();
+        });
+
+        // Add subject if it doesn't exist
+        if (!hasSubject && gradeValue !== null) {
+          updatedGrades.push({
+            subjectId: selectedSubjectId,
+            [currentTab]: gradeValue,
+          });
+        }
+
+        // Update grade record
+        await dispatch(
+          updateGrade({
+            id: gradeRecord._id,
+            data: {
+              grades: updatedGrades,
+              comment: commentValue,
+            },
+          })
+        ).unwrap();
+      } else {
+        // Create new grade record
+        const studentId = currentStudent.studentId;
+        
+        if (!studentId) {
+          throw new Error('Student ID not found. Please refresh the page and try again.');
+        }
+        
+        updatedGrades = [
+          {
+            subjectId: selectedSubjectId,
+            [currentTab]: gradeValue !== null ? gradeValue : undefined,
+          },
+        ];
+
+        const newGradeRecord = await dispatch(
+          createGrade({
+            studentId,
+            grades: updatedGrades,
+            comment: commentValue,
+          })
+        ).unwrap();
+        gradeRecord = newGradeRecord;
+      }
+
+      // Refresh grades
+      await dispatch(fetchGrades());
+
+      closeConfirmationModal();
+      closeGradeInputModal();
+      setToastMessage(`Grade posted successfully for ${formatStudentName(currentStudent)}.`);
+      setShowSuccessToast(true);
+      setTimeout(() => {
+        setShowSuccessToast(false);
+      }, 2200);
+    } catch (error) {
+      setGradeInputError(error || 'Failed to update grade. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   // Handle Enter key in grade input
@@ -195,25 +420,19 @@ function TeacherGrades() {
 
   // Get filtered students
   const getFilteredStudents = () => {
-    return gradesData[currentTab].filter(row =>
-      row.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  };
-
-  // Get status display
-  const getStatusDisplay = (status) => {
-    if (status === 'PASSED') {
-      return { text: status, style: { fontWeight: 700, color: '#184d27' } };
-    } else if (status === 'FAILED') {
-      return { text: status, style: { fontWeight: 700, color: '#c53030' } };
-    }
-    return { text: '', style: {} };
+    if (!searchQuery.trim()) return students;
+    const query = searchQuery.toLowerCase();
+    return students.filter((student) => {
+      const name = formatStudentName(student).toLowerCase();
+      const lrn = (student.learnerReferenceNo || '').toLowerCase();
+      return name.includes(query) || lrn.includes(query);
+    });
   };
 
   // Get confirmation summary
   const getConfirmationSummary = () => {
-    const gradeValue = gradeInput.trim() || '-';
-    const status = pendingGrade === '' ? '' : (pendingGrade >= 75 ? 'PASSED' : 'FAILED');
+    const gradeValue = pendingGrade !== null ? pendingGrade.toString() : '-';
+    const status = pendingGrade !== null ? (pendingGrade >= 75 ? 'PASSED' : 'FAILED') : '';
     const statusColor = status === 'PASSED' ? '#184d27' : status === 'FAILED' ? '#c53030' : '';
     
     return { gradeValue, status, statusColor };
@@ -221,14 +440,43 @@ function TeacherGrades() {
 
   // Get student info HTML
   const getStudentInfo = () => {
-    const student = gradesData[currentTab].find(row => row.name === currentStudentName);
-    if (student) {
-      return `Name: <b>${student.name}</b><br>LRN: <b>${student.lrn}</b><br>Grade: <b>${student.grade}</b>`;
-    }
-    return '';
+    if (!currentStudent) return '';
+    const name = formatStudentName(currentStudent);
+    const lrn = currentStudent.learnerReferenceNo || 'N/A';
+    const selectedIdStr = selectedSectionId?.toString();
+    const section = sections.find((s) => {
+      const sectionId = s._id?.toString();
+      return sectionId === selectedIdStr;
+    });
+    const gradeLevel = section?.gradeLevel || 'N/A';
+    return `Name: <b>${name}</b><br>LRN: <b>${lrn}</b><br>Grade: <b>${gradeLevel}</b>`;
   };
 
   const filteredStudents = getFilteredStudents();
+  const selectedSubject = sectionSubjects.find((s) => s._id === selectedSubjectId);
+  const loading = subjectsLoading || masterlistsLoading || gradesLoading || sectionsLoading;
+
+  if (loading && sections.length === 0 && allSections.length === 0) {
+    return (
+      <div className={styles.mainContent}>
+        <h1 className={styles.gradesTitle}>Grades</h1>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>Loading grades data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (sections.length === 0) {
+    return (
+      <div className={styles.mainContent}>
+        <h1 className={styles.gradesTitle}>Grades</h1>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>No sections available. Please contact an administrator.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
       <div className={styles.mainContent}>
@@ -237,16 +485,37 @@ function TeacherGrades() {
         <div className={styles.sectionSelect}>
           <select
             id="sectionSelect"
-            value={currentSection}
+            value={selectedSectionId || ''}
             onChange={handleSectionChange}
             className={styles.sectionSelectInput}
           >
-            <option value="g7-dahlia">Grade 7 - Dahlia</option>
-            <option value="g8-lilac">Grade 8 - Lilac</option>
-            <option value="g8-tulip">Grade 8 - Tulip</option>
-            <option value="g9-daisy">Grade 9 - Daisy</option>
+            {sections.map((section) => {
+              const sectionId = section._id?.toString() || section._id;
+              return (
+                <option key={sectionId} value={sectionId}>
+                  Grade {section.gradeLevel} - {section.sectionName}
+                </option>
+              );
+            })}
           </select>
         </div>
+
+        {sectionSubjects.length > 0 && (
+          <div className={styles.sectionSelect} style={{ marginTop: '1rem' }}>
+            <select
+              id="subjectSelect"
+              value={selectedSubjectId || ''}
+              onChange={handleSubjectChange}
+              className={styles.sectionSelectInput}
+            >
+              {sectionSubjects.map((subject) => (
+                <option key={subject._id} value={subject._id}>
+                  {subject.subjectName}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         <div className={styles.gradesCard}>
           <div className={styles.gradesTabs}>
@@ -292,44 +561,62 @@ function TeacherGrades() {
                   <th style={{ textAlign: 'center' }}>Grade</th>
                   <th>Subject</th>
                   <th>Name</th>
-                  <th>Status</th>
+                  <th style={{ textAlign: 'center' }}>
+                    {currentTab === 'q1' ? 'Q1 Grade' : 
+                     currentTab === 'q2' ? 'Q2 Grade' : 
+                     currentTab === 'q3' ? 'Q3 Grade' : 'Q4 Grade'}
+                  </th>
                   <th>LRN</th>
                   <th>Final Grade</th>
                   <th>Edit Grades</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredStudents.map((row, index) => {
-                  const status = getStatusDisplay(row.status);
-                  return (
-                    <tr
-                      key={index}
-                      style={{
-                        background: row.status === 'INCOMPLETE' || row.status === 'FAILED' ? '#f8fafc' : '',
-                      }}
-                    >
-                      <td style={{ textAlign: 'center' }}>{row.grade}</td>
-                      <td style={{ textAlign: 'center' }}>Math</td>
-                      <td>{row.name}</td>
-                      <td style={status.style}>{status.text}</td>
-                      <td>{row.lrn}</td>
-                      <td>{row.final !== null ? row.final : '-'}</td>
-                      <td>
-                        <button
-                          onClick={() => handleViewGrade(row.name)}
-                          className={styles.viewButton}
-                        >
-                          <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" />
-                            <circle cx="12" cy="12" r="4" />
-                            <line x1="21" y1="12" x2="17" y2="12" />
-                          </svg>
-                          view
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
+                {filteredStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '2rem' }}>
+                      {selectedSubjectId ? 'No students found in this section.' : 'Please select a subject.'}
+                    </td>
+                  </tr>
+                ) : (
+                  filteredStudents.map((student, index) => {
+                    const studentGrade = getStudentGrade(student);
+                    const finalGrade = getStudentFinalGrade(student);
+                    const selectedIdStr = selectedSectionId?.toString();
+                    const section = sections.find((s) => {
+                      const sectionId = s._id?.toString();
+                      return sectionId === selectedIdStr;
+                    });
+                    return (
+                      <tr
+                        key={student.studentId || index}
+                      >
+                        <td style={{ textAlign: 'center' }}>{section?.gradeLevel || 'N/A'}</td>
+                        <td style={{ textAlign: 'center' }}>{selectedSubject?.subjectName || 'N/A'}</td>
+                        <td>{formatStudentName(student)}</td>
+                        <td style={{ textAlign: 'center', fontWeight: studentGrade !== null && studentGrade !== undefined ? 600 : 400 }}>
+                          {studentGrade !== null && studentGrade !== undefined ? Math.round(studentGrade) : '-'}
+                        </td>
+                        <td>{student.learnerReferenceNo || 'N/A'}</td>
+                        <td>{finalGrade !== null && finalGrade !== undefined ? Math.round(finalGrade) : '-'}</td>
+                        <td>
+                          <button
+                            onClick={() => handleViewGrade(student)}
+                            className={styles.viewButton}
+                            disabled={!selectedSubjectId}
+                          >
+                            <svg width="20" height="20" fill="none" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                              <circle cx="12" cy="12" r="10" />
+                              <circle cx="12" cy="12" r="4" />
+                              <line x1="21" y1="12" x2="17" y2="12" />
+                            </svg>
+                            view
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
@@ -358,7 +645,7 @@ function TeacherGrades() {
                 />
               </div>
               <h3 className={styles.modalTitle}>
-                Insert Grade for <span>{currentStudentName}</span>
+                Insert Grade for <span>{currentStudent ? formatStudentName(currentStudent) : ''}</span>
               </h3>
               <input
                 type="number"
@@ -437,7 +724,7 @@ function TeacherGrades() {
                           {summary.status}
                         </span>
                       )}{' '}
-                      for <b>{currentStudentName}</b>.
+                      for <b>{currentStudent ? formatStudentName(currentStudent) : ''}</b>.
                       <br />
                       {pendingComment && (
                         <>
@@ -460,8 +747,9 @@ function TeacherGrades() {
                 <button
                   className={styles.confirmBtn}
                   onClick={submitGrade}
+                  disabled={submitting}
                 >
-                  Confirm
+                  {submitting ? 'Submitting...' : 'Confirm'}
                 </button>
               </div>
             </div>

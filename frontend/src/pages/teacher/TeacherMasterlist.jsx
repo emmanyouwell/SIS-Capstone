@@ -147,7 +147,7 @@ function TeacherMasterlist() {
           <h1>Masterlist</h1>
         </div>
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>No masterlists assigned to you yet.</p>
+          <p>No masterlists available yet.</p>
         </div>
       </div>
     );
