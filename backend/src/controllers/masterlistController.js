@@ -82,11 +82,13 @@ export const getMasterlist = async (req, res) => {
 // @access  Private (Admin)
 export const createMasterlist = async (req, res) => {
   try {
+    const Student = (await import('../models/Student.js')).default;
+    const Section = (await import('../models/Section.js')).default;
+    
     // Check if all students are enrolled
     if (req.body.students && req.body.students.length > 0) {
-      const Student = (await import('../models/Student.js')).default;
       const students = await Student.find({ 
-        _id: { $in: req.body.students } 
+        userId: { $in: req.body.students } 
       });
       
       const notEnrolled = students.filter(s => !s.enrollmentStatus);
@@ -98,6 +100,24 @@ export const createMasterlist = async (req, res) => {
     }
 
     const masterlist = await Masterlist.create(req.body);
+    
+    // Update Student documents with sectionId
+    if (req.body.students && req.body.students.length > 0 && req.body.section && req.body.grade) {
+      // Find the Section document by sectionName and gradeLevel
+      const section = await Section.findOne({
+        sectionName: req.body.section,
+        gradeLevel: req.body.grade,
+      });
+      
+      if (section) {
+        // Update all Student documents where userId is in the students array
+        await Student.updateMany(
+          { userId: { $in: req.body.students } },
+          { $set: { sectionId: section._id } }
+        );
+      }
+    }
+    
     await masterlist.populate('students', 'firstName lastName learnerReferenceNo');
     await masterlist.populate({
       path: 'adviser',
@@ -129,11 +149,19 @@ export const createMasterlist = async (req, res) => {
 // @access  Private (Admin)
 export const updateMasterlist = async (req, res) => {
   try {
+    const Student = (await import('../models/Student.js')).default;
+    const Section = (await import('../models/Section.js')).default;
+    
+    // Get the existing masterlist to compare students
+    const existingMasterlist = await Masterlist.findById(req.params.id);
+    if (!existingMasterlist) {
+      return res.status(404).json({ message: 'Masterlist not found' });
+    }
+    
     // Check if students being added are enrolled
     if (req.body.students && req.body.students.length > 0) {
-      const Student = (await import('../models/Student.js')).default;
       const students = await Student.find({ 
-        _id: { $in: req.body.students } 
+        userId: { $in: req.body.students } 
       });
       
       const notEnrolled = students.filter(s => !s.enrollmentStatus);
@@ -143,6 +171,17 @@ export const updateMasterlist = async (req, res) => {
         });
       }
     }
+
+    // Determine which students were added and removed
+    const existingStudentIds = (existingMasterlist.students || []).map(s => 
+      s.toString ? s.toString() : s
+    );
+    const newStudentIds = (req.body.students || []).map(s => 
+      s.toString ? s.toString() : s
+    );
+    
+    const addedStudentIds = newStudentIds.filter(id => !existingStudentIds.includes(id));
+    const removedStudentIds = existingStudentIds.filter(id => !newStudentIds.includes(id));
 
     const masterlist = await Masterlist.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -165,8 +204,31 @@ export const updateMasterlist = async (req, res) => {
         }
       });
 
-    if (!masterlist) {
-      return res.status(404).json({ message: 'Masterlist not found' });
+    // Update Student documents: set sectionId for added students, clear for removed
+    if (addedStudentIds.length > 0 || removedStudentIds.length > 0) {
+      // Find the Section document by sectionName and gradeLevel
+      const section = await Section.findOne({
+        sectionName: existingMasterlist.section,
+        gradeLevel: existingMasterlist.grade,
+      });
+      
+      if (section) {
+        // Update added students with sectionId
+        if (addedStudentIds.length > 0) {
+          await Student.updateMany(
+            { userId: { $in: addedStudentIds } },
+            { $set: { sectionId: section._id } }
+          );
+        }
+        
+        // Clear sectionId for removed students
+        if (removedStudentIds.length > 0) {
+          await Student.updateMany(
+            { userId: { $in: removedStudentIds } },
+            { $set: { sectionId: null } }
+          );
+        }
+      }
     }
 
     res.json({
@@ -183,10 +245,22 @@ export const updateMasterlist = async (req, res) => {
 // @access  Private (Admin)
 export const deleteMasterlist = async (req, res) => {
   try {
+    const Student = (await import('../models/Student.js')).default;
     const masterlist = await Masterlist.findById(req.params.id);
 
     if (!masterlist) {
       return res.status(404).json({ message: 'Masterlist not found' });
+    }
+
+    // Clear sectionId for all students in this masterlist before deleting
+    if (masterlist.students && masterlist.students.length > 0) {
+      const studentIds = masterlist.students.map(s => 
+        s.toString ? s.toString() : s
+      );
+      await Student.updateMany(
+        { userId: { $in: studentIds } },
+        { $set: { sectionId: null } }
+      );
     }
 
     await masterlist.deleteOne();

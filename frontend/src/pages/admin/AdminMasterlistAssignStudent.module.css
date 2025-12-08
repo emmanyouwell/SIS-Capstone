@@ -1,83 +1,142 @@
 .mainContent {
-  margin-left: 220px;
-  margin-top: 60px;
-  padding: 32px 24px 24px 24px;
+  margin-left: var(--sidebar-width, 220px);
+  margin-top: var(--header-height, 60px);
+  padding: 2.5rem;
   background: #f7f7f7;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - var(--header-height, 60px));
 }
 
 .headerBar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 24px;
-  margin-bottom: 18px;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .headerBar h1 {
   font-size: 1.5rem;
+  font-weight: 700;
   color: #184d27;
   margin: 0;
 }
 
-.addStudentContainer {
-  display: inline-flex;
+.sectionBadge {
+  background: #e6f0ea;
+  color: #184d27;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.actionButtons {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Section Dropdown - Separate from Add Button */
+.sectionDropdownContainer {
   position: relative;
-  margin-right: 24px;
 }
 
-.addStudentMain {
-  background: linear-gradient(180deg, #8fd14f 0%, #5cbf2a 100%);
-  color: #fff;
-  font-size: 1.13rem;
-  font-weight: 600;
-  border: 1px solid #5cbf2a;
-  border-radius: 6px 0 0 6px;
-  padding: 10px 22px;
-  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.1);
-  cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
-  outline: none;
-}
-
-.addStudentArrow {
-  background: linear-gradient(180deg, #8fd14f 0%, #5cbf2a 100%);
-  color: #fff;
-  font-size: 1.13rem;
-  border: 1px solid #5cbf2a;
-  border-left: none;
-  border-radius: 0 6px 6px 0;
+.sectionDropdownBtn {
+  background: #fff;
+  color: #184d27;
+  font-size: 1rem;
+  font-weight: 500;
+  border: 1px solid #a1c8b8;
+  border-radius: 8px;
   padding: 10px 16px;
   box-shadow: 0 2px 6px rgba(44, 62, 80, 0.1);
   cursor: pointer;
-  transition: background 0.18s, box-shadow 0.18s;
+  transition: all 0.2s;
   outline: none;
   display: flex;
   align-items: center;
+  gap: 8px;
+  min-width: 160px;
+  justify-content: space-between;
 }
 
-.addStudentMain:hover,
-.addStudentArrow:hover {
-  background: linear-gradient(180deg, #a2e063 0%, #6fdc3f 100%);
-  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.13);
+.sectionDropdownBtn:hover {
+  background: #f5f5f5;
+  border-color: #4c7a67;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.12);
+}
+
+.dropdownArrow {
+  font-size: 0.8rem;
+  transition: transform 0.2s;
+}
+
+.sectionDropdownContainer:has(.dropdownMenu) .dropdownArrow {
+  transform: rotate(180deg);
+}
+
+/* Action Button - Separate from Dropdown */
+.actionButton {
+  background: #4c7a67;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.1);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.actionButton:hover:not(:disabled) {
+  background: #357a5b;
+  box-shadow: 0 4px 12px rgba(44, 62, 80, 0.15);
+}
+
+.actionButton:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.removeButton {
+  background: #dc3545;
+}
+
+.removeButton:hover:not(:disabled) {
+  background: #c82333;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
 }
 
 .dropdownMenu {
   position: absolute;
   left: 0;
-  top: 110%;
-  min-width: 180px;
+  top: calc(100% + 4px);
+  min-width: 100%;
   background: #fff;
-  border: 1px solid #cde6b0;
-  border-radius: 0 0 8px 8px;
+  border: 1px solid #a1c8b8;
+  border-radius: 8px;
   box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
   z-index: 100;
-  margin-top: 2px;
+  margin-top: 4px;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .dropdownItem {
   padding: 12px 18px;
   color: #184d27;
-  font-size: 1.08rem;
+  font-size: 1rem;
   cursor: pointer;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
@@ -89,15 +148,21 @@
 }
 
 .dropdownItem:hover {
-  background: #eafbe7;
+  background: #e6f0ea;
+}
+
+.dropdownItem.active {
+  background: #c6eecf;
+  font-weight: 600;
 }
 
 .gradeTabs {
   display: flex;
-  background: #19b6c9;
+  background: #4c7a67;
   border-radius: 10px 10px 0 0;
   overflow: hidden;
   margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
 }
 
 .gradeTab {
@@ -105,57 +170,62 @@
   background: none;
   border: none;
   color: #fff;
-  font-size: 1.18rem;
+  font-size: 1.1rem;
   font-weight: 500;
-  padding: 16px 0 12px 0;
+  padding: 14px 0;
   cursor: pointer;
   outline: none;
   border-bottom: 3px solid transparent;
-  transition: color 0.18s, border 0.18s;
+  transition: all 0.2s;
   margin: 0;
 }
 
 .gradeTab.active {
   font-weight: 700;
   border-bottom: 3px solid #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .gradeTab:hover {
-  color: #e0f7fa;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .tabs {
   display: flex;
   align-items: center;
-  background: #19b6c9;
-  border-radius: 10px 10px 0 0;
-  padding: 0 2rem;
+  background: #4c7a67;
+  border-radius: 0;
+  padding: 0 1.5rem;
   height: 54px;
   position: relative;
   margin-bottom: 0;
+  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .tab {
   background: none;
   border: none;
   color: #fff;
-  font-size: 1.13rem;
+  font-size: 1rem;
   font-weight: 500;
-  padding: 0 2.2rem;
+  padding: 0 1.5rem;
   height: 54px;
   cursor: pointer;
   border-bottom: 3px solid transparent;
-  transition: color 0.18s, border 0.18s;
+  transition: all 0.2s;
 }
 
 .tab.active {
   color: #fff;
   font-weight: 600;
   border-bottom: 3px solid #fff;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .tab:hover {
-  color: #e0f7fa;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .searchContainer {
@@ -167,15 +237,20 @@
 
 .searchInput {
   border: none;
-  border-radius: 18px;
-  padding: 8px 18px;
-  font-size: 1.08rem;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 1rem;
   background: #fff;
   color: #184d27;
   box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
   outline: none;
-  width: 180px;
-  margin-left: 1.5rem;
+  width: 200px;
+  margin-left: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.searchInput:focus {
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.12);
 }
 
 .genderFilter {
@@ -188,8 +263,8 @@
 .genderFilterBtn {
   padding: 8px 16px;
   border: none;
-  border-radius: 18px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.2);
@@ -203,61 +278,181 @@
 
 .genderFilterBtn.active {
   background: #fff;
-  color: #19b6c9;
+  color: #4c7a67;
   font-weight: 600;
 }
 
-.tableContainer {
+.tableCard {
   background: #fff;
-  border-radius: 0 0 16px 16px;
+  border-radius: 0 0 12px 12px;
   box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
-  padding: 0 0 18px 0;
-  margin-bottom: 0;
+  padding: 0;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #f9f9f9;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tableInfo {
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.pageInfo {
+  color: #999;
+  font-weight: 400;
+}
+
+.selectAllBtn {
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.selectAllBtn:hover {
+  background: #357a5b;
+}
+
+.tableContainer {
+  overflow-x: auto;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1.08rem;
-  margin-top: 0;
+  font-size: 1rem;
+  margin: 0;
 }
 
 .table th,
 .table td {
   text-align: left;
-  padding: 12px 10px;
+  padding: 14px 1rem;
   border-bottom: 1px solid #e0e0e0;
   background: none;
 }
 
 .table th {
-  background: #e0f7fa;
-  color: #276749;
-  font-size: 1.13rem;
-  font-weight: 700;
-  border-bottom: 2px solid #b2ebf2;
+  background: #c6eecf;
+  color: #222;
+  font-size: 1rem;
+  font-weight: 600;
+  border-bottom: 2px solid #a5d6a7;
+}
+
+.table tbody tr {
+  transition: background 0.15s;
+}
+
+.table tbody tr:hover {
+  background: #f5f5f5;
 }
 
 .table tr:nth-child(even) td {
-  background: #f7f7f7;
+  background: #fafafa;
+}
+
+.table tr:nth-child(even):hover td {
+  background: #f0f0f0;
 }
 
 .checkbox {
   width: 18px;
   height: 18px;
-  accent-color: #19b6c9;
+  accent-color: #4c7a67;
   cursor: pointer;
 }
 
 .studentName {
   font-weight: 500;
+  color: #222;
 }
 
-.greyedOut {
-  background: #e0e0e0 !important;
-  color: #a0a0a0 !important;
-  pointer-events: none;
-  opacity: 0.7;
+.enrolledRow {
+  background: #f0f9f4;
+}
+
+.enrolledRow:hover {
+  background: #e6f0ea;
+}
+
+.notEnrolledRow {
+  background: #fff;
+}
+
+.assignedRow {
+  background: #f0f9f4;
+}
+
+.assignedRow:hover {
+  background: #e6f0ea;
+}
+
+.enrolledUnassignedRow {
+  background: #fff8e1;
+}
+
+.enrolledUnassignedRow:hover {
+  background: #ffecb3;
+}
+
+.selectedRow {
+  background: #e6f0ea !important;
+}
+
+.selectedRow:hover {
+  background: #d4f4e0 !important;
+}
+
+.statusBadge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusEnrolled {
+  background: #c6eecf;
+  color: #184d27;
+}
+
+.statusNotEnrolled {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.statusAssigned {
+  background: #c6eecf;
+  color: #184d27;
+}
+
+.statusEnrolledUnassigned {
+  background: #ffb74d;
+  color: #5d4037;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #888;
+  font-style: italic;
 }
 
 .bottomBar {
@@ -304,6 +499,74 @@
   font-weight: 500;
 }
 
+/* Pagination Styles */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem;
+  background: #f9f9f9;
+  border-top: 1px solid #e0e0e0;
+}
+
+.paginationBtn {
+  background: #4c7a67;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.paginationBtn:hover:not(:disabled) {
+  background: #357a5b;
+}
+
+.paginationBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.paginationNumbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.paginationNumber {
+  background: #fff;
+  color: #4c7a67;
+  border: 1px solid #e0e0e0;
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 36px;
+}
+
+.paginationNumber:hover {
+  background: #e6f0ea;
+  border-color: #4c7a67;
+}
+
+.paginationNumber.active {
+  background: #4c7a67;
+  color: #fff;
+  border-color: #4c7a67;
+}
+
+.paginationEllipsis {
+  padding: 0 4px;
+  color: #999;
+}
+
 .backButton {
   position: fixed;
   bottom: 2.5rem;
@@ -330,22 +593,88 @@
 @media (max-width: 900px) {
   .mainContent {
     margin-left: 0;
-    padding: 8px;
+    padding: 1rem;
+  }
+
+  .headerBar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .headerLeft {
+    width: 100%;
+  }
+
+  .actionButtons {
+    width: 100%;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .sectionDropdownContainer {
+    width: 100%;
+  }
+
+  .sectionDropdownBtn {
+    width: 100%;
+  }
+
+  .actionButton {
+    width: 100%;
+  }
+
+  .tabs {
+    height: auto;
+    padding: 0.75rem 1rem;
+  }
+
+  .tab {
+    height: auto;
+    padding: 0.5rem 1rem;
+  }
+
+  .searchContainer {
+    width: 100%;
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .searchInput {
+    width: 100%;
+    margin-left: 0;
   }
 
   .tableContainer {
-    padding: 0 0 8px 0;
+    overflow-x: auto;
+  }
+
+  .table {
+    font-size: 0.9rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 10px 8px;
   }
 
   .bottomBar {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    padding: 12px 8px;
+    padding: 12px 1rem;
   }
 
   .adviserInfo {
     margin-left: 0;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .paginationNumbers {
+    flex-wrap: wrap;
   }
 }
 
