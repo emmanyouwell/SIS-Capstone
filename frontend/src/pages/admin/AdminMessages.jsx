@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import styles from './AdminMessages.module.css';
 import { fetchAllMessages, createMessage } from '../../store/slices/messageSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
@@ -8,6 +9,7 @@ import { fetchAllAdmins } from '../../store/slices/adminSlice';
 
 function AdminMessages() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { messages, loading } = useSelector((state) => state.messages);
   const { students } = useSelector((state) => state.students);
   const { teachers } = useSelector((state) => state.teachers);
@@ -31,30 +33,80 @@ function AdminMessages() {
     dispatch(fetchAllAdmins());
   }, [dispatch]);
 
-  // Format messages for display
-  const formattedMessages = messages.map((msg) => {
-    const sender = msg.senderId;
-    const senderName = sender ? `${sender.firstName || ''} ${sender.lastName || ''}`.trim() : 'Unknown';
-    const timeAgo = msg.dateSent ? new Date(msg.dateSent).toLocaleString() : '';
-    
-    return {
-      id: msg._id,
-      name: senderName,
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: msg.messageText?.substring(0, 50) + '...' || '',
-      time: timeAgo,
-      status: msg.status,
-      senderRole: msg.senderRole
-    };
-  });
+  // Filter and format messages for display
+  const formattedMessages = useMemo(() => {
+    let filtered = messages.filter((msg) => {
+      // Show messages where user is sender or receiver
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    // Apply sorting
+    if (sortBy === 'latest') {
+      filtered.sort((a, b) => new Date(b.dateSent) - new Date(a.dateSent));
+    } else if (sortBy === 'oldest') {
+      filtered.sort((a, b) => new Date(a.dateSent) - new Date(b.dateSent));
+    } else if (sortBy === 'unread') {
+      filtered = filtered.filter((msg) => msg.status === 'sent');
+      filtered.sort((a, b) => new Date(b.dateSent) - new Date(a.dateSent));
+    }
+
+    return filtered.map((msg) => {
+      const sender = msg.senderId;
+      const receiver = msg.receiverId;
+      const isSentByMe = sender?._id?.toString() === user?.id?.toString();
+      
+      // Determine display name
+      let displayName = 'Unknown';
+      if (isSentByMe) {
+        // If I sent it, show receiver name
+        if (receiver) {
+          displayName = `${receiver.firstName || ''} ${receiver.lastName || ''}`.trim();
+        } else if (msg.receiverRole) {
+          displayName = `All ${msg.receiverRole}s`;
+        }
+      } else {
+        // If someone sent it to me, show sender name
+        if (sender) {
+          displayName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim();
+        }
+      }
+
+      const timeAgo = msg.dateSent ? new Date(msg.dateSent).toLocaleString() : '';
+      
+      return {
+        id: msg._id,
+        name: displayName,
+        avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
+        message: msg.messageText?.substring(0, 50) + (msg.messageText?.length > 50 ? '...' : '') || '',
+        time: timeAgo,
+        status: msg.status,
+        senderRole: msg.senderRole,
+        subject: msg.subject,
+        fullMessage: msg,
+      };
+    });
+  }, [messages, user, sortBy]);
 
   // Statistics
-  const stats = {
-    sent: messages.filter(m => m.status === 'sent').length,
-    trash: messages.filter(m => m.status === 'deleted').length,
-    viewed: messages.filter(m => m.status === 'read').length,
-    unread: messages.filter(m => m.status === 'sent').length,
-  };
+  const stats = useMemo(() => {
+    const userMessages = messages.filter((msg) => {
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    return {
+      sent: userMessages.filter((m) => m.senderId?._id?.toString() === user?.id?.toString()).length,
+      trash: messages.filter((m) => m.status === 'deleted').length,
+      viewed: userMessages.filter((m) => m.status === 'read').length,
+      unread: userMessages.filter((m) => m.status === 'sent').length,
+    };
+  }, [messages, user]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -84,6 +136,7 @@ function AdminMessages() {
       };
 
       await dispatch(createMessage(messageData));
+      await dispatch(fetchAllMessages()); // Refresh messages
       handleCloseModal();
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -94,6 +147,10 @@ function AdminMessages() {
     if (e.target.id === 'write-message-modal') {
       handleCloseModal();
     }
+  };
+
+  const handleMessageClick = (messageId) => {
+    navigate(`/admin/message/${messageId}`);
   };
 
   return (
@@ -109,7 +166,7 @@ function AdminMessages() {
             alt="Profile Picture"
             className={styles.profilePic}
           />
-          <h2>Erwin</h2>
+          <h2>{user?.firstName} {user?.lastName}</h2>
           <button
             className={styles.writeMessageBtn}
             onClick={handleOpenModal}
@@ -164,7 +221,12 @@ function AdminMessages() {
             <div style={{ padding: '2rem', textAlign: 'center' }}>No messages</div>
           ) : (
             formattedMessages.map((msg) => (
-              <div key={msg.id} className={styles.messageItem}>
+              <div
+                key={msg.id}
+                className={styles.messageItem}
+                onClick={() => handleMessageClick(msg.id)}
+                style={{ cursor: 'pointer' }}
+              >
                 <img
                   src={msg.avatar}
                   alt="Avatar"
@@ -172,10 +234,14 @@ function AdminMessages() {
                 />
                 <div className={styles.messageContent}>
                   <div className={styles.messageHeader}>
-                    <div className={styles.studentName}>{msg.name} ({msg.senderRole})</div>
+                    <div className={styles.studentName}>
+                      {msg.name} ({msg.senderRole}) {msg.status === 'sent' && <span style={{ color: '#4c7a67', fontSize: '0.75rem' }}>(Unread)</span>}
+                    </div>
                     <div className={styles.messageTime}>{msg.time}</div>
                   </div>
-                  <div className={styles.messageText}>{msg.message}</div>
+                  <div className={styles.messageText}>
+                    <strong>{msg.subject}:</strong> {msg.message}
+                  </div>
                 </div>
               </div>
             ))

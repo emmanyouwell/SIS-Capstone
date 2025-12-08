@@ -62,9 +62,22 @@ export const deleteMessage = createAsyncThunk(
   }
 );
 
+export const fetchUnreadMessageCount = createAsyncThunk(
+  'messages/fetchUnreadCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/messages/unread/count');
+      return response.data.count;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch unread count');
+    }
+  }
+);
+
 const initialState = {
   messages: [],
   selectedMessage: null,
+  unreadCount: 0,
   loading: false,
   error: null,
 };
@@ -132,12 +145,24 @@ const messageSlice = createSlice({
       })
       .addCase(updateMessage.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.messages.findIndex((m) => m._id === action.payload._id);
+        const updatedMessage = action.payload;
+        const index = state.messages.findIndex((m) => m._id === updatedMessage._id);
+        
+        // Update message in array
         if (index !== -1) {
-          state.messages[index] = action.payload;
+          // Check if message was previously unread before updating
+          const wasUnread = state.messages[index].status === 'sent';
+          state.messages[index] = updatedMessage;
+          
+          // If message status changed from 'sent' to 'read', decrease unread count
+          if (wasUnread && updatedMessage.status === 'read' && state.unreadCount > 0) {
+            state.unreadCount -= 1;
+          }
         }
-        if (state.selectedMessage && state.selectedMessage._id === action.payload._id) {
-          state.selectedMessage = action.payload;
+        
+        // Update selected message if it's the same one
+        if (state.selectedMessage && state.selectedMessage._id === updatedMessage._id) {
+          state.selectedMessage = updatedMessage;
         }
       })
       .addCase(updateMessage.rejected, (state, action) => {
@@ -159,6 +184,13 @@ const messageSlice = createSlice({
       .addCase(deleteMessage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      // Fetch unread message count
+      .addCase(fetchUnreadMessageCount.fulfilled, (state, action) => {
+        state.unreadCount = action.payload;
+      })
+      .addCase(fetchUnreadMessageCount.rejected, (state) => {
+        state.unreadCount = 0;
       });
   },
 });

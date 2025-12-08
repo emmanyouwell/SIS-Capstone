@@ -25,6 +25,19 @@ const notificationSchema = new mongoose.Schema(
       enum: ['unread', 'read'],
       default: 'unread',
     },
+    type: {
+      type: String,
+      enum: ['message', 'grade', 'announcement', 'enrollment', 'other'],
+      default: 'other',
+    },
+    link: {
+      type: String,
+      trim: true,
+    },
+    relatedId: {
+      type: mongoose.Schema.Types.ObjectId,
+      // Can reference Message, Grade, Announcement, etc.
+    },
   },
   {
     timestamps: true,

@@ -2,6 +2,9 @@ import Grade from '../models/Grade.js';
 import Student from '../models/Student.js';
 import Subject from '../models/Subject.js';
 import Teacher from '../models/Teacher.js';
+import Message from '../models/Message.js';
+import User from '../models/User.js';
+import { getGradeDescriptor, isGradeComplete } from '../utils/gradeUtils.js';
 
 // @desc    Get all grades
 // @route   GET /api/v1/grades
@@ -164,6 +167,13 @@ export const createGrade = async (req, res) => {
     });
     await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
+    // Check if grade is complete and send message if needed
+    if (isGradeComplete(grade.grades) && !grade.gradeCompleteMessageSent) {
+      await sendGradeCompleteMessage(grade);
+      grade.gradeCompleteMessageSent = true;
+      await grade.save();
+    }
+
     res.status(201).json({
       success: true,
       data: grade,
@@ -203,6 +213,9 @@ export const updateGrade = async (req, res) => {
       }
     }
 
+    // Store previous state to check if grade was complete before
+    const wasComplete = isGradeComplete(grade.grades);
+
     // Update the grade document fields
     if (req.body.grades !== undefined) {
       grade.grades = req.body.grades;
@@ -227,12 +240,95 @@ export const updateGrade = async (req, res) => {
     });
     await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
+    // Check if grade is now complete and send message if needed
+    const isNowComplete = isGradeComplete(grade.grades);
+    if (isNowComplete && !wasComplete && !grade.gradeCompleteMessageSent) {
+      await sendGradeCompleteMessage(grade);
+      grade.gradeCompleteMessageSent = true;
+      await grade.save();
+    }
+
     res.json({
       success: true,
       data: grade,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+/**
+ * Helper function to send grade complete message to student
+ * @param {Object} grade - The grade document with populated studentId
+ */
+const sendGradeCompleteMessage = async (grade) => {
+  try {
+    let student;
+    
+    // Check if studentId is already populated
+    if (grade.studentId && grade.studentId.userId) {
+      // Student is already populated, use it directly
+      student = grade.studentId;
+      // Ensure userId is populated
+      if (typeof student.userId === 'object' && student.userId._id) {
+        // Already populated
+      } else {
+        // Need to populate userId
+        await student.populate('userId', 'firstName lastName');
+      }
+    } else {
+      // StudentId is just an ID, need to fetch and populate
+      const studentId = grade.studentId._id || grade.studentId;
+      student = await Student.findById(studentId).populate('userId', 'firstName lastName');
+    }
+
+    if (!student || !student.userId) {
+      console.error('Student or userId not found for grade:', grade._id);
+      return;
+    }
+
+    // Get grade descriptor and remarks
+    const { descriptor, remarks } = getGradeDescriptor(grade.finalGrade);
+    const finalGradeRounded = grade.finalGrade ? Math.round(grade.finalGrade) : 'N/A';
+
+    // Get student name
+    const studentName = student.userId.firstName + (student.userId.lastName ? ` ${student.userId.lastName}` : '');
+    const userId = student.userId._id || student.userId;
+
+    // Create message subject and content
+    const subject = 'Grade Report Available';
+    const messageText = `Dear ${studentName},
+
+Your complete grade report is now available.
+
+Final Grade: ${finalGradeRounded}
+Descriptor: ${descriptor}
+Remarks: ${remarks}
+
+You can view your detailed grades in your student portal.
+
+Thank you.`;
+
+    // Find an admin user to send as sender (or use system)
+    // For now, we'll use the first admin user or create a system message
+    const adminUser = await User.findOne({ role: 'Admin' }).select('_id');
+    
+    // Create the message
+    await Message.create({
+      senderRole: 'Admin',
+      senderId: adminUser?._id || userId, // Fallback to student's userId if no admin
+      receiverRole: 'Student',
+      receiverId: userId,
+      subject,
+      messageText,
+      dateSent: new Date(),
+      status: 'sent',
+    });
+
+    console.log(`Grade complete message sent to student: ${userId}`);
+  } catch (error) {
+    console.error('Error sending grade complete message:', error);
+    // Don't throw error - we don't want to fail the grade update if message fails
   }
 };
 

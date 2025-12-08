@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminDashboard.module.css';
 import { fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
+import { fetchUnreadMessageCount } from '../../store/slices/messageSlice';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -14,10 +15,12 @@ function AdminDashboard() {
     (state) => state.enrollments
   );
   const { users, loading: usersLoading } = useSelector((state) => state.users);
+  const { unreadCount: unreadMessageCount } = useSelector((state) => state.messages);
 
   useEffect(() => {
     dispatch(fetchAllEnrollments());
     dispatch(fetchAllUsers({ role: 'Student' }));
+    dispatch(fetchUnreadMessageCount());
   }, [dispatch]);
 
   // Calculate enrollment statistics
@@ -226,7 +229,7 @@ function AdminDashboard() {
               <div className={`${styles.statCard} ${styles.red}`}>
                 <div className={styles.statContent}>
                   <div className={styles.statLabel}>Messages</div>
-                  <div className={styles.statNumber}>6</div>
+                  <div className={styles.statNumber}>{unreadMessageCount || 0}</div>
                 </div>
                 <div className={styles.statIcon}>📩</div>
                 <a

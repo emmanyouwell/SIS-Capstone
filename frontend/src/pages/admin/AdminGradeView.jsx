@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchGrades, updateGrade, createGrade } from '../../store/slices/gradeSlice';
 import styles from './AdminGradeView.module.css';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
+import { createMessage } from '../../store/slices/messageSlice';
 
 const ADMIN_PASSWORD = '12345';
 
@@ -27,6 +28,10 @@ function AdminGradeView() {
   const [editingSubjectIndex, setEditingSubjectIndex] = useState(null);
   const [editGrades, setEditGrades] = useState({ q1: '', q2: '', q3: '', q4: '' });
   const [editError, setEditError] = useState('');
+  const [notifyingStudent, setNotifyingStudent] = useState(false);
+  const [notifyingTeacher, setNotifyingTeacher] = useState(false);
+  const [notificationError, setNotificationError] = useState('');
+  const [notificationSuccess, setNotificationSuccess] = useState('');
 
   const gradeNumber = parseInt(grade.replace('grade', ''), 10);
 
@@ -323,14 +328,14 @@ function AdminGradeView() {
     }
   };
 
-  const calculateSubjectFinal = (subjectGrade) => {
+  const calculateSubjectFinal = useCallback((subjectGrade) => {
     const values = [subjectGrade.q1, subjectGrade.q2, subjectGrade.q3, subjectGrade.q4].filter(
       (v) => typeof v === 'number'
     );
     if (values.length === 0) return null;
     const sum = values.reduce((acc, v) => acc + v, 0);
     return Math.round(sum / values.length);
-  };
+  }, []);
 
   const calculateOverallFinal = () => {
     if (!selectedGrade || !selectedGrade.gradeRecord) return null;
@@ -363,6 +368,209 @@ function AdminGradeView() {
         return styles.statusFailed;
       default:
         return '';
+    }
+  };
+
+  // Calculate failed subjects (final grade <= 75)
+  const getFailedSubjects = useMemo(() => {
+    if (!subjects || subjects.length === 0) return [];
+    
+    return subjects.filter((subjectGrade) => {
+      const final = calculateSubjectFinal(subjectGrade);
+      return final !== null && final <= 75;
+    });
+  }, [subjects, calculateSubjectFinal]);
+
+  // Calculate pending grades (subjects with missing quarter grades)
+  const getPendingGrades = useMemo(() => {
+    if (!subjects || subjects.length === 0) return [];
+    
+    return subjects.filter((subjectGrade) => {
+      // Check if any quarter is missing (null, undefined, or 0)
+      // 0 is used as placeholder for missing grades, so we treat it as missing
+      const hasMissingQuarter = 
+        (subjectGrade.q1 === null || subjectGrade.q1 === undefined || subjectGrade.q1 === 0) ||
+        (subjectGrade.q2 === null || subjectGrade.q2 === undefined || subjectGrade.q2 === 0) ||
+        (subjectGrade.q3 === null || subjectGrade.q3 === undefined || subjectGrade.q3 === 0) ||
+        (subjectGrade.q4 === null || subjectGrade.q4 === undefined || subjectGrade.q4 === 0);
+      
+      return hasMissingQuarter;
+    });
+  }, [subjects]);
+
+  // Handle notify student button
+  const handleNotifyStudent = async () => {
+    if (getFailedSubjects.length === 0) {
+      setNotificationError('No failed subjects to notify about.');
+      return;
+    }
+
+    if (!selectedGrade?.student?.userId) {
+      setNotificationError('Student information not available.');
+      return;
+    }
+
+    setNotifyingStudent(true);
+    setNotificationError('');
+    setNotificationSuccess('');
+
+    try {
+      // Get student userId - handle both object and ID string
+      const studentUserId = selectedGrade.student.userId?._id || selectedGrade.student.userId;
+      if (!studentUserId) {
+        setNotificationError('Student user ID not available.');
+        setNotifyingStudent(false);
+        return;
+      }
+
+      const studentFirstName = selectedGrade.student.userId?.firstName || 'Student';
+
+      const messageText = `Dear ${studentFirstName},
+
+You have failed the following subject(s) with a grade of 75 or below:
+${getFailedSubjects.map((sg, idx) => {
+  const final = calculateSubjectFinal(sg);
+  const subjectName = sg.subject?.subjectName || sg.subject?.name || 'Unknown Subject';
+  return `${idx + 1}. ${subjectName} - Final Grade: ${final}`;
+}).join('\n')}
+
+Please contact your adviser or the administration office for guidance on how to address these failing grades.
+
+Best regards,
+Administration`;
+
+      await dispatch(createMessage({
+        receiverId: studentUserId,
+        receiverRole: 'Student',
+        subject: 'Failed Subjects Notification',
+        messageText: messageText,
+      })).unwrap();
+
+      setNotificationSuccess(`Successfully notified student about ${getFailedSubjects.length} failed subject(s).`);
+      
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setNotificationSuccess('');
+      }, 3000);
+    } catch (error) {
+      setNotificationError(error.message || 'Failed to send notification to student.');
+    } finally {
+      setNotifyingStudent(false);
+    }
+  };
+
+  // Handle notify teacher button
+  const handleNotifyTeacher = async () => {
+    if (getPendingGrades.length === 0) {
+      setNotificationError('No pending grades to notify about.');
+      return;
+    }
+
+    setNotifyingTeacher(true);
+    setNotificationError('');
+    setNotificationSuccess('');
+
+    try {
+      // Group pending grades by teacher (using teacher's userId for messaging)
+      const teacherPendingMap = new Map();
+
+      for (const pendingGrade of getPendingGrades) {
+        const subject = pendingGrade.subject;
+        const teacherIds = subject?.teacherId || [];
+        
+        // If no teacher assigned, skip
+        if (!teacherIds || teacherIds.length === 0) {
+          continue;
+        }
+
+        const subjectName = subject?.subjectName || subject?.name || 'Unknown Subject';
+        const missingQuarters = [];
+        // Check for missing quarters (null, undefined, or 0)
+        if (pendingGrade.q1 === null || pendingGrade.q1 === undefined || pendingGrade.q1 === 0) missingQuarters.push('1st Quarter');
+        if (pendingGrade.q2 === null || pendingGrade.q2 === undefined || pendingGrade.q2 === 0) missingQuarters.push('2nd Quarter');
+        if (pendingGrade.q3 === null || pendingGrade.q3 === undefined || pendingGrade.q3 === 0) missingQuarters.push('3rd Quarter');
+        if (pendingGrade.q4 === null || pendingGrade.q4 === undefined || pendingGrade.q4 === 0) missingQuarters.push('4th Quarter');
+
+        // Handle both array and single teacherId
+        // teacherId is populated with Teacher objects that have userId populated
+        const teachers = Array.isArray(teacherIds) ? teacherIds : [teacherIds];
+        
+        teachers.forEach((teacher) => {
+          // Get the userId from the teacher object (teacher.userId is populated User object)
+          const teacherUserId = teacher?.userId?._id?.toString() || teacher?.userId?.toString();
+          if (!teacherUserId) return;
+
+          if (!teacherPendingMap.has(teacherUserId)) {
+            teacherPendingMap.set(teacherUserId, []);
+          }
+          teacherPendingMap.get(teacherUserId).push({
+            subjectName,
+            missingQuarters: missingQuarters.join(', '),
+          });
+        });
+      }
+
+      if (teacherPendingMap.size === 0) {
+        setNotificationError('No teachers assigned to subjects with pending grades.');
+        setNotifyingTeacher(false);
+        return;
+      }
+
+      // Send messages to each teacher
+      const studentName = selectedGrade.student?.userId
+        ? `${selectedGrade.student.userId.firstName || ''} ${selectedGrade.student.userId.lastName || ''}`.trim() || 'Student'
+        : 'Student';
+
+      let successCount = 0;
+      let errorCount = 0;
+
+      for (const [teacherUserId, pendingSubjects] of teacherPendingMap.entries()) {
+        try {
+          const subjectList = pendingSubjects
+            .map((ps, idx) => `${idx + 1}. ${ps.subjectName} - Missing: ${ps.missingQuarters}`)
+            .join('\n');
+
+          const messageText = `Dear Teacher,
+
+You have pending grades to enter for the following subject(s) for student ${studentName} (LRN: ${selectedGrade.student?.lrn || 'N/A'}):
+
+${subjectList}
+
+Please enter the missing quarter grades as soon as possible.
+
+Best regards,
+Administration`;
+
+          await dispatch(createMessage({
+            receiverId: teacherUserId,
+            receiverRole: 'Teacher',
+            subject: 'Pending Grades Notification',
+            messageText: messageText,
+          })).unwrap();
+          
+          successCount++;
+        } catch (error) {
+          console.error(`Failed to notify teacher ${teacherUserId}:`, error);
+          errorCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        setNotificationSuccess(`Successfully notified ${successCount} teacher(s) about pending grades.`);
+      }
+      if (errorCount > 0) {
+        setNotificationError(`Failed to notify ${errorCount} teacher(s).`);
+      }
+
+      // Clear messages after 5 seconds
+      setTimeout(() => {
+        setNotificationSuccess('');
+        setNotificationError('');
+      }, 5000);
+    } catch (error) {
+      setNotificationError(error.message || 'Failed to send notifications to teachers.');
+    } finally {
+      setNotifyingTeacher(false);
     }
   };
 
@@ -549,14 +757,31 @@ function AdminGradeView() {
             <div className={styles.modalBottom}>
               <div className={styles.modalNotify}>
                 <div>
-                  Failed subjects: <span>0</span>{' '}
-                  <button className={styles.notifyBtn}>notify student</button>
+                  Failed subjects: <span>{getFailedSubjects.length}</span>{' '}
+                  <button 
+                    className={styles.notifyBtn}
+                    onClick={handleNotifyStudent}
+                    disabled={notifyingStudent || getFailedSubjects.length === 0}
+                  >
+                    {notifyingStudent ? 'Sending...' : 'notify student'}
+                  </button>
                 </div>
                 <div>
-                  Pending grades: <span>0</span>{' '}
-                  <button className={styles.notifyBtn}>notify teacher</button>
+                  Pending grades: <span>{getPendingGrades.length}</span>{' '}
+                  <button 
+                    className={styles.notifyBtn}
+                    onClick={handleNotifyTeacher}
+                    disabled={notifyingTeacher || getPendingGrades.length === 0}
+                  >
+                    {notifyingTeacher ? 'Sending...' : 'notify teacher'}
+                  </button>
                 </div>
               </div>
+              {(notificationError || notificationSuccess) && (
+                <div className={notificationError ? styles.notificationError : styles.notificationSuccess}>
+                  {notificationError || notificationSuccess}
+                </div>
+              )}
               <div className={styles.modalSummary}>
                 <div>
                   FINAL GRADE:{' '}
@@ -722,4 +947,5 @@ function AdminGradeView() {
 }
 
 export default AdminGradeView;
+
 

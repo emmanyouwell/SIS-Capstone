@@ -320,6 +320,40 @@
   background: #b71c1c;
 }
 
+.notifyBtn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.notifyBtn:disabled:hover {
+  background: #ccc;
+}
+
+.notificationError {
+  background: #ffebee;
+  color: #c62828;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  border-left: 4px solid #c62828;
+  width: 100%;
+  flex-basis: 100%;
+}
+
+.notificationSuccess {
+  background: #e8f5e9;
+  color: #2e7d32;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-top: 0.5rem;
+  border-left: 4px solid #2e7d32;
+  width: 100%;
+  flex-basis: 100%;
+}
+
 .modalSummary {
   background: #fff;
   border: 1px solid #e0e0e0;

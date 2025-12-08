@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { getGradeDescriptor } from '../utils/gradeUtils.js';
 
 const gradeSchema = new mongoose.Schema(
   {
@@ -37,6 +38,10 @@ const gradeSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    gradeCompleteMessageSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,
@@ -65,6 +70,12 @@ gradeSchema.pre('save', async function () {
   if (allQuarterGrades.length > 0) {
     const sum = allQuarterGrades.reduce((acc, val) => acc + val, 0);
     this.finalGrade = sum / allQuarterGrades.length;
+    
+    // Automatically set remarks based on final grade if not already set
+    if (!this.remarks || this.remarks.trim() === '') {
+      const { remarks } = getGradeDescriptor(this.finalGrade);
+      this.remarks = remarks;
+    }
   }
 });
 

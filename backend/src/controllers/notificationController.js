@@ -161,3 +161,23 @@ export const markAllAsRead = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// @desc    Get unread notification count
+// @route   GET /api/v1/notifications/unread/count
+// @access  Private
+export const getUnreadCount = async (req, res) => {
+  try {
+    const count = await Notification.countDocuments({
+      userId: req.user.id,
+      userRole: req.user.role,
+      status: 'unread',
+    });
+
+    res.json({
+      success: true,
+      count,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};

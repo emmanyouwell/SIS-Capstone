@@ -74,9 +74,22 @@ export const markAllAsRead = createAsyncThunk(
   }
 );
 
+export const fetchUnreadCount = createAsyncThunk(
+  'notifications/fetchUnreadCount',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/notifications/unread/count');
+      return response.data.count;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch unread count');
+    }
+  }
+);
+
 const initialState = {
   notifications: [],
   selectedNotification: null,
+  unreadCount: 0,
   loading: false,
   error: null,
 };
@@ -102,6 +115,8 @@ const notificationSlice = createSlice({
       .addCase(fetchAllNotifications.fulfilled, (state, action) => {
         state.loading = false;
         state.notifications = action.payload;
+        // Update unread count based on fetched notifications
+        state.unreadCount = action.payload.filter((n) => n.status === 'unread').length;
       })
       .addCase(fetchAllNotifications.rejected, (state, action) => {
         state.loading = false;
@@ -146,7 +161,13 @@ const notificationSlice = createSlice({
         state.loading = false;
         const index = state.notifications.findIndex((n) => n._id === action.payload._id);
         if (index !== -1) {
+          const wasUnread = state.notifications[index].status === 'unread';
+          const isNowRead = action.payload.status === 'read';
           state.notifications[index] = action.payload;
+          // Decrease unread count if notification was marked as read
+          if (wasUnread && isNowRead && state.unreadCount > 0) {
+            state.unreadCount -= 1;
+          }
         }
         if (state.selectedNotification && state.selectedNotification._id === action.payload._id) {
           state.selectedNotification = action.payload;
@@ -178,6 +199,14 @@ const notificationSlice = createSlice({
           ...n,
           status: 'read',
         }));
+        state.unreadCount = 0;
+      })
+      // Fetch unread count
+      .addCase(fetchUnreadCount.fulfilled, (state, action) => {
+        state.unreadCount = action.payload;
+      })
+      .addCase(fetchUnreadCount.rejected, (state) => {
+        state.unreadCount = 0;
       });
   },
 });

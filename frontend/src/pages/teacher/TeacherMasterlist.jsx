@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherMasterlist.module.css';
 import MessageModal from '../../components/MessageModal';
+import { fetchMasterlists } from '../../store/slices/masterlistSlice';
 
 const studentsIcon = (
   <img 
@@ -28,7 +30,10 @@ const averageIcon = (
 );
 
 function TeacherMasterlist() {
-  const [selectedSection, setSelectedSection] = useState('7-dahlia');
+  const dispatch = useDispatch();
+  const { masterlists, loading, error } = useSelector((state) => state.masterlists);
+  
+  const [selectedMasterlistId, setSelectedMasterlistId] = useState(null);
   const [showGradeModal, setShowGradeModal] = useState(false);
   const [currentRow, setCurrentRow] = useState(null);
   const [gradeForm, setGradeForm] = useState({
@@ -38,52 +43,49 @@ function TeacherMasterlist() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
-  // Student data for each section
-  const sectionStudents = {
-    '7-dahlia': [
-      { lrn: '117283040001', name: 'Alonzo, Bam Carlo', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040002', name: 'Alvarez, Kiana Mae', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040003', name: 'Bautista, John Michael', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040004', name: 'Cruz, Maria Angela', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040005', name: 'Dela Cruz, Juan Paolo', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040006', name: 'Garcia, Sofia Marie', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040007', name: 'Lopez, Miguel Antonio', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040008', name: 'Mendoza, Andrea Nicole', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040009', name: 'Reyes, Gabriel James', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040010', name: 'Santos, Isabella Marie', gender: 'F', enrollment: '08/25/2023' }
-    ],
-    '8-tulip': [
-      { lrn: '117283040011', name: 'Aquino, Rafael Miguel', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040012', name: 'Castro, Patricia Ann', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040013', name: 'Domingo, Christian Paul', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040014', name: 'Fernandez, Diana Rose', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040015', name: 'Gonzales, Marco Luis', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040016', name: 'Hernandez, Angela Mae', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040017', name: 'Lim, Joshua David', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040018', name: 'Morales, Christine Joy', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040019', name: 'Ramos, Daniel Joseph', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040020', name: 'Torres, Michelle Anne', gender: 'F', enrollment: '08/25/2023' }
-    ],
-    '9-daisy': [
-      { lrn: '117283040021', name: 'Aguilar, Adrian James', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040022', name: 'Borja, Catherine Mae', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040023', name: 'Chua, Matthew Vincent', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040024', name: 'Delos Santos, Emma Louise', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040025', name: 'Enriquez, Francis John', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040026', name: 'Flores, Hannah Grace', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040027', name: 'Ignacio, Kyle Patrick', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040028', name: 'Martinez, Sarah Jane', gender: 'F', enrollment: '08/25/2023' },
-      { lrn: '117283040029', name: 'Pascual, Andre Miguel', gender: 'M', enrollment: '08/25/2023' },
-      { lrn: '117283040030', name: 'Villanueva, Rachel Anne', gender: 'F', enrollment: '08/25/2023' }
-    ]
+  // Fetch masterlists on component mount
+  useEffect(() => {
+    dispatch(fetchMasterlists());
+  }, [dispatch]);
+
+  // Set default selected masterlist when data loads
+  useEffect(() => {
+    if (masterlists.length > 0 && !selectedMasterlistId) {
+      setSelectedMasterlistId(masterlists[0]._id);
+    }
+  }, [masterlists, selectedMasterlistId]);
+
+  // Get current masterlist and students
+  const currentMasterlist = masterlists.find(m => m._id === selectedMasterlistId);
+  const currentStudents = currentMasterlist?.students || [];
+
+  // Calculate totals
+  const totalStudents = masterlists.reduce((sum, ml) => sum + (ml.students?.length || 0), 0);
+  const totalSections = masterlists.length;
+
+  // Format student name
+  const formatStudentName = (student) => {
+    if (!student) return '';
+    const lastName = student.lastName || '';
+    const firstName = student.firstName || '';
+    const middleName = student.middleName || '';
+    const extensionName = student.extensionName || '';
+    
+    let name = lastName;
+    if (firstName) name += `, ${firstName}`;
+    if (middleName) name += ` ${middleName.charAt(0)}.`;
+    if (extensionName) name += ` ${extensionName}`;
+    return name;
   };
 
-  const currentStudents = sectionStudents[selectedSection] || [];
-  const totalStudents = Object.values(sectionStudents).reduce((sum, students) => sum + students.length, 0);
-  const totalSections = Object.keys(sectionStudents).length;
+  // Format section display name
+  const getSectionDisplayName = (masterlist) => {
+    return `Grade ${masterlist.grade} - ${masterlist.section}`;
+  };
 
   const handleSectionChange = (e) => {
-    setSelectedSection(e.target.value);
+    const masterlistId = e.target.value;
+    setSelectedMasterlistId(masterlistId);
   };
 
   const handleGradeSubmit = (e) => {
@@ -111,6 +113,45 @@ function TeacherMasterlist() {
     setCurrentRow(null);
     setGradeForm({ grade: '', note: '' });
   };
+
+  if (loading) {
+    return (
+      <div className={styles.mainContent}>
+        <div className={styles.header}>
+          <h1>Masterlist</h1>
+        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>Loading masterlist data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.mainContent}>
+        <div className={styles.header}>
+          <h1>Masterlist</h1>
+        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p style={{ color: 'red' }}>Error: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (masterlists.length === 0) {
+    return (
+      <div className={styles.mainContent}>
+        <div className={styles.header}>
+          <h1>Masterlist</h1>
+        </div>
+        <div style={{ textAlign: 'center', padding: '2rem' }}>
+          <p>No masterlists assigned to you yet.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -145,12 +186,14 @@ function TeacherMasterlist() {
             <div className={styles.sectionSelect}>
               <select 
                 id="sectionSelect" 
-                value={selectedSection}
+                value={selectedMasterlistId || ''}
                 onChange={handleSectionChange}
               >
-                <option value="7-dahlia">Grade 7 - Dahlia</option>
-                <option value="8-tulip">Grade 8 - Tulip</option>
-                <option value="9-daisy">Grade 9 - Daisy</option>
+                {masterlists.map((masterlist) => (
+                  <option key={masterlist._id} value={masterlist._id}>
+                    {getSectionDisplayName(masterlist)}
+                  </option>
+                ))}
               </select>
             </div>
             <table className={styles.masterlistTable}>
@@ -159,18 +202,28 @@ function TeacherMasterlist() {
                   <th>LRN</th>
                   <th>Name</th>
                   <th>Gender</th>
-                  <th>Enrollment</th>
+                  <th>Grade</th>
+                  <th>Section</th>
                 </tr>
               </thead>
               <tbody>
-                {currentStudents.map((student, index) => (
-                  <tr key={student.lrn} data-row={index + 1}>
-                    <td>{student.lrn}</td>
-                    <td>{student.name}</td>
-                    <td>{student.gender}</td>
-                    <td>{student.enrollment}</td>
+                {currentStudents.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" style={{ textAlign: 'center', padding: '1rem' }}>
+                      No students in this section yet.
+                    </td>
                   </tr>
-                ))}
+                ) : (
+                  currentStudents.map((student, index) => (
+                    <tr key={student._id || student.learnerReferenceNo || index} data-row={index + 1}>
+                      <td>{student.learnerReferenceNo || 'N/A'}</td>
+                      <td>{formatStudentName(student)}</td>
+                      <td>{student.sex || 'N/A'}</td>
+                      <td>{student.grade || currentMasterlist?.grade || 'N/A'}</td>
+                      <td>{student.section || currentMasterlist?.section || 'N/A'}</td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

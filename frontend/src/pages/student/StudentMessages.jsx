@@ -1,61 +1,108 @@
-import { useState } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import styles from './StudentMessages.module.css';
+import { fetchAllMessages, createMessage } from '../../store/slices/messageSlice';
+import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins } from '../../store/slices/adminSlice';
 
 function StudentMessages() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { messages, loading } = useSelector((state) => state.messages);
+  const { teachers } = useSelector((state) => state.teachers);
+  const { admins } = useSelector((state) => state.admins);
+  const { user } = useSelector((state) => state.auth);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [sortBy, setSortBy] = useState('latest');
   const [formData, setFormData] = useState({
-    recipient: '',
+    receiverId: '',
+    receiverRole: '',
     subject: '',
-    message: '',
+    messageText: '',
   });
 
-  // Sample message data
-  const messages = [
-    {
-      id: 1,
-      name: 'Teacher 1',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good morning! I wanted to remind you about the upcoming project submission...',
-      time: '2h ago',
-    },
-    {
-      id: 2,
-      name: 'Admin',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Hello! Please check the recent announcement regarding the upcoming event...',
-      time: '3h ago',
-    },
-    {
-      id: 3,
-      name: 'Teacher 2',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Good afternoon! Can you please submit your homework by tomorrow...',
-      time: '5h ago',
-    },
-    {
-      id: 4,
-      name: 'Admin',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Reminder: The enrollment period is now open. Please complete your enrollment...',
-      time: '6h ago',
-    },
-    {
-      id: 5,
-      name: 'Teacher 1',
-      avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
-      message: 'Great work on your recent assignment! Keep up the excellent progress...',
-      time: '8h ago',
-    },
-  ];
+  useEffect(() => {
+    dispatch(fetchAllMessages());
+    dispatch(fetchAllTeachers());
+    dispatch(fetchAllAdmins());
+  }, [dispatch]);
+
+  // Filter and format messages for display
+  const formattedMessages = useMemo(() => {
+    let filtered = messages.filter((msg) => {
+      // Show messages where user is sender or receiver
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    // Apply sorting
+    if (sortBy === 'latest') {
+      filtered.sort((a, b) => new Date(b.dateSent) - new Date(a.dateSent));
+    } else if (sortBy === 'oldest') {
+      filtered.sort((a, b) => new Date(a.dateSent) - new Date(b.dateSent));
+    } else if (sortBy === 'unread') {
+      filtered = filtered.filter((msg) => msg.status === 'sent');
+      filtered.sort((a, b) => new Date(b.dateSent) - new Date(a.dateSent));
+    }
+
+    return filtered.map((msg) => {
+      const sender = msg.senderId;
+      const receiver = msg.receiverId;
+      const isSentByMe = sender?._id?.toString() === user?.id?.toString();
+      
+      // Determine display name
+      let displayName = 'Unknown';
+      if (isSentByMe) {
+        // If I sent it, show receiver name
+        if (receiver) {
+          displayName = `${receiver.firstName || ''} ${receiver.lastName || ''}`.trim();
+        } else if (msg.receiverRole) {
+          displayName = `All ${msg.receiverRole}s`;
+        }
+      } else {
+        // If someone sent it to me, show sender name
+        if (sender) {
+          displayName = `${sender.firstName || ''} ${sender.lastName || ''}`.trim();
+        }
+      }
+
+      const timeAgo = msg.dateSent ? new Date(msg.dateSent).toLocaleString() : '';
+      
+      return {
+        id: msg._id,
+        name: displayName,
+        avatar: 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png',
+        message: msg.messageText?.substring(0, 50) + (msg.messageText?.length > 50 ? '...' : '') || '',
+        time: timeAgo,
+        status: msg.status,
+        senderRole: msg.senderRole,
+        subject: msg.subject,
+        fullMessage: msg,
+      };
+    });
+  }, [messages, user, sortBy]);
 
   // Statistics
-  const stats = {
-    sent: 12,
-    trash: 2,
-    viewed: 13,
-    unread: 9,
-  };
+  const stats = useMemo(() => {
+    const userMessages = messages.filter((msg) => {
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    return {
+      sent: userMessages.filter((m) => m.senderId?._id?.toString() === user?.id?.toString()).length,
+      trash: messages.filter((m) => m.status === 'deleted').length,
+      viewed: userMessages.filter((m) => m.status === 'read').length,
+      unread: userMessages.filter((m) => m.status === 'sent').length,
+    };
+  }, [messages, user]);
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -63,7 +110,7 @@ function StudentMessages() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormData({ recipient: '', subject: '', message: '' });
+    setFormData({ receiverId: '', receiverRole: '', subject: '', messageText: '' });
   };
 
   const handleInputChange = (e) => {
@@ -74,12 +121,26 @@ function StudentMessages() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Add API call here to send message
-    console.log('Sending message:', formData);
-    handleCloseModal();
-    // Show success message or update UI
+    try {
+      const messageData = {
+        receiverId: formData.receiverId || undefined,
+        receiverRole: formData.receiverRole || undefined,
+        subject: formData.subject,
+        messageText: formData.messageText,
+      };
+
+      await dispatch(createMessage(messageData));
+      await dispatch(fetchAllMessages()); // Refresh messages
+      handleCloseModal();
+    } catch (error) {
+      console.error('Failed to send message:', error);
+    }
+  };
+
+  const handleMessageClick = (messageId) => {
+    navigate(`/student/message/${messageId}`);
   };
 
   const handleModalClick = (e) => {
@@ -102,7 +163,7 @@ function StudentMessages() {
               alt="Profile Picture"
               className={styles.profilePic}
             />
-            <h2>Kiana Mae Alvarez</h2>
+            <h2>{user?.firstName} {user?.lastName}</h2>
             <button
               className={styles.writeMessageBtn}
               onClick={handleOpenModal}
@@ -151,22 +212,37 @@ function StudentMessages() {
           </div>
 
           <div className={styles.messagesList}>
-            {messages.map((msg) => (
-              <div key={msg.id} className={styles.messageItem}>
-                <img
-                  src={msg.avatar}
-                  alt="Avatar"
-                  className={styles.studentAvatar}
-                />
-                <div className={styles.messageContent}>
-                  <div className={styles.messageHeader}>
-                    <div className={styles.studentName}>{msg.name}</div>
-                    <div className={styles.messageTime}>{msg.time}</div>
+            {loading ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>Loading messages...</div>
+            ) : formattedMessages.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>No messages</div>
+            ) : (
+              formattedMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={styles.messageItem}
+                  onClick={() => handleMessageClick(msg.id)}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <img
+                    src={msg.avatar}
+                    alt="Avatar"
+                    className={styles.studentAvatar}
+                  />
+                  <div className={styles.messageContent}>
+                    <div className={styles.messageHeader}>
+                      <div className={styles.studentName}>
+                        {msg.name} {msg.status === 'sent' && <span style={{ color: '#4c7a67', fontSize: '0.75rem' }}>(Unread)</span>}
+                      </div>
+                      <div className={styles.messageTime}>{msg.time}</div>
+                    </div>
+                    <div className={styles.messageText}>
+                      <strong>{msg.subject}:</strong> {msg.message}
+                    </div>
                   </div>
-                  <div className={styles.messageText}>{msg.message}</div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>
@@ -181,20 +257,38 @@ function StudentMessages() {
           <div className={styles.modalContent}>
             <h3>New Message</h3>
             <form id="message-form" onSubmit={handleSubmit}>
-              <label htmlFor="recipient">To:</label>
+              <label htmlFor="receiverRole">To (Role):</label>
               <select
-                id="recipient"
-                name="recipient"
-                value={formData.recipient}
+                id="receiverRole"
+                name="receiverRole"
+                value={formData.receiverRole}
                 onChange={handleInputChange}
                 required
               >
-                <option value="">Select recipient...</option>
-                <option value="admin">Administrator</option>
-                <option value="teacher-1">Teacher 1</option>
-                <option value="teacher-2">Teacher 2</option>
-                <option value="teacher-3">Teacher 3</option>
-                <option value="class-adviser">Class Adviser</option>
+                <option value="">Select recipient type...</option>
+                <option value="All">All Users</option>
+                <option value="Teacher">All Teachers</option>
+                <option value="Admin">All Admins</option>
+              </select>
+
+              <label htmlFor="receiverId">To (Specific User - Optional):</label>
+              <select
+                id="receiverId"
+                name="receiverId"
+                value={formData.receiverId}
+                onChange={handleInputChange}
+              >
+                <option value="">Select specific user (optional)...</option>
+                {teachers.map((teacher) => (
+                  <option key={teacher._id} value={teacher.userId?._id}>
+                    {teacher.userId?.firstName} {teacher.userId?.lastName} (Teacher)
+                  </option>
+                ))}
+                {admins.map((admin) => (
+                  <option key={admin._id} value={admin.userId?._id}>
+                    {admin.userId?.firstName} {admin.userId?.lastName} (Admin)
+                  </option>
+                ))}
               </select>
 
               <label htmlFor="subject">Subject:</label>
@@ -208,12 +302,12 @@ function StudentMessages() {
                 placeholder="Enter subject"
               />
 
-              <label htmlFor="message">Message:</label>
+              <label htmlFor="messageText">Message:</label>
               <textarea
-                id="message"
-                name="message"
+                id="messageText"
+                name="messageText"
                 rows="5"
-                value={formData.message}
+                value={formData.messageText}
                 onChange={handleInputChange}
                 required
                 placeholder="Type your message here..."

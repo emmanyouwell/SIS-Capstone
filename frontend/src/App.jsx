@@ -30,6 +30,7 @@ import AdminMasterlistAssignTeacher from './pages/admin/AdminMasterlistAssignTea
 import AdminMasterlistAssignStudent from './pages/admin/AdminMasterlistAssignStudent';
 import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminMessages from './pages/admin/AdminMessages';
+import AdminMessageView from './pages/admin/AdminMessageView';
 import AdminProfile from './pages/admin/AdminProfile';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentSubjects from './pages/student/StudentSubjects';
@@ -38,6 +39,7 @@ import StudentSchedule from './pages/student/StudentSchedule';
 import StudentEnrollment from './pages/student/StudentEnrollment';
 import StudentNotifications from './pages/student/StudentNotifications';
 import StudentMessages from './pages/student/StudentMessages';
+import StudentMessageView from './pages/student/StudentMessageView';
 import StudentProfile from './pages/student/StudentProfile';
 import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TeacherClasses from './pages/teacher/TeacherClasses';
@@ -45,6 +47,7 @@ import TeacherGrades from './pages/teacher/TeacherGrades';
 import TeacherSubject from './pages/teacher/TeacherSubject';
 import TeacherMasterlist from './pages/teacher/TeacherMasterlist';
 import TeacherMessage from './pages/teacher/TeacherMessage';
+import TeacherMessageView from './pages/teacher/TeacherMessageView';
 import TeacherProfile from './pages/teacher/TeacherProfile';
 import StudentHelp from './pages/student/StudentHelp';
 import TeacherHelp from './pages/teacher/TeacherHelp';
@@ -92,6 +95,7 @@ function App() {
           <Route path="masterlist/assign-student" element={<AdminMasterlistAssignStudent />} />
           <Route path="notifications" element={<AdminNotifications />} />
           <Route path="messages" element={<AdminMessages />} />
+          <Route path="message/:id" element={<AdminMessageView />} />
           <Route path="profile" element={<AdminProfile />} />
         </Route>
         <Route
@@ -109,6 +113,7 @@ function App() {
           <Route path="enrollment" element={<StudentEnrollment />} />
           <Route path="notifications" element={<StudentNotifications />} />
           <Route path="messages" element={<StudentMessages />} />
+          <Route path="message/:id" element={<StudentMessageView />} />
           <Route path="profile" element={<StudentProfile />} />
           <Route path="help" element={<StudentHelp />} />
         </Route>
@@ -126,6 +131,7 @@ function App() {
           <Route path="subject" element={<TeacherSubject />} />
           <Route path="masterlist" element={<TeacherMasterlist />} />
           <Route path="message" element={<TeacherMessage />} />
+          <Route path="message/:id" element={<TeacherMessageView />} />
           <Route path="profile" element={<TeacherProfile />} />
           <Route path="help" element={<TeacherHelp />} />
         </Route>

@@ -1,5 +1,33 @@
 import Masterlist from '../models/Masterlist.js';
 
+// Helper function to enrich students with LRN from Student model
+const enrichStudentsWithLRN = async (students) => {
+  if (!students || students.length === 0) return students;
+
+  const Student = (await import('../models/Student.js')).default;
+  const studentUserIds = students.map(s => s._id || s);
+  
+  // Fetch Student documents for these users
+  const studentDocs = await Student.find({ userId: { $in: studentUserIds } })
+    .select('userId lrn');
+  
+  // Create a map of userId -> lrn
+  const lrnMap = new Map();
+  studentDocs.forEach(student => {
+    lrnMap.set(student.userId.toString(), student.lrn);
+  });
+  
+  // Add LRN to each student object
+  return students.map(student => {
+    const studentObj = student.toObject ? student.toObject() : student;
+    const userId = studentObj._id ? studentObj._id.toString() : studentObj.toString();
+    return {
+      ...studentObj,
+      learnerReferenceNo: lrnMap.get(userId) || null,
+    };
+  });
+};
+
 // @desc    Get all masterlists
 // @route   GET /api/v1/masterlists
 // @access  Private
@@ -12,8 +40,29 @@ export const getMasterlists = async (req, res) => {
     if (section) filter.section = section;
     if (schoolYear) filter.schoolYear = schoolYear;
 
+    // If user is a Teacher, filter masterlists where they are adviser or subject teacher
+    if (req.user.role === 'Teacher') {
+      const Teacher = (await import('../models/Teacher.js')).default;
+      const teacher = await Teacher.findOne({ userId: req.user._id });
+      
+      if (teacher) {
+        // Filter masterlists where teacher is adviser OR subject teacher
+        filter.$or = [
+          { adviser: teacher._id },
+          { 'subjectTeachers.teacher': teacher._id }
+        ];
+      } else {
+        // Teacher document not found, return empty array
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
+    }
+
     const masterlists = await Masterlist.find(filter)
-      .populate('students', 'firstName lastName learnerReferenceNo grade section sex')
+      .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
         populate: {
@@ -31,10 +80,19 @@ export const getMasterlists = async (req, res) => {
       })
       .sort({ grade: 1, section: 1 });
 
+    // Enrich students with LRN for each masterlist
+    const enrichedMasterlists = await Promise.all(
+      masterlists.map(async (masterlist) => {
+        const masterlistObj = masterlist.toObject();
+        masterlistObj.students = await enrichStudentsWithLRN(masterlist.students);
+        return masterlistObj;
+      })
+    );
+
     res.json({
       success: true,
-      count: masterlists.length,
-      data: masterlists,
+      count: enrichedMasterlists.length,
+      data: enrichedMasterlists,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -47,7 +105,7 @@ export const getMasterlists = async (req, res) => {
 export const getMasterlist = async (req, res) => {
   try {
     const masterlist = await Masterlist.findById(req.params.id)
-      .populate('students', 'firstName lastName learnerReferenceNo grade section')
+      .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
         populate: {
@@ -68,9 +126,13 @@ export const getMasterlist = async (req, res) => {
       return res.status(404).json({ message: 'Masterlist not found' });
     }
 
+    // Enrich students with LRN
+    const masterlistObj = masterlist.toObject();
+    masterlistObj.students = await enrichStudentsWithLRN(masterlist.students);
+
     res.json({
       success: true,
-      data: masterlist,
+      data: masterlistObj,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -118,7 +180,7 @@ export const createMasterlist = async (req, res) => {
       }
     }
     
-    await masterlist.populate('students', 'firstName lastName learnerReferenceNo');
+    await masterlist.populate('students', 'firstName lastName middleName extensionName sex');
     await masterlist.populate({
       path: 'adviser',
       populate: {
@@ -135,9 +197,13 @@ export const createMasterlist = async (req, res) => {
       }
     });
 
+    // Enrich students with LRN
+    const masterlistObj = masterlist.toObject();
+    masterlistObj.students = await enrichStudentsWithLRN(masterlist.students);
+
     res.status(201).json({
       success: true,
-      data: masterlist,
+      data: masterlistObj,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -187,7 +253,7 @@ export const updateMasterlist = async (req, res) => {
       new: true,
       runValidators: true,
     })
-      .populate('students', 'firstName lastName learnerReferenceNo grade section')
+      .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
         populate: {
@@ -231,9 +297,13 @@ export const updateMasterlist = async (req, res) => {
       }
     }
 
+    // Enrich students with LRN
+    const masterlistObj = masterlist.toObject();
+    masterlistObj.students = await enrichStudentsWithLRN(masterlist.students);
+
     res.json({
       success: true,
-      data: masterlist,
+      data: masterlistObj,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
