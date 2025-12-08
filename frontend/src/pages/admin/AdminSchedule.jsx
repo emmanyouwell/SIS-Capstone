@@ -2,10 +2,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminSchedule.module.css';
 import {
-  fetchAllSchedules,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
+  getScheduleBySection,
+  setFullSchedule,
   clearError,
 } from '../../store/slices/scheduleSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
@@ -18,7 +16,9 @@ function AdminSchedule() {
   const dispatch = useDispatch();
 
   // Redux state
-  const { schedules: allSchedules, loading, error } = useSelector((state) => state.schedules);
+  const { schedule: scheduleEntries, selectedSchedule, loading, error } = useSelector(
+    (state) => state.schedules
+  );
   const { subjects } = useSelector((state) => state.subjects);
   const { students } = useSelector((state) => state.students);
   const { data: sections } = useSelector((state) => state.section);
@@ -49,12 +49,6 @@ function AdminSchedule() {
     return sections.filter((s) => s.gradeLevel === currentGrade);
   }, [sections, currentGrade]);
 
-  // Get students in current section
-  const sectionStudents = useMemo(() => {
-    if (!currentSectionId) return [];
-    return students.filter((s) => s.sectionId?._id?.toString() === currentSectionId.toString());
-  }, [students, currentSectionId]);
-
   // Get current section object
   const currentSection = useMemo(() => {
     return sections.find((s) => s._id?.toString() === currentSectionId?.toString());
@@ -68,36 +62,34 @@ function AdminSchedule() {
     );
   }, [masterlists, currentGrade, currentSection]);
 
-  // Get schedules for current section
-  const sectionSchedules = useMemo(() => {
-    if (!currentSectionId) return [];
-    return allSchedules.filter((schedule) => {
-      const scheduleSectionId = schedule.sectionId?._id?.toString() || schedule.sectionId?.toString();
-      return scheduleSectionId === currentSectionId.toString();
-    });
-  }, [allSchedules, currentSectionId]);
-
-  // Transform schedules to UI structure (grouped by time and day)
+  // Transform schedule array to UI structure (grouped by time and day)
   const transformSchedulesToUI = useMemo(() => {
     const uiStructure = {};
-    
+
     times.forEach((time) => {
       if (time === 'BREAK') return;
       uiStructure[time] = {};
       days.forEach((day) => {
-        // Find a representative schedule for this time/day (all students should have the same)
-        const matchingSchedule = sectionSchedules.find((s) => {
-          const scheduleDay = s.day;
-          const scheduleTime = `${s.startTime}-${s.endTime}`;
-          // Try to match time format
-          const timeMatch = time.includes(s.startTime) || scheduleTime === time;
-          return scheduleDay === day && timeMatch;
+        // Find matching schedule entry for this time/day
+        const matchingEntry = scheduleEntries.find((entry) => {
+          const entryDay = entry.day;
+          const [timeStart, timeEnd] = time.replace(' AM', '').replace(' PM', '').split('-');
+          const normalizeTime = (t) => t.replace(/AM|PM|am|pm/gi, '').trim();
+          const normalizedTimeStart = normalizeTime(timeStart);
+          const normalizedTimeEnd = normalizeTime(timeEnd);
+          const normalizedEntryStart = normalizeTime(entry.startTime);
+          const normalizedEntryEnd = normalizeTime(entry.endTime);
+
+          const timeMatch =
+            normalizedEntryStart === normalizedTimeStart &&
+            normalizedEntryEnd === normalizedTimeEnd;
+          return entryDay === day && timeMatch;
         });
 
-        if (matchingSchedule) {
-          const subject = matchingSchedule.subjectId;
+        if (matchingEntry && matchingEntry.subjectId) {
+          const subject = matchingEntry.subjectId;
           const subjectId = subject?._id || subject;
-          
+
           // Find teacher from masterlist for this subject
           let teacherName = '';
           let teacherId = '';
@@ -111,44 +103,31 @@ function AdminSchedule() {
               teacherId = subjectTeacher.teacher._id || subjectTeacher.teacher;
             }
           }
-          
+
           uiStructure[time][day] = {
             subjectId: subjectId || '',
             subjectName: subject?.subjectName || '',
             teacherId: teacherId || '',
             teacherName: teacherName,
-            scheduleIds: sectionSchedules
-              .filter((s) => {
-                const scheduleDay = s.day;
-                const scheduleTime = `${s.startTime}-${s.endTime}`;
-                const timeMatch = time.includes(s.startTime) || scheduleTime === time;
-                const scheduleSubjectId = s.subjectId?._id?.toString() || s.subjectId?.toString();
-                return (
-                  scheduleDay === day &&
-                  timeMatch &&
-                  scheduleSubjectId === (subjectId?.toString() || '')
-                );
-              })
-              .map((s) => s._id),
-            startTime: matchingSchedule.startTime,
-            endTime: matchingSchedule.endTime,
+            startTime: matchingEntry.startTime,
+            endTime: matchingEntry.endTime,
           };
         } else {
+          const [startTime, endTime] = time.replace(' AM', '').replace(' PM', '').split('-');
           uiStructure[time][day] = {
             subjectId: '',
             subjectName: '',
             teacherId: '',
             teacherName: '',
-            scheduleIds: [],
-            startTime: time.split('-')[0]?.trim() || '',
-            endTime: time.split('-')[1]?.trim() || '',
+            startTime: startTime?.trim() || '',
+            endTime: endTime?.trim() || '',
           };
         }
       });
     });
 
     return uiStructure;
-  }, [sectionSchedules, times, days, currentMasterlist]);
+  }, [scheduleEntries, times, days, currentMasterlist]);
 
   // Update section when grade changes
   useEffect(() => {
@@ -167,22 +146,20 @@ function AdminSchedule() {
     }
   }, [dispatch, currentGrade]);
 
-  // Fetch schedules when section changes
+  // Fetch schedule when section changes
   useEffect(() => {
     if (currentSectionId) {
-      // Fetch schedules for the section (even if no students yet)
-      dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
+      dispatch(getScheduleBySection(currentSectionId));
     }
   }, [dispatch, currentSectionId]);
 
   // Update UI schedules when transformed schedules change (only when not in edit mode)
   useEffect(() => {
-    // Only update if we're not in edit mode and sectionSchedules changed
     if (!editMode && currentSectionId) {
       setUiSchedules(transformSchedulesToUI);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sectionSchedules, editMode, currentSectionId]); // Depend on sectionSchedules, not the memoized object
+  }, [scheduleEntries, editMode, currentSectionId]);
 
   // Clear error after 5 seconds
   useEffect(() => {
@@ -196,18 +173,48 @@ function AdminSchedule() {
 
   // Get available subjects from masterlist for current section
   const availableSubjects = useMemo(() => {
-    if (!currentMasterlist?.subjectTeachers) {
-      // Fallback to subjects if no masterlist
-      return subjects.filter((subject) => subject.gradeLevel === currentGrade);
+    if (!currentMasterlist?.subjectTeachers || currentMasterlist.subjectTeachers.length === 0) {
+      // Fallback to subjects if no masterlist or empty subjectTeachers
+      return subjects
+        .filter((subject) => {
+          const grade = subject.gradeLevel || subject.grade;
+          return grade === currentGrade;
+        })
+        .map((subject) => {
+          const subjectId = subject._id?.toString() || subject._id;
+          return {
+            _id: subjectId,
+            subjectName: subject.subjectName || subject.name || 'Unknown Subject',
+            gradeLevel: subject.gradeLevel || subject.grade || currentGrade,
+          };
+        })
+        .filter((s) => s._id) // Filter out any without valid ID
+        .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
     }
-    
+
     // Use subjects from masterlist.subjectTeachers
     return currentMasterlist.subjectTeachers
       .map((st) => {
         const subject = st.subject;
         if (!subject) return null;
+        
+        // Normalize subject ID to string - handle both populated and unpopulated cases
+        let subjectId;
+        if (typeof subject === 'string' || subject instanceof String) {
+          // Unpopulated - just an ID string
+          subjectId = subject.toString();
+        } else if (subject._id) {
+          // Populated - has _id property
+          subjectId = subject._id.toString();
+        } else {
+          // Fallback
+          subjectId = subject.toString();
+        }
+        
+        if (!subjectId) return null;
+        
         return {
-          _id: subject._id || subject,
+          _id: subjectId,
           subjectName: subject.subjectName || subject.name || 'Unknown Subject',
           gradeLevel: subject.gradeLevel || currentGrade,
           teacher: st.teacher, // Teacher from masterlist
@@ -216,30 +223,6 @@ function AdminSchedule() {
       .filter(Boolean)
       .sort((a, b) => a.subjectName.localeCompare(b.subjectName));
   }, [currentMasterlist, subjects, currentGrade]);
-
-  // Get available teachers from masterlist
-  const availableTeachers = useMemo(() => {
-    if (!currentMasterlist?.subjectTeachers) {
-      return [];
-    }
-    
-    const teacherMap = new Map();
-    currentMasterlist.subjectTeachers.forEach((st) => {
-      if (st.teacher) {
-        const teacher = st.teacher;
-        // Handle populated teacher object
-        const teacherId = teacher._id || teacher;
-        const userId = teacher.userId;
-        if (userId && !teacherMap.has(teacherId)) {
-          teacherMap.set(teacherId, {
-            id: teacherId,
-            name: `${userId.firstName || ''} ${userId.lastName || ''}`.trim() || 'Unknown Teacher',
-          });
-        }
-      }
-    });
-    return Array.from(teacherMap.values());
-  }, [currentMasterlist]);
 
   // Handle grade change
   const handleGradeChange = (e) => {
@@ -264,25 +247,30 @@ function AdminSchedule() {
   const handleSubjectChange = (time, day, subjectId) => {
     const updatedSchedules = { ...uiSchedules };
     if (updatedSchedules[time] && updatedSchedules[time][day]) {
-      const subject = availableSubjects.find((s) => s._id === subjectId);
-      
+      // Normalize subjectId for comparison
+      const normalizedSubjectId = subjectId?.toString();
+      const subject = availableSubjects.find(
+        (s) => s._id?.toString() === normalizedSubjectId
+      );
+
       // Get teacher from masterlist for this subject
       let teacherName = '';
       let teacherId = '';
       if (currentMasterlist?.subjectTeachers && subjectId) {
-        const subjectTeacher = currentMasterlist.subjectTeachers.find(
-          (st) => (st.subject?._id || st.subject)?.toString() === subjectId.toString()
-        );
+        const subjectTeacher = currentMasterlist.subjectTeachers.find((st) => {
+          const stSubjectId = st.subject?._id?.toString() || st.subject?.toString() || st.subject;
+          return stSubjectId === normalizedSubjectId;
+        });
         if (subjectTeacher?.teacher?.userId) {
           const teacher = subjectTeacher.teacher.userId;
           teacherName = `${teacher.firstName || ''} ${teacher.lastName || ''}`.trim();
           teacherId = subjectTeacher.teacher._id || subjectTeacher.teacher;
         }
       }
-      
+
       updatedSchedules[time][day] = {
         ...updatedSchedules[time][day],
-        subjectId: subjectId || '',
+        subjectId: normalizedSubjectId || '',
         subjectName: subject?.subjectName || '',
         teacherId: teacherId || '',
         teacherName: teacherName,
@@ -291,7 +279,7 @@ function AdminSchedule() {
     }
   };
 
-  // Transform UI structure to backend format and save
+  // Transform UI structure to schedule array and save
   const handleSave = async () => {
     if (!currentSectionId) {
       setMessageModalContent({
@@ -304,7 +292,7 @@ function AdminSchedule() {
 
     setSaving(true);
     try {
-      const operations = [];
+      const scheduleArray = [];
 
       // Process each time slot and day
       times.forEach((time) => {
@@ -314,54 +302,25 @@ function AdminSchedule() {
           const cellData = uiSchedules[time]?.[day];
           if (!cellData) return;
 
-          const { subjectId, scheduleIds, startTime, endTime } = cellData;
+          const { subjectId, startTime, endTime } = cellData;
 
-          // If no subject selected, delete all existing schedules for this time/day
-          if (!subjectId) {
-            scheduleIds.forEach((scheduleId) => {
-              operations.push(dispatch(deleteSchedule(scheduleId)));
+          // Only add entry if subject is selected
+          if (subjectId) {
+            scheduleArray.push({
+              subjectId: subjectId,
+              day: day,
+              startTime: startTime,
+              endTime: endTime,
             });
-            return;
-          }
-
-          // Check if schedule already exists for this section/subject/time/day
-          const existingSchedule = sectionSchedules.find((s) => {
-            const scheduleDay = s.day;
-            const scheduleTime = `${s.startTime}-${s.endTime}`;
-            const timeMatch = time.includes(s.startTime) || scheduleTime === time;
-            const scheduleSubjectId = s.subjectId?._id?.toString() || s.subjectId?.toString();
-            return (
-              scheduleSubjectId === subjectId &&
-              scheduleDay === day &&
-              timeMatch
-            );
-          });
-
-          const scheduleData = {
-            sectionId: currentSectionId,
-            subjectId: subjectId,
-            day: day,
-            startTime: startTime,
-            endTime: endTime,
-          };
-
-          if (existingSchedule) {
-            // Update existing schedule
-            operations.push(
-              dispatch(updateSchedule({ id: existingSchedule._id, data: scheduleData }))
-            );
-          } else {
-            // Create new schedule
-            operations.push(dispatch(createSchedule(scheduleData)));
           }
         });
       });
 
-      // Wait for all operations to complete
-      await Promise.all(operations);
+      // Save the entire schedule array
+      await dispatch(setFullSchedule({ sectionId: currentSectionId, schedule: scheduleArray }));
 
-      // Refresh schedules
-      await dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
+      // Refresh schedule
+      await dispatch(getScheduleBySection(currentSectionId));
 
       setEditMode(false);
       setMessageModalContent({
@@ -405,9 +364,7 @@ function AdminSchedule() {
       // Subject row with teacher displayed below
       const subjectRow = (
         <tr key={`subject-${time}`}>
-          <td className={styles.timeCol}>
-            {time}
-          </td>
+          <td className={styles.timeCol}>{time}</td>
           {days.map((day) => {
             const scheduleData = uiSchedules[time]?.[day] || {
               subjectId: '',
@@ -416,25 +373,35 @@ function AdminSchedule() {
               teacherName: '',
             };
             if (editMode) {
+              // Normalize the current value for comparison
+              const currentValue = scheduleData.subjectId?.toString() || scheduleData.subjectId || '';
+              
               return (
                 <td key={`subject-${time}-${day}`}>
                   <select
                     className={styles.subjectDropdown}
-                    value={scheduleData.subjectId || ''}
+                    value={currentValue}
                     onChange={(e) => handleSubjectChange(time, day, e.target.value)}
                     disabled={saving}
                   >
                     <option value="">Subject</option>
-                    {availableSubjects.map((subject) => (
-                      <option key={subject._id} value={subject._id}>
-                        {subject.subjectName}
+                    {availableSubjects.length > 0 ? (
+                      availableSubjects.map((subject) => {
+                        const subjectId = subject._id?.toString() || subject._id;
+                        return (
+                          <option key={subjectId} value={subjectId}>
+                            {subject.subjectName}
+                          </option>
+                        );
+                      })
+                    ) : (
+                      <option value="" disabled>
+                        No subjects available
                       </option>
-                    ))}
+                    )}
                   </select>
                   {scheduleData.subjectId && scheduleData.teacherName && (
-                    <div className={styles.teacherName}>
-                      {scheduleData.teacherName}
-                    </div>
+                    <div className={styles.teacherName}>{scheduleData.teacherName}</div>
                   )}
                 </td>
               );
@@ -462,9 +429,7 @@ function AdminSchedule() {
 
   return (
     <div className={styles.mainContent}>
-      <div className={styles.scheduleTitle}>
-        Schedule - Grade {currentGrade}
-      </div>
+      <div className={styles.scheduleTitle}>Schedule - Grade {currentGrade}</div>
 
       <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
         <select
@@ -496,7 +461,7 @@ function AdminSchedule() {
         </div>
       )}
 
-      {loading && !allSchedules.length && (
+      {loading && !scheduleEntries.length && (
         <div style={{ textAlign: 'center', padding: '40px' }}>Loading schedules...</div>
       )}
 
