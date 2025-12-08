@@ -1,0 +1,228 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 12px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.modalClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  font-size: 2rem;
+  color: #999;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.modalClose:hover {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.modalHeader {
+  padding: 2rem 2rem 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.modalHeader h2 {
+  margin: 0 0 1rem;
+  color: var(--primary-green, #4c7a67);
+  font-size: 1.5rem;
+}
+
+.studentInfo {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.studentInfo div {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form {
+  padding: 1.5rem 2rem 2rem;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.sectionHeader {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  border-radius: 6px 6px 0 0;
+}
+
+.formContent {
+  background: white;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.25rem;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formRow label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.checkboxRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.checkboxRow label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.checkboxRow input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
+}
+
+.formRow input,
+.formRow select {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.formRow input:focus,
+.formRow select:focus {
+  outline: none;
+  border-color: var(--primary-green, #4c7a67);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.15);
+}
+
+.formRow input.inputError,
+.formRow select.inputError {
+  border-color: #e53e3e;
+}
+
+.formRow input.inputError:focus,
+.formRow select.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+}
+
+.errorText {
+  color: #e53e3e;
+  font-size: 0.75rem;
+  margin-top: -0.25rem;
+}
+
+.formActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.btnCancel,
+.btnSubmit {
+  padding: 0.75rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  border: none;
+}
+
+.btnCancel {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.btnCancel:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.btnSubmit {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+}
+
+.btnSubmit:hover:not(:disabled) {
+  background: var(--hover-green, #5c8a77);
+}
+
+.btnCancel:disabled,
+.btnSubmit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+  
+  .modalContent {
+    max-width: 95%;
+    padding: 1rem;
+  }
+}
+
+

@@ -28,18 +28,34 @@ export const register = async (req, res) => {
       contactNumber,
       address,
       dateOfBirth,
+      sex: req.body.sex,
+      extensionName: req.body.extensionName || '',
     });
 
     // Create role-specific record
     if (role === 'Student') {
-      await Student.create({
+      const studentData = {
         userId: user._id,
-        lrn: roleSpecificData.lrn,
-        gradeLevel: roleSpecificData.gradeLevel,
-        sectionId: roleSpecificData.sectionId,
-        guardianName: roleSpecificData.guardianName,
-        guardianContact: roleSpecificData.guardianContact,
-      });
+        enrollmentStatus: false, // New students default to not enrolled
+      };
+      // LRN and gradeLevel are optional - can be added later via enrollment form
+      if (roleSpecificData.lrn) {
+        studentData.lrn = roleSpecificData.lrn;
+      }
+      if (roleSpecificData.gradeLevel) {
+        studentData.gradeLevel = roleSpecificData.gradeLevel;
+      }
+      if (roleSpecificData.sectionId) {
+        studentData.sectionId = roleSpecificData.sectionId;
+      }
+      // Guardian fields are optional - can be added later via enrollment form
+      if (roleSpecificData.guardianName) {
+        studentData.guardianName = roleSpecificData.guardianName;
+      }
+      if (roleSpecificData.guardianContact) {
+        studentData.guardianContact = roleSpecificData.guardianContact;
+      }
+      await Student.create(studentData);
     } else if (role === 'Teacher') {
       await Teacher.create({
         userId: user._id,

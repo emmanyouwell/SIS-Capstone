@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { createEnrollment } from '../../store/slices/enrollmentSlice';
 import styles from './StudentEnrollment.module.css';
+import MessageModal from '../../components/MessageModal';
 
 function StudentEnrollment() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +29,8 @@ function StudentEnrollment() {
     indigenousPeoples: false,
     family4Ps: false,
     fourPsHouseholdId: '',
+    learnerWithDisability: false,
+    typeOfDisability: [],
     
     // Current Address
     currentHouseNo: '',
@@ -57,10 +62,20 @@ function StudentEnrollment() {
     guardianFirstName: '',
     guardianMiddleName: '',
     guardianContact: '',
+    
+    // Returning learner fields (optional)
+    lastGradeLevelCompleted: '',
+    lastSchoolYearCompleted: '',
+    lastSchoolAttended: '',
+    schoolId: '',
   });
 
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
+  const dispatch = useDispatch();
+  const { loading, error } = useSelector((state) => state.enrollments);
 
   // Pre-fill with student data (in a real app, this would come from API/auth context)
   useEffect(() => {
@@ -172,29 +187,103 @@ function StudentEnrollment() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleDisabilityChange = (disabilityType) => {
+    setFormData(prev => {
+      const currentTypes = prev.typeOfDisability || [];
+      const updatedTypes = currentTypes.includes(disabilityType)
+        ? currentTypes.filter(t => t !== disabilityType)
+        : [...currentTypes, disabilityType];
+      return {
+        ...prev,
+        typeOfDisability: updatedTypes,
+      };
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
-      alert('Please fill out all required fields.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please fill out all required fields.',
+      });
+      setShowMessageModal(true);
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // TODO: Replace with actual API call
-      // await enrollmentAPI.submitEnrollment(formData);
+      // Construct current and permanent addresses
+      const currentAddress = [
+        formData.currentHouseNo,
+        formData.currentBarangay,
+        formData.currentMunicipality,
+        formData.currentProvince,
+        formData.currentZipCode,
+        formData.currentCountry,
+      ].filter(Boolean).join(', ');
+
+      const permanentAddress = formData.sameAsCurrent
+        ? currentAddress
+        : [
+            formData.permanentHouseNo,
+            formData.permanentBarangay,
+            formData.permanentMunicipality,
+            formData.permanentProvince,
+            formData.permanentZipCode,
+            formData.permanentCountry,
+          ].filter(Boolean).join(', ');
+
+      // Prepare enrollment data
+      const enrollmentData = {
+        schoolYear: formData.schoolYear,
+        gradeToEnroll: parseInt(formData.gradeLevelToEnroll),
+        psaCertificateNo: formData.psaCertificateNo,
+        placeOfBirth: formData.placeOfBirth,
+        motherTongue: formData.motherTongue,
+        religion: formData.religion,
+        indigenousPeople: formData.indigenousPeoples,
+        beneficiaryOf4Ps: formData.family4Ps,
+        fourPsHouseholdId: formData.family4Ps ? formData.fourPsHouseholdId : undefined,
+        learnerWithDisability: formData.learnerWithDisability,
+        typeOfDisability: formData.typeOfDisability,
+        currentAddress,
+        permanentAddress,
+        // Returning learner fields (only if returningBalikAral is true)
+        ...(formData.returningBalikAral && {
+          lastGradeLevelCompleted: formData.lastGradeLevelCompleted ? parseInt(formData.lastGradeLevelCompleted) : undefined,
+          lastSchoolYearCompleted: formData.lastSchoolYearCompleted || undefined,
+          lastSchoolAttended: formData.lastSchoolAttended || undefined,
+          schoolId: formData.schoolId || undefined,
+        }),
+      };
+
+      const result = await dispatch(createEnrollment(enrollmentData));
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      alert('Enrollment form submitted successfully!');
-      setIsModalOpen(false);
-      // Reset form or show success message
+      if (createEnrollment.fulfilled.match(result)) {
+        setMessageModalContent({
+          type: 'success',
+          message: 'Enrollment form submitted successfully!',
+        });
+        setShowMessageModal(true);
+        setIsModalOpen(false);
+        // Optionally reset form
+      } else {
+        setMessageModalContent({
+          type: 'error',
+          message: result.payload || 'Failed to submit enrollment form. Please try again.',
+        });
+        setShowMessageModal(true);
+      }
     } catch (error) {
       console.error('Error submitting enrollment:', error);
-      alert('Failed to submit enrollment form. Please try again.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Failed to submit enrollment form. Please try again.',
+      });
+      setShowMessageModal(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -477,6 +566,30 @@ function StudentEnrollment() {
                     </>
                   )}
                 </div>
+                <div className={styles.modalRow}>
+                  <label>Learner with Disability?</label>
+                  <input
+                    type="checkbox"
+                    name="learnerWithDisability"
+                    checked={formData.learnerWithDisability}
+                    onChange={handleInputChange}
+                  />
+                  {formData.learnerWithDisability && (
+                    <div style={{ marginLeft: '24px', display: 'inline-block' }}>
+                      <label>Type of Disability (check all that apply):</label>
+                      {['Visual', 'Hearing', 'Learning', 'Physical', 'Intellectual', 'Speech', 'Emotional', 'Other'].map((type) => (
+                        <label key={type} style={{ marginLeft: '12px' }}>
+                          <input
+                            type="checkbox"
+                            checked={formData.typeOfDisability.includes(type)}
+                            onChange={() => handleDisabilityChange(type)}
+                          />
+                          {type}
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Address Section */}
@@ -606,6 +719,56 @@ function StudentEnrollment() {
                   )}
                 </div>
               </div>
+
+              {/* Returning Learner Section (if returningBalikAral is checked) */}
+              {formData.returningBalikAral && (
+                <>
+                  <div className={`${styles.modalSection} ${styles.sectionHeader}`}>
+                    RETURNING LEARNER INFORMATION
+                  </div>
+                  <div className={styles.modalSection}>
+                    <div className={styles.modalRow}>
+                      <label>Last Grade Level Completed</label>
+                      <input
+                        type="number"
+                        name="lastGradeLevelCompleted"
+                        value={formData.lastGradeLevelCompleted}
+                        onChange={handleInputChange}
+                        min="1"
+                        max="10"
+                        style={{ width: '80px' }}
+                      />
+                      <label style={{ marginLeft: '24px' }}>Last School Year Completed</label>
+                      <input
+                        type="text"
+                        name="lastSchoolYearCompleted"
+                        value={formData.lastSchoolYearCompleted}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 2023-2024"
+                        style={{ width: '120px' }}
+                      />
+                    </div>
+                    <div className={styles.modalRow}>
+                      <label>Last School Attended</label>
+                      <input
+                        type="text"
+                        name="lastSchoolAttended"
+                        value={formData.lastSchoolAttended}
+                        onChange={handleInputChange}
+                        style={{ width: '200px' }}
+                      />
+                      <label style={{ marginLeft: '24px' }}>School ID</label>
+                      <input
+                        type="text"
+                        name="schoolId"
+                        value={formData.schoolId}
+                        onChange={handleInputChange}
+                        style={{ width: '120px' }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* Parent's/Guardian's Information Section */}
               <div className={`${styles.modalSection} ${styles.sectionHeader}`}>
@@ -739,15 +902,21 @@ function StudentEnrollment() {
                 <button
                   type="submit"
                   className={styles.btnSave}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loading}
                 >
-                  {isSubmitting ? 'Saving...' : 'Save Changes'}
+                  {isSubmitting || loading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
       </>
   );
 }

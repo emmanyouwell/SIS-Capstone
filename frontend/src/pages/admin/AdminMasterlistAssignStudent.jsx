@@ -5,6 +5,7 @@ import styles from './AdminMasterlistAssignStudent.module.css';
 import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from '../../store/slices/masterlistSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import MessageModal from '../../components/MessageModal';
 
 function AdminMasterlistAssignStudent() {
   const navigate = useNavigate();
@@ -18,6 +19,8 @@ function AdminMasterlistAssignStudent() {
   const [currentGrade, setCurrentGrade] = useState(7);
   const [saving, setSaving] = useState(false);
   const [genderFilter, setGenderFilter] = useState('All');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   const { masterlists, loading: masterlistLoading, error } = useSelector(
     (state) => state.masterlists
@@ -113,7 +116,11 @@ function AdminMasterlistAssignStudent() {
 
   const handleAddStudents = async () => {
     if (!selectedSection || checkedStudents.size === 0) {
-      alert('Please select at least one student and a section.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please select at least one student and a section.',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -141,11 +148,19 @@ function AdminMasterlistAssignStudent() {
         ).unwrap();
         masterlistToUpdate = newMasterlist;
         setCheckedStudents(new Set());
-        alert(`Masterlist created and students successfully added to ${selectedSection}!`);
+        setMessageModalContent({
+          type: 'success',
+          message: `Masterlist created and students successfully added to ${selectedSection}!`,
+        });
+        setShowMessageModal(true);
         // Refresh masterlists
         dispatch(fetchMasterlists({ grade: currentGrade }));
       } catch (err) {
-        alert(err || 'Failed to create masterlist and add students');
+        setMessageModalContent({
+          type: 'error',
+          message: err || 'Failed to create masterlist and add students',
+        });
+        setShowMessageModal(true);
         setSaving(false);
         return;
       } finally {
@@ -169,9 +184,17 @@ function AdminMasterlistAssignStudent() {
         })
       ).unwrap();
       setCheckedStudents(new Set());
-      alert(`Students successfully added to ${selectedSection}!`);
+      setMessageModalContent({
+        type: 'success',
+        message: `Students successfully added to ${selectedSection}!`,
+      });
+      setShowMessageModal(true);
     } catch (err) {
-      alert(err || 'Failed to add students');
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to add students',
+      });
+      setShowMessageModal(true);
     } finally {
       setSaving(false);
     }
@@ -268,9 +291,17 @@ function AdminMasterlistAssignStudent() {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert('Masterlist copied to clipboard!');
+      setMessageModalContent({
+        type: 'success',
+        message: 'Masterlist copied to clipboard!',
+      });
+      setShowMessageModal(true);
     } catch (err) {
-      alert('Failed to copy to clipboard.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Failed to copy to clipboard.',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -446,6 +477,12 @@ function AdminMasterlistAssignStudent() {
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </div>
   );
 }

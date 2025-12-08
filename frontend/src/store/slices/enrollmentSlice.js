@@ -38,6 +38,18 @@ export const createEnrollment = createAsyncThunk(
   }
 );
 
+export const adminCreateEnrollment = createAsyncThunk(
+  'enrollments/adminCreate',
+  async (enrollmentData, { rejectWithValue }) => {
+    try {
+      const response = await api.post('/enrollments/admin', enrollmentData);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create enrollment');
+    }
+  }
+);
+
 export const updateEnrollment = createAsyncThunk(
   'enrollments/update',
   async ({ id, data }, { rejectWithValue }) => {
@@ -122,6 +134,19 @@ const enrollmentSlice = createSlice({
         state.enrollments.push(action.payload);
       })
       .addCase(createEnrollment.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Admin create enrollment
+      .addCase(adminCreateEnrollment.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(adminCreateEnrollment.fulfilled, (state, action) => {
+        state.loading = false;
+        state.enrollments.push(action.payload);
+      })
+      .addCase(adminCreateEnrollment.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })

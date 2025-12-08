@@ -28,6 +28,8 @@ function AdminAccounts() {
     contactNumber: '',
     address: '',
     dateOfBirth: '',
+    sex: '',
+    extensionName: '',
     employeeId: '',
     department: '',
     position: '',
@@ -76,6 +78,8 @@ function AdminAccounts() {
         contactNumber: formData.contactNumber,
         address: formData.address,
         dateOfBirth: formData.dateOfBirth || undefined,
+        sex: formData.sex,
+        extensionName: formData.extensionName || undefined,
         employeeId: formData.employeeId || undefined,
         department: formData.department || undefined,
         position: formData.position || undefined,
@@ -97,6 +101,8 @@ function AdminAccounts() {
           contactNumber: '',
           address: '',
           dateOfBirth: '',
+          sex: '',
+          extensionName: '',
           employeeId: '',
           department: '',
           position: '',
@@ -256,6 +262,27 @@ function AdminAccounts() {
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                 required
               />
+              <label htmlFor="account-extensionName">Extension Name (e.g. Jr., III)</label>
+              <input
+                type="text"
+                id="account-extensionName"
+                name="account-extensionName"
+                value={formData.extensionName}
+                onChange={(e) => setFormData({ ...formData, extensionName: e.target.value })}
+                placeholder="Leave blank if not applicable"
+              />
+              <label htmlFor="account-sex">Sex</label>
+              <select
+                id="account-sex"
+                name="account-sex"
+                value={formData.sex}
+                onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
+                required
+              >
+                <option value="">Select Sex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+              </select>
               <label htmlFor="account-email">Email</label>
               <input
                 type="email"
@@ -385,6 +412,8 @@ function AdminAccounts() {
                       contactNumber: '',
                       address: '',
                       dateOfBirth: '',
+                      sex: '',
+                      extensionName: '',
                       employeeId: '',
                       department: '',
                       position: '',

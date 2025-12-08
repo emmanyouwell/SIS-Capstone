@@ -38,7 +38,9 @@ function AdminAccountEdit() {
     emergencyContactNumber: '', // Teacher only
     dateOfBirth: '',
     contactNumber: '',
-    address: ''
+    address: '',
+    sex: '',
+    extensionName: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingAccount, setEditingAccount] = useState(null); // Can be teacher or admin
@@ -167,7 +169,9 @@ function AdminAccountEdit() {
           emergencyContactNumber: accountData.emergencyContactNumber || '',
           dateOfBirth: accountData.userId?.dateOfBirth ? new Date(accountData.userId.dateOfBirth).toISOString().split('T')[0] : '',
           contactNumber: accountData.userId?.contactNumber || '',
-          address: accountData.userId?.address || ''
+          address: accountData.userId?.address || '',
+          sex: accountData.userId?.sex || '',
+          extensionName: accountData.userId?.extensionName || ''
         });
         setShowAddModal(true);
         break;
@@ -202,7 +206,9 @@ function AdminAccountEdit() {
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
-          address: formData.address || undefined
+          address: formData.address || undefined,
+          sex: formData.sex,
+          extensionName: formData.extensionName || undefined
         };
 
         if (formData.password) {
@@ -280,6 +286,8 @@ function AdminAccountEdit() {
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
           address: formData.address || undefined,
+          sex: formData.sex,
+          extensionName: formData.extensionName || undefined,
           // Role-specific data (register controller handles creation of Teacher/Admin documents)
           employeeId: formData.employeeId || undefined,
           department: formData.department || undefined,
@@ -609,6 +617,34 @@ function AdminAccountEdit() {
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     required
                   />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="extensionName">Extension Name (e.g. Jr., III)</label>
+                  <input
+                    type="text"
+                    id="extensionName"
+                    name="extensionName"
+                    value={formData.extensionName}
+                    onChange={(e) => setFormData({ ...formData, extensionName: e.target.value })}
+                    placeholder="Leave blank if not applicable"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="sex">Sex</label>
+                  <select
+                    id="sex"
+                    name="sex"
+                    value={formData.sex}
+                    onChange={(e) => setFormData({ ...formData, sex: e.target.value })}
+                    required
+                  >
+                    <option value="">Select Sex</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
                 </div>
               </div>
 

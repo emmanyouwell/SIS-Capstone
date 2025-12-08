@@ -13,7 +13,7 @@ export const getStudents = async (req, res) => {
     if (sectionId) filter.sectionId = sectionId;
 
     const students = await Student.find(filter)
-      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status')
+      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status sex extensionName')
       .populate('sectionId', 'sectionName gradeLevel')
       .populate('subjects.subjectId', 'subjectName gradeLevel')
       .sort({ createdAt: -1 });
@@ -34,7 +34,7 @@ export const getStudents = async (req, res) => {
 export const getStudent = async (req, res) => {
   try {
     const student = await Student.findById(req.params.id)
-      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status')
+      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status sex extensionName')
       .populate('sectionId', 'sectionName gradeLevel')
       .populate('subjects.subjectId', 'subjectName gradeLevel');
 
@@ -57,7 +57,7 @@ export const getStudent = async (req, res) => {
 export const createStudent = async (req, res) => {
   try {
     const student = await Student.create(req.body);
-    await student.populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status');
+    await student.populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status sex extensionName');
     await student.populate('sectionId', 'sectionName gradeLevel');
 
     res.status(201).json({
@@ -74,21 +74,36 @@ export const createStudent = async (req, res) => {
 // @access  Private (Admin)
 export const updateStudent = async (req, res) => {
   try {
-    const student = await Student.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    })
-      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status')
-      .populate('sectionId', 'sectionName gradeLevel')
-      .populate('subjects.subjectId', 'subjectName gradeLevel');
+    const student = await Student.findById(req.params.id);
 
     if (!student) {
       return res.status(404).json({ message: 'Student not found' });
     }
 
+    // Check enrollment restrictions when assigning section or subjects
+    if (req.body.sectionId && !student.enrollmentStatus) {
+      return res.status(400).json({ 
+        message: 'Student is not enrolled. Cannot assign to section.' 
+      });
+    }
+
+    if (req.body.subjects && !student.enrollmentStatus) {
+      return res.status(400).json({ 
+        message: 'Student must complete enrollment before proceeding. Cannot assign subjects.' 
+      });
+    }
+
+    const updatedStudent = await Student.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    })
+      .populate('userId', 'firstName lastName middleName email contactNumber address dateOfBirth status sex extensionName')
+      .populate('sectionId', 'sectionName gradeLevel')
+      .populate('subjects.subjectId', 'subjectName gradeLevel');
+
     res.json({
       success: true,
-      data: student,
+      data: updatedStudent,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

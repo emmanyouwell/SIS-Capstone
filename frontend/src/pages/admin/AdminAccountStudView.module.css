@@ -163,6 +163,24 @@
   background: #276749;
 }
 
+.createEnrollmentBtn {
+  background: #4c7a67;
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 6px;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.createEnrollmentBtn:hover {
+  background: #39916f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 .loading {
   text-align: center;
   padding: 2rem;

@@ -82,6 +82,21 @@ export const getMasterlist = async (req, res) => {
 // @access  Private (Admin)
 export const createMasterlist = async (req, res) => {
   try {
+    // Check if all students are enrolled
+    if (req.body.students && req.body.students.length > 0) {
+      const Student = (await import('../models/Student.js')).default;
+      const students = await Student.find({ 
+        _id: { $in: req.body.students } 
+      });
+      
+      const notEnrolled = students.filter(s => !s.enrollmentStatus);
+      if (notEnrolled.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot add student(s) to masterlist. ${notEnrolled.length} student(s) are not enrolled.` 
+        });
+      }
+    }
+
     const masterlist = await Masterlist.create(req.body);
     await masterlist.populate('students', 'firstName lastName learnerReferenceNo');
     await masterlist.populate({
@@ -114,6 +129,21 @@ export const createMasterlist = async (req, res) => {
 // @access  Private (Admin)
 export const updateMasterlist = async (req, res) => {
   try {
+    // Check if students being added are enrolled
+    if (req.body.students && req.body.students.length > 0) {
+      const Student = (await import('../models/Student.js')).default;
+      const students = await Student.find({ 
+        _id: { $in: req.body.students } 
+      });
+      
+      const notEnrolled = students.filter(s => !s.enrollmentStatus);
+      if (notEnrolled.length > 0) {
+        return res.status(400).json({ 
+          message: `Cannot add student(s) to masterlist. ${notEnrolled.length} student(s) are not enrolled.` 
+        });
+      }
+    }
+
     const masterlist = await Masterlist.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,

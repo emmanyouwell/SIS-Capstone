@@ -14,17 +14,27 @@ export const getGrades = async (req, res) => {
     if (studentId) filter.studentId = studentId;
     if (subjectId) filter['grades.subjectId'] = subjectId;
 
-    // Filter by gradeLevel through student relationship
+    // Filter by gradeLevel through student relationship - only enrolled students
     if (gradeLevel) {
-      const studentsInGrade = await Student.find({ gradeLevel: parseInt(gradeLevel) }).select('_id');
+      const studentsInGrade = await Student.find({ 
+        gradeLevel: parseInt(gradeLevel),
+        enrollmentStatus: true 
+      }).select('_id');
       const studentIds = studentsInGrade.map((s) => s._id);
       filter.studentId = { $in: studentIds };
     }
 
-    // Students can only see their own grades
+    // Students can only see their own grades (and must be enrolled)
     if (req.user.role === 'Student') {
       const student = await Student.findOne({ userId: req.user.id });
       if (student) {
+        if (!student.enrollmentStatus) {
+          return res.json({
+            success: true,
+            count: 0,
+            data: [],
+          });
+        }
         filter.studentId = student._id;
       } else {
         return res.json({
@@ -131,6 +141,17 @@ export const getGrade = async (req, res) => {
 // @access  Private (Admin, Teacher)
 export const createGrade = async (req, res) => {
   try {
+    // Check if student is enrolled
+    const student = await Student.findById(req.body.studentId);
+    if (!student) {
+      return res.status(404).json({ message: 'Student not found' });
+    }
+    if (!student.enrollmentStatus) {
+      return res.status(400).json({ 
+        message: 'Student is not enrolled. Cannot create grade record.' 
+      });
+    }
+
     req.body.dateRecorded = new Date();
 
     const grade = await Grade.create(req.body);

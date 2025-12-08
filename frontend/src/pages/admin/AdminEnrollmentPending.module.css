@@ -155,8 +155,8 @@
   background: #fff;
   border-radius: 16px;
   box-shadow: 0 4px 32px rgba(44, 62, 80, 0.18);
-  padding: 32px 24px;
-  max-width: 900px;
+  padding: 40px 32px;
+  max-width: 1000px;
   width: 98vw;
   max-height: 96vh;
   overflow-y: auto;
@@ -194,76 +194,171 @@
 .formHeader {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
   font-size: 1rem;
+  gap: 24px;
+}
+
+.formHeader > div {
+  flex: 1;
+}
+
+.formHeader > div > div {
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.formHeader strong {
+  color: #184d27;
+  font-weight: 600;
 }
 
 .enrollForm {
   font-size: 1rem;
+  padding: 8px 0;
+}
+
+.enrollForm > label {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.enrollForm > label input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 0.95rem;
+  background: #f5f5f5;
 }
 
 .formSection {
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   border-radius: 10px;
-  padding: 18px;
-  margin-bottom: 18px;
+  padding: 20px;
+  margin-bottom: 24px;
+  background: #fafafa;
 }
 
 .formRow {
   display: flex;
-  gap: 12px;
-  margin-bottom: 8px;
+  gap: 16px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
 }
-
+.formRowUpper{
+  width: 100%
+}
 .formRow label {
   flex: 1;
+  min-width: 100px;
   display: flex;
   flex-direction: column;
   font-size: 0.95rem;
+  color: #333;
 }
 
-.formRow input[type="text"] {
+.formRow label strong {
+  color: #184d27;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.formRow input[type="text"],
+.formRow input[type="date"] {
   width: 100%;
-  padding: 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-top: 4px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  margin-top: 6px;
   font-size: 0.95rem;
+  background: #fff;
+  transition: border-color 0.2s;
+}
+
+.formRow input[type="text"]:focus,
+.formRow input[type="date"]:focus {
+  outline: none;
+  border-color: #4c7a67;
+}
+
+.formRow input[readonly] {
+  background: #f5f5f5;
+  cursor: not-allowed;
 }
 
 .checkboxGroup {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: 32px;
+  gap: 0.5rem;
+  margin: 12px 0;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
   font-size: 0.95rem;
+}
+
+.checkboxGroup span {
+  font-weight: 500;
+  color: #333;
+  margin-right: 6px;
+  flex-shrink: 0;
 }
 
 .checkboxGroup label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.checkboxGroup label input[type="checkbox"] {
+  margin: 0;
+  margin-right: 0;
 }
 
 .radioGroup {
   display: flex;
-  gap: 12px;
+  gap: 0.75rem;
   margin-top: 4px;
 }
 
 .radioGroup label {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 0.375rem;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.radioGroup label input[type="radio"] {
+  margin: 0;
+  margin-right: 0;
 }
 
 .sectionHeader {
-  background: #d2f7d2;
-  padding: 6px 12px;
-  border-radius: 6px;
-  margin-bottom: 12px;
+  background: #4c7a67;
+  color: #fff;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin: 24px 0 16px 0;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
 }
 
 .attachedFile {
@@ -438,6 +533,126 @@
   background-color: #276749;
 }
 
+/* Confirmation Modal Styles */
+.confirmModal {
+  position: fixed;
+  z-index: 100001;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmModalContent {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  padding: 0;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  overflow: hidden;
+}
+
+.confirmModalHeader {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.confirmModalTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+}
+
+.confirmModalBody {
+  padding: 2rem;
+}
+
+.confirmModalMessage {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.confirmModalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 0 2rem 2rem 2rem;
+}
+
+.confirmModalCancelBtn {
+  background: #e2e8f0;
+  color: #4a5568;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmModalCancelBtn:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.confirmModalCancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmModalAcceptBtn {
+  background: #357a38;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmModalAcceptBtn:hover:not(:disabled) {
+  background: #2d6530;
+}
+
+.confirmModalAcceptBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.confirmModalDeclineBtn {
+  background: #a94442;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmModalDeclineBtn:hover:not(:disabled) {
+  background: #8b3634;
+}
+
+.confirmModalDeclineBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Responsive Design */
 @media (max-width: 900px) {
   .mainContent {
@@ -458,6 +673,34 @@
   .enrollModalContent,
   .gradeModalContent {
     padding: 24px 16px;
+  }
+
+  .confirmModalContent {
+    width: 95%;
+    max-width: 100%;
+  }
+
+  .confirmModalHeader {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .confirmModalTitle {
+    font-size: 1.1rem;
+  }
+
+  .confirmModalBody {
+    padding: 1.5rem;
+  }
+
+  .confirmModalActions {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+    flex-direction: column;
+  }
+
+  .confirmModalCancelBtn,
+  .confirmModalAcceptBtn,
+  .confirmModalDeclineBtn {
+    width: 100%;
   }
 }
 

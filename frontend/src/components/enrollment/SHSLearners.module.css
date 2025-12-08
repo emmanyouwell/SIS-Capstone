@@ -1,0 +1,73 @@
+.section {
+  margin-bottom: 2rem;
+}
+
+.sectionHeader {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  border-radius: 6px 6px 0 0;
+}
+
+.formContent {
+  background: white;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+}
+
+.formRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.formRow:last-child {
+  margin-bottom: 0;
+}
+
+.formRow label {
+  font-weight: 500;
+  color: #4a5568;
+  font-size: 0.875rem;
+}
+
+.formRow input,
+.formRow select {
+  padding: 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  font-family: inherit;
+}
+
+.formRow input:focus,
+.formRow select:focus {
+  outline: none;
+  border-color: var(--primary-green, #4c7a67);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.15);
+}
+
+.formRow input.inputError,
+.formRow select.inputError {
+  border-color: #e53e3e;
+}
+
+.formRow input.inputError:focus,
+.formRow select.inputError:focus {
+  box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.15);
+}
+
+.errorText {
+  color: #e53e3e;
+  font-size: 0.75rem;
+  margin-top: -0.25rem;
+}
+
+

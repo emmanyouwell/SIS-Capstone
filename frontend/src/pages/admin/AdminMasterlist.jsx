@@ -8,6 +8,7 @@ import {
   updateSection,
   deleteSection,
 } from '../../store/slices/sectionSlice';
+import MessageModal from '../../components/MessageModal';
 
 function AdminMasterlist() {
   const navigate = useNavigate();
@@ -15,6 +16,8 @@ function AdminMasterlist() {
   const [showSectionsModal, setShowSectionsModal] = useState(false);
   const [pendingRemoval, setPendingRemoval] = useState(null);
   const [sectionForm, setSectionForm] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   const { data: sections, loading: sectionsLoading } = useSelector((state) => state.section);
 
@@ -110,7 +113,11 @@ function AdminMasterlist() {
       }
       closeSectionForm();
     } catch (error) {
-      alert(error || 'Failed to save section');
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to save section',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -130,7 +137,11 @@ function AdminMasterlist() {
         await dispatch(deleteSection(section._id)).unwrap();
         setPendingRemoval(null);
       } catch (error) {
-        alert(error || 'Failed to delete section');
+        setMessageModalContent({
+          type: 'error',
+          message: error || 'Failed to delete section',
+        });
+        setShowMessageModal(true);
       }
     }
   };
@@ -355,6 +366,12 @@ function AdminMasterlist() {
           </form>
         </div>
       )}
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </div>
   );
 }

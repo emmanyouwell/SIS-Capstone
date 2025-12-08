@@ -3,6 +3,7 @@ import {
   getEnrollments,
   getEnrollment,
   createEnrollment,
+  adminCreateEnrollment,
   updateEnrollment,
   deleteEnrollment,
 } from '../controllers/enrollmentController.js';
@@ -17,6 +18,11 @@ router
   .route('/')
   .get(getEnrollments)
   .post(roleMiddleware('Student'), createEnrollment);
+
+// Admin-only route for creating enrollments
+router
+  .route('/admin')
+  .post(roleMiddleware('Admin'), adminCreateEnrollment);
 
 router
   .route('/:id')

@@ -11,6 +11,8 @@ import {
 } from '../../store/slices/subjectSlice';
 import { fetchAllTeachers } from '../../store/slices/teacherSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import MessageModal from '../../components/MessageModal';
 
 function AdminSubjectView() {
   const navigate = useNavigate();
@@ -31,6 +33,10 @@ function AdminSubjectView() {
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [localSubjects, setLocalSubjects] = useState([]); // For optimistic updates in modals
   const [teachersLoading, setTeachersLoading] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   // Map grade param to gradeLevel number
   const getGradeLevel = () => {
@@ -89,7 +95,11 @@ function AdminSubjectView() {
 
     // Check if subject already exists
     if (filteredSubjects.find((s) => s.subjectName.toLowerCase() === subjectName.toLowerCase())) {
-      alert('Subject with this name already exists');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Subject with this name already exists',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -105,19 +115,33 @@ function AdminSubjectView() {
 
       setNewSubjectName('');
     } catch (error) {
-      alert(error || 'Failed to create subject');
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to create subject',
+      });
+      setShowMessageModal(true);
     }
   };
 
-  const handleRemoveSubject = async (subjectId) => {
-    if (!window.confirm('Are you sure you want to delete this subject?')) {
-      return;
-    }
+  const handleRemoveSubjectClick = (subjectId) => {
+    setDeleteTargetId(subjectId);
+    setShowConfirmModal(true);
+  };
 
+  const handleRemoveSubject = async () => {
+    if (!deleteTargetId) return;
     try {
-      await dispatch(deleteSubject(subjectId)).unwrap();
+      await dispatch(deleteSubject(deleteTargetId)).unwrap();
+      setShowConfirmModal(false);
+      setDeleteTargetId(null);
     } catch (error) {
-      alert(error || 'Failed to delete subject');
+      setShowConfirmModal(false);
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to delete subject',
+      });
+      setShowMessageModal(true);
+      setDeleteTargetId(null);
     }
   };
 
@@ -130,7 +154,11 @@ function AdminSubjectView() {
 
   const handleSaveSubjectName = async (subjectId, newName) => {
     if (!newName.trim()) {
-      alert('Subject name cannot be empty');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Subject name cannot be empty',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -142,7 +170,11 @@ function AdminSubjectView() {
         })
       ).unwrap();
     } catch (error) {
-      alert(error || 'Failed to update subject name');
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to update subject name',
+      });
+      setShowMessageModal(true);
       // Revert local change on error
       const originalSubject = filteredSubjects.find((s) => s._id === subjectId);
       if (originalSubject) {
@@ -173,7 +205,11 @@ function AdminSubjectView() {
 
     // Check if teacher is already assigned
     if (currentTeacherIds.includes(selectedTeacherId)) {
-      alert('Teacher is already assigned to this subject');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Teacher is already assigned to this subject',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -242,7 +278,11 @@ function AdminSubjectView() {
       setShowEditTeachersModal(false);
       setEditingSubject(null);
     } catch (error) {
-      alert(error || 'Failed to update teachers');
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to update teachers',
+      });
+      setShowMessageModal(true);
       // Revert to original on error
       const originalSubject = filteredSubjects.find((s) => s._id === editingSubject._id);
       if (originalSubject) {
@@ -276,7 +316,11 @@ function AdminSubjectView() {
         setShowEditSubjectsModal(false);
       })
       .catch((error) => {
-        alert(error || 'Failed to save some changes');
+        setMessageModalContent({
+          type: 'error',
+          message: error || 'Failed to save some changes',
+        });
+        setShowMessageModal(true);
       });
   };
 
@@ -518,7 +562,7 @@ function AdminSubjectView() {
                       />
                       <button
                         className={styles.removeBtn}
-                        onClick={() => handleRemoveSubject(subject._id)}
+                        onClick={() => handleRemoveSubjectClick(subject._id)}
                         disabled={loading}
                       >
                         Remove
@@ -624,6 +668,25 @@ function AdminSubjectView() {
           <path d="M15 18l-6-6 6-6"/>
         </svg>
       </button>
+      <ConfirmationModal
+        show={showConfirmModal}
+        title="Delete Subject?"
+        message="Are you sure you want to delete this subject? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleRemoveSubject}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setDeleteTargetId(null);
+        }}
+      />
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </div>
   );
 }

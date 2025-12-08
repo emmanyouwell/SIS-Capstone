@@ -9,6 +9,8 @@ import {
   deleteAnnouncement,
   clearError,
 } from '../../store/slices/announcementSlice';
+import ConfirmationModal from '../../components/ConfirmationModal';
+import MessageModal from '../../components/MessageModal';
 
 const calendarIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -42,6 +44,10 @@ function AdminAnnouncements() {
     audience: 'All',
     content: '',
   });
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   useEffect(() => {
     dispatch(fetchAnnouncements());
@@ -60,7 +66,11 @@ function AdminAnnouncements() {
       setFormData({ title: '', audience: 'All', content: '' });
       setShowAddModal(false);
     } catch (err) {
-      alert(err || 'Failed to create announcement');
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to create announcement',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -79,13 +89,25 @@ function AdminAnnouncements() {
     setShowViewEditModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this announcement?')) {
-      try {
-        await dispatch(deleteAnnouncement(id)).unwrap();
-      } catch (err) {
-        alert(err || 'Failed to delete announcement');
-      }
+  const handleDeleteClick = (id) => {
+    setDeleteTargetId(id);
+    setShowConfirmModal(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTargetId) return;
+    try {
+      await dispatch(deleteAnnouncement(deleteTargetId)).unwrap();
+      setShowConfirmModal(false);
+      setDeleteTargetId(null);
+    } catch (err) {
+      setShowConfirmModal(false);
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to delete announcement',
+      });
+      setShowMessageModal(true);
+      setDeleteTargetId(null);
     }
   };
 
@@ -107,7 +129,11 @@ function AdminAnnouncements() {
       setShowViewEditModal(false);
       setFormData({ title: '', audience: 'All', content: '' });
     } catch (err) {
-      alert(err || 'Failed to update announcement');
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to update announcement',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -189,7 +215,7 @@ function AdminAnnouncements() {
                         <br />
                         <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
                         <br />
-                        <button type="button" onClick={() => handleDelete(announcement._id)}>Delete</button>
+                        <button type="button" onClick={() => handleDeleteClick(announcement._id)}>Delete</button>
                       </div>
                     </div>
                   </div>
@@ -375,6 +401,25 @@ function AdminAnnouncements() {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        show={showConfirmModal}
+        title="Delete Announcement?"
+        message="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setDeleteTargetId(null);
+        }}
+      />
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </>);
 }
 

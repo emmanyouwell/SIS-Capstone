@@ -5,7 +5,6 @@ import styles from './AdminAccountStudEdit.module.css';
 import { fetchAllStudents, updateStudent, deleteStudent } from '../../store/slices/studentSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
-import { getAllSections } from '../../store/slices/sectionSlice';
 
 function AdminAccountStudEdit() {
   const navigate = useNavigate();
@@ -14,7 +13,6 @@ function AdminAccountStudEdit() {
   const { students, loading, error } = useSelector((state) => state.students);
   const { users, loading: usersLoading } = useSelector((state) => state.users);
   const { loading: registerLoading } = useSelector((state) => state.auth);
-  const sections = useSelector((state) => state.section.data);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [gradeFilter, setGradeFilter] = useState('');
@@ -28,14 +26,11 @@ function AdminAccountStudEdit() {
     email: '',
     password: '',
     status: 'Active',
-    lrn: '',
-    gradeLevel: '',
-    sectionId: '',
     dateOfBirth: '',
     contactNumber: '',
     address: '',
-    guardianName: '',
-    guardianContact: ''
+    sex: '',
+    extensionName: ''
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
@@ -44,16 +39,10 @@ function AdminAccountStudEdit() {
 
   useEffect(() => {
     dispatch(fetchAllStudents());
-    dispatch(getAllSections());
   }, [dispatch]);
 
-  // Get sections for selected grade
-  const gradeSections = formData.gradeLevel
-    ? sections
-        .filter((s) => s.gradeLevel === parseInt(formData.gradeLevel))
-        .map((s) => ({ id: s._id, name: s.sectionName }))
-        .sort((a, b) => a.name.localeCompare(b.name))
-    : [];
+  // Note: Section is removed from student creation form
+  // Section should be assigned after enrollment
 
   useEffect(() => {
     if (!id || !students.length) return;
@@ -69,14 +58,11 @@ function AdminAccountStudEdit() {
       email: found.userId?.email || '',
       password: '',
       status: found.userId?.status || 'Active',
-      lrn: found.lrn || '',
-      gradeLevel: found.gradeLevel ? found.gradeLevel.toString() : '',
-      sectionId: found.sectionId?._id || found.sectionId || '',
       dateOfBirth: found.userId?.dateOfBirth ? new Date(found.userId.dateOfBirth).toISOString().split('T')[0] : '',
       contactNumber: found.userId?.contactNumber || '',
       address: found.userId?.address || '',
-      guardianName: found.guardianName || '',
-      guardianContact: found.guardianContact || ''
+      sex: found.userId?.sex || '',
+      extensionName: found.userId?.extensionName || ''
     });
   }, [id, students]);
 
@@ -158,16 +144,11 @@ function AdminAccountStudEdit() {
       email: student.userId?.email || '',
       password: '',
       status: student.userId?.status || 'Active',
-      lrn: student.lrn || '',
-      gradeLevel: student.gradeLevel ? student.gradeLevel.toString() : '',
-      sectionId: student.sectionId?._id || student.sectionId || '',
       dateOfBirth: student.userId?.dateOfBirth
         ? new Date(student.userId.dateOfBirth).toISOString().split('T')[0]
         : '',
       contactNumber: student.userId?.contactNumber || '',
-      address: student.userId?.address || '',
-      guardianName: student.guardianName || '',
-      guardianContact: student.guardianContact || ''
+      address: student.userId?.address || ''
     });
   };
 
@@ -201,14 +182,11 @@ function AdminAccountStudEdit() {
       email: '',
       password: '',
       status: 'Active',
-      lrn: '',
-      gradeLevel: '',
-      sectionId: '',
       dateOfBirth: '',
       contactNumber: '',
       address: '',
-      guardianName: '',
-      guardianContact: ''
+      sex: '',
+      extensionName: ''
     });
   };
 
@@ -228,7 +206,9 @@ function AdminAccountStudEdit() {
           status: formData.status,
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
-          address: formData.address || undefined
+          address: formData.address || undefined,
+          sex: formData.sex,
+          extensionName: formData.extensionName || undefined
         };
 
         if (formData.password) {
@@ -236,11 +216,10 @@ function AdminAccountStudEdit() {
         }
 
         const studentUpdateData = {
-          lrn: formData.lrn || undefined,
-          gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
-          sectionId: formData.sectionId || undefined,
-          guardianName: formData.guardianName || undefined,
-          guardianContact: formData.guardianContact || undefined
+          // Note: LRN, gradeLevel, and sectionId are not updated here
+          // LRN and gradeLevel should be added via enrollment form
+          // sectionId should be assigned during enrollment approval
+          // Guardian fields should be added via enrollment form
         };
 
         // Update User first
@@ -280,12 +259,12 @@ function AdminAccountStudEdit() {
           dateOfBirth: formData.dateOfBirth || undefined,
           contactNumber: formData.contactNumber || undefined,
           address: formData.address || undefined,
+          sex: formData.sex,
+          extensionName: formData.extensionName || undefined,
           // Role-specific data (register controller handles creation of Student document)
-          lrn: formData.lrn || undefined,
-          gradeLevel: formData.gradeLevel ? parseInt(formData.gradeLevel, 10) : undefined,
-          sectionId: formData.sectionId || undefined,
-          guardianName: formData.guardianName || undefined,
-          guardianContact: formData.guardianContact || undefined
+          // Note: LRN and gradeLevel are not included - should be added via enrollment form
+          // Note: sectionId is not included - section should be assigned after enrollment
+          // Guardian fields should be added via enrollment form
         };
 
         const result = await dispatch(register(registerData));
@@ -584,36 +563,6 @@ function AdminAccountStudEdit() {
             <form onSubmit={handleSubmit}>
               <div className={styles.formRow}>
                 <div className={styles.formGroup}>
-                  <label htmlFor="lrn">Learner Reference No (LRN)</label>
-                  <input
-                    type="text"
-                    id="lrn"
-                    name="lrn"
-                    value={formData.lrn}
-                    onChange={(e) =>
-                      setFormData({ ...formData, lrn: e.target.value })
-                    }
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="gradeLevel">Grade Level</label>
-                  <select
-                    id="gradeLevel"
-                    name="gradeLevel"
-                    value={formData.gradeLevel}
-                    onChange={(e) => setFormData({ ...formData, gradeLevel: e.target.value })}
-                  >
-                    <option value="">Select Grade</option>
-                    <option value="7">Grade 7</option>
-                    <option value="8">Grade 8</option>
-                    <option value="9">Grade 9</option>
-                    <option value="10">Grade 10</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
                   <label htmlFor="firstName">First Name</label>
                   <input
                     type="text"
@@ -655,22 +604,35 @@ function AdminAccountStudEdit() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label htmlFor="sectionId">Section</label>
-                  <select
-                    id="sectionId"
-                    name="sectionId"
-                    value={formData.sectionId}
+                  <label htmlFor="extensionName">Extension Name (e.g. Jr., III)</label>
+                  <input
+                    type="text"
+                    id="extensionName"
+                    name="extensionName"
+                    value={formData.extensionName}
                     onChange={(e) =>
-                      setFormData({ ...formData, sectionId: e.target.value })
+                      setFormData({ ...formData, extensionName: e.target.value })
                     }
-                    disabled={!formData.gradeLevel}
+                    placeholder="Leave blank if not applicable"
+                  />
+                </div>
+              </div>
+
+              <div className={styles.formRow}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="sex">Sex</label>
+                  <select
+                    id="sex"
+                    name="sex"
+                    value={formData.sex}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sex: e.target.value })
+                    }
+                    required
                   >
-                    <option value="">Select Section</option>
-                    {gradeSections.map((section) => (
-                      <option key={section.id} value={section.id}>
-                        {section.name}
-                      </option>
-                    ))}
+                    <option value="">Select Sex</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
                   </select>
                 </div>
               </div>
@@ -724,31 +686,6 @@ function AdminAccountStudEdit() {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     placeholder="Enter address"
-                  />
-                </div>
-              </div>
-
-              <div className={styles.formRow}>
-                <div className={styles.formGroup}>
-                  <label htmlFor="guardianName">Guardian Name</label>
-                  <input
-                    type="text"
-                    id="guardianName"
-                    name="guardianName"
-                    value={formData.guardianName}
-                    onChange={(e) => setFormData({ ...formData, guardianName: e.target.value })}
-                    placeholder="Enter guardian name"
-                  />
-                </div>
-                <div className={styles.formGroup}>
-                  <label htmlFor="guardianContact">Guardian Contact</label>
-                  <input
-                    type="text"
-                    id="guardianContact"
-                    name="guardianContact"
-                    value={formData.guardianContact}
-                    onChange={(e) => setFormData({ ...formData, guardianContact: e.target.value })}
-                    placeholder="Enter guardian contact"
                   />
                 </div>
               </div>
@@ -819,7 +756,7 @@ function AdminAccountStudEdit() {
         </div>
       )}
 
-      {showDeleteModal && userToDelete && (
+      {showDeleteModal && studentToDelete && (
         <div className={styles.modal} onClick={handleCancelDelete}>
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
             <h3>Confirm Delete</h3>

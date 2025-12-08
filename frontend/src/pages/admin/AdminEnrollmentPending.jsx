@@ -17,6 +17,10 @@ function AdminEnrollmentPending() {
   const [selectedGrade, setSelectedGrade] = useState(null);
   const [notes, setNotes] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // 'accept' or 'decline'
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'success', message: '' });
 
   const { enrollments, loading, error } = useSelector((state) => state.enrollments);
 
@@ -32,7 +36,7 @@ function AdminEnrollmentPending() {
   // Group pending enrollments by grade
   const pendingGradeData = useMemo(() => {
     const grouped = { 7: [], 8: [], 9: [], 10: [] };
-    
+
     pendingEnrollments.forEach((enrollment) => {
       const grade = enrollment.gradeToEnroll;
       if (grade >= 7 && grade <= 10) {
@@ -41,7 +45,7 @@ function AdminEnrollmentPending() {
         const studentName = studentUser.firstName && studentUser.lastName
           ? `${studentUser.firstName || ''} ${studentUser.lastName || ''} ${studentUser.middleName || ''}`.trim()
           : 'Unknown Student';
-        
+
         grouped[grade].push({
           id: enrollment._id,
           name: studentName,
@@ -71,9 +75,16 @@ function AdminEnrollmentPending() {
     setShowEnrollModal(true);
   };
 
+  const handleAcceptClick = () => {
+    if (!selectedEnrollment) return;
+    setConfirmAction('accept');
+    setShowConfirmModal(true);
+  };
+
   const handleAccept = async () => {
     if (!selectedEnrollment) return;
-    
+
+    setShowConfirmModal(false);
     setProcessing(true);
     try {
       await dispatch(
@@ -85,27 +96,38 @@ function AdminEnrollmentPending() {
           },
         })
       ).unwrap();
-      
-    alert('Student was successfully enrolled!');
-    setShowEnrollModal(false);
+
+      setMessageModalContent({
+        type: 'success',
+        message: 'Student was successfully enrolled!',
+      });
+      setShowMessageModal(true);
+      setShowEnrollModal(false);
       setSelectedEnrollment(null);
       setNotes('');
       // Refresh enrollments
       dispatch(fetchAllEnrollments({ status: 'pending' }));
     } catch (err) {
-      alert(`Error: ${err || 'Failed to enroll student'}`);
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to enroll student',
+      });
+      setShowMessageModal(true);
     } finally {
       setProcessing(false);
     }
   };
 
+  const handleDeclineClick = () => {
+    if (!selectedEnrollment) return;
+    setConfirmAction('decline');
+    setShowConfirmModal(true);
+  };
+
   const handleDecline = async () => {
     if (!selectedEnrollment) return;
-    
-    if (!confirm('Are you sure you want to decline this enrollment?')) {
-      return;
-    }
 
+    setShowConfirmModal(false);
     setProcessing(true);
     try {
       await dispatch(
@@ -117,15 +139,23 @@ function AdminEnrollmentPending() {
           },
         })
       ).unwrap();
-      
-    alert('Enrollment declined.');
-    setShowEnrollModal(false);
+
+      setMessageModalContent({
+        type: 'success',
+        message: 'Enrollment declined.',
+      });
+      setShowMessageModal(true);
+      setShowEnrollModal(false);
       setSelectedEnrollment(null);
       setNotes('');
       // Refresh enrollments
       dispatch(fetchAllEnrollments({ status: 'pending' }));
     } catch (err) {
-      alert(`Error: ${err || 'Failed to decline enrollment'}`);
+      setMessageModalContent({
+        type: 'error',
+        message: err || 'Failed to decline enrollment',
+      });
+      setShowMessageModal(true);
     } finally {
       setProcessing(false);
     }
@@ -177,7 +207,7 @@ function AdminEnrollmentPending() {
           title="Back"
         >
           <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <path d="M15 18l-6-6 6-6"/>
+            <path d="M15 18l-6-6 6-6" />
           </svg>
         </button>
       </div>
@@ -189,36 +219,40 @@ function AdminEnrollmentPending() {
       {loading ? (
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
       ) : (
-      <div className={styles.pendingCard}>
+        <div className={styles.pendingCard}>
           {pendingEnrollments.length > 0 ? (
             <>
-        <table className={styles.pendingTable}>
-          <tbody>
+              <table className={styles.pendingTable}>
+                <tbody>
                   {pendingEnrollments.slice(0, 10).map((enrollment) => {
-                    const student = enrollment.student;
-                    const studentName = student
-                      ? `${student.firstName || ''} ${student.lastName || ''}`.trim()
-                      : 'Unknown Student';
+                    // Get student name from populated studentId or from snapshot
+                    const student = enrollment.studentId;
+                    const studentUser = student?.userId || {};
+                    const studentName = enrollment.firstName && enrollment.lastName
+                      ? `${enrollment.firstName || ''} ${enrollment.lastName || ''} ${enrollment.middleName || ''}`.trim()
+                      : studentUser.firstName && studentUser.lastName
+                        ? `${studentUser.firstName || ''} ${studentUser.lastName || ''} ${studentUser.middleName || ''}`.trim()
+                        : 'Unknown Student';
                     return (
                       <tr key={enrollment._id}>
                         <td>{studentName}</td>
-                        <td>Grade {enrollment.gradeLevelToEnroll}</td>
-                <td>
-                  <button
-                    className={styles.pendingViewBtn}
+                        <td>Grade {enrollment.gradeLevelToEnroll || enrollment.gradeToEnroll}</td>
+                        <td>
+                          <button
+                            className={styles.pendingViewBtn}
                             onClick={() => handleViewForm(enrollment._id)}
-                  >
-                    View form
-                  </button>
-                </td>
-              </tr>
+                          >
+                            View form
+                          </button>
+                        </td>
+                      </tr>
                     );
                   })}
-          </tbody>
-        </table>
+                </tbody>
+              </table>
               {pendingEnrollments.length > 10 && (
-        <div className={styles.pendingViewall}>
-          <a href="#" onClick={(e) => { e.preventDefault(); }}>
+                <div className={styles.pendingViewall}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); }}>
                     &raquo; view all ({pendingEnrollments.length} total)
                   </a>
                 </div>
@@ -264,7 +298,7 @@ function AdminEnrollmentPending() {
         title="Back"
       >
         <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6"/>
+          <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
 
@@ -282,35 +316,38 @@ function AdminEnrollmentPending() {
               <div className={styles.formHeader}>
                 <div>
                   <div>
-                    Name:{' '}
-                    {enrollment.student
-                      ? `${enrollment.student.firstName || ''} ${enrollment.student.lastName || ''}`.trim()
-                      : `${enrollment.firstName || ''} ${enrollment.lastName || ''}`.trim()}
+                    <strong>Name:</strong>{' '}
+                    {enrollment.firstName && enrollment.lastName
+                      ? `${enrollment.firstName || ''} ${enrollment.middleName || ''} ${enrollment.lastName || ''} ${enrollment.extensionName || ''}`.trim()
+                      : enrollment.studentId?.userId
+                        ? `${enrollment.studentId.userId.firstName || ''} ${enrollment.studentId.userId.middleName || ''} ${enrollment.studentId.userId.lastName || ''} ${enrollment.studentId.userId.extensionName || ''}`.trim()
+                        : 'Unknown Student'}
                   </div>
                   <div>
-                    LRN:{' '}
-                    {enrollment.student?.learnerReferenceNo ||
-                      enrollment.learnerReferenceNo ||
-                      'N/A'}
+                    <strong>LRN:</strong>{' '}
+                    {enrollment.lrn || enrollment.studentId?.lrn || 'N/A'}
                   </div>
                 </div>
                 <div>
-                  <div>Grade to Enroll: {enrollment.gradeLevelToEnroll}</div>
-                  <div>School Year: {enrollment.schoolYear || 'N/A'}</div>
+                  <div><strong>Grade to Enroll:</strong> {enrollment.gradeLevelToEnroll || enrollment.gradeToEnroll}</div>
+                  <div><strong>School Year:</strong> {enrollment.schoolYear || 'N/A'}</div>
                 </div>
               </div>
 
               <form className={styles.enrollForm}>
                 <div className={styles.formSection}>
                   <div className={styles.formRow}>
-                    <label>
-                      <strong>School Year</strong>
-                      <input type="text" value={enrollment.schoolYear || ''} readOnly />
-                    </label>
-                    <label>
-                      <strong>Grade level to Enroll</strong>
-                      <input type="text" value={enrollment.gradeLevelToEnroll || ''} readOnly />
-                    </label>
+                    <div className={styles.formRowUpper}>
+                      <label>
+                        <strong>School Year</strong>
+                        <input type="text" value={enrollment.schoolYear || ''} readOnly />
+                      </label>
+                      <label>
+                        <strong>Grade level to Enroll</strong>
+                        <input type="text" value={enrollment.gradeLevelToEnroll || ''} readOnly />
+                      </label>
+                    </div>
+
                     <div className={styles.checkboxGroup}>
                       <span>With LRN?</span>
                       <label>
@@ -327,7 +364,7 @@ function AdminEnrollmentPending() {
                       <label>
                         <input
                           type="checkbox"
-                          checked={enrollment.returningBalikAral || false}
+                          checked={enrollment.returning || enrollment.returningBalikAral || false}
                           readOnly
                         />
                         Yes
@@ -335,7 +372,7 @@ function AdminEnrollmentPending() {
                       <label>
                         <input
                           type="checkbox"
-                          checked={!enrollment.returningBalikAral}
+                          checked={!(enrollment.returning || enrollment.returningBalikAral)}
                           readOnly
                         />
                         No
@@ -355,11 +392,7 @@ function AdminEnrollmentPending() {
                     Learner Reference No. (LRN)
                     <input
                       type="text"
-                      value={
-                        enrollment.student?.learnerReferenceNo ||
-                        enrollment.learnerReferenceNo ||
-                        ''
-                      }
+                      value={enrollment.lrn || enrollment.studentId?.lrn || ''}
                       readOnly
                     />
                   </label>
@@ -396,11 +429,7 @@ function AdminEnrollmentPending() {
                   </label>
                   <label>
                     Birthdate
-                    <input type="text" value={formatDate(enrollment.birthdate)} readOnly />
-                  </label>
-                  <label>
-                    Age
-                    <input type="text" value={enrollment.age || ''} readOnly />
+                    <input type="text" value={formatDate(enrollment.dateOfBirth || enrollment.birthdate)} readOnly />
                   </label>
                 </div>
 
@@ -429,7 +458,7 @@ function AdminEnrollmentPending() {
                   <label>
                     <input
                       type="checkbox"
-                      checked={enrollment.indigenousPeoples || false}
+                      checked={enrollment.indigenousPeople || enrollment.indigenousPeoples || false}
                       readOnly
                     />
                     Yes
@@ -437,7 +466,7 @@ function AdminEnrollmentPending() {
                   <label>
                     <input
                       type="checkbox"
-                      checked={!enrollment.indigenousPeoples}
+                      checked={!(enrollment.indigenousPeople || enrollment.indigenousPeoples)}
                       readOnly
                     />
                     No
@@ -447,20 +476,48 @@ function AdminEnrollmentPending() {
                 <div className={styles.checkboxGroup}>
                   <span>Is your family beneficiary of 4Ps?</span>
                   <label>
-                    <input type="checkbox" checked={enrollment.family4Ps || false} readOnly />
+                    <input type="checkbox" checked={enrollment.beneficiaryOf4Ps || enrollment.family4Ps || false} readOnly />
                     Yes
                   </label>
                   <label>
-                    <input type="checkbox" checked={!enrollment.family4Ps} readOnly />
+                    <input type="checkbox" checked={!(enrollment.beneficiaryOf4Ps || enrollment.family4Ps)} readOnly />
                     No
                   </label>
                 </div>
+                {(enrollment.beneficiaryOf4Ps || enrollment.family4Ps) && enrollment.fourPsHouseholdId && (
+                  <label>
+                    4Ps Household ID
+                    <input type="text" value={enrollment.fourPsHouseholdId || ''} readOnly />
+                  </label>
+                )}
+
+                <div className={styles.checkboxGroup}>
+                  <span>Learner with Disability?</span>
+                  <label>
+                    <input type="checkbox" checked={enrollment.learnerWithDisability || false} readOnly />
+                    Yes
+                  </label>
+                  <label>
+                    <input type="checkbox" checked={!enrollment.learnerWithDisability} readOnly />
+                    No
+                  </label>
+                </div>
+                {enrollment.learnerWithDisability && enrollment.typeOfDisability && enrollment.typeOfDisability.length > 0 && (
+                  <label>
+                    Type of Disability
+                    <input
+                      type="text"
+                      value={Array.isArray(enrollment.typeOfDisability) ? enrollment.typeOfDisability.join(', ') : enrollment.typeOfDisability}
+                      readOnly
+                    />
+                  </label>
+                )}
 
                 <label>
                   Current Address
                   <input
                     type="text"
-                    value={formatAddress(enrollment.currentAddress)}
+                    value={enrollment.currentAddress || formatAddress(enrollment.currentAddress) || ''}
                     readOnly
                   />
                 </label>
@@ -469,10 +526,43 @@ function AdminEnrollmentPending() {
                   Permanent Address
                   <input
                     type="text"
-                    value={formatAddress(enrollment.permanentAddress)}
+                    value={enrollment.permanentAddress || formatAddress(enrollment.permanentAddress) || ''}
                     readOnly
                   />
                 </label>
+
+                {/* Returning Learner Information */}
+                {(enrollment.returning || enrollment.returningBalikAral) && (
+                  <>
+                    <div className={styles.sectionHeader}>RETURNING LEARNER INFORMATION</div>
+                    <div className={styles.formRow}>
+                      {enrollment.lastGradeLevelCompleted && (
+                        <label>
+                          Last Grade Level Completed
+                          <input type="text" value={enrollment.lastGradeLevelCompleted || ''} readOnly />
+                        </label>
+                      )}
+                      {enrollment.lastSchoolYearCompleted && (
+                        <label>
+                          Last School Year Completed
+                          <input type="text" value={enrollment.lastSchoolYearCompleted || ''} readOnly />
+                        </label>
+                      )}
+                    </div>
+                    {enrollment.lastSchoolAttended && (
+                      <label>
+                        Last School Attended
+                        <input type="text" value={enrollment.lastSchoolAttended || ''} readOnly />
+                      </label>
+                    )}
+                    {enrollment.schoolId && (
+                      <label>
+                        School ID
+                        <input type="text" value={enrollment.schoolId || ''} readOnly />
+                      </label>
+                    )}
+                  </>
+                )}
 
                 <div className={styles.sectionHeader}>PARENT'S/GUARDIAN'S INFORMATION</div>
 
@@ -481,19 +571,15 @@ function AdminEnrollmentPending() {
                     Father's Name
                     <input
                       type="text"
-                      value={
-                        enrollment.fatherInfo
-                          ? `${enrollment.fatherInfo.firstName || ''} ${enrollment.fatherInfo.lastName || ''}`.trim()
-                          : ''
-                      }
+                      value={enrollment.fatherName || ''}
                       readOnly
                     />
                   </label>
                   <label>
-                    Contact Number
+                    Father's Contact Number
                     <input
                       type="text"
-                      value={enrollment.fatherInfo?.contact || ''}
+                      value={enrollment.fatherContact || ''}
                       readOnly
                     />
                   </label>
@@ -504,19 +590,15 @@ function AdminEnrollmentPending() {
                     Mother's Name
                     <input
                       type="text"
-                      value={
-                        enrollment.motherInfo
-                          ? `${enrollment.motherInfo.firstName || ''} ${enrollment.motherInfo.lastName || ''}`.trim()
-                          : ''
-                      }
+                      value={enrollment.motherName || ''}
                       readOnly
                     />
                   </label>
                   <label>
-                    Contact Number
+                    Mother's Contact Number
                     <input
                       type="text"
-                      value={enrollment.motherInfo?.contact || ''}
+                      value={enrollment.motherContact || ''}
                       readOnly
                     />
                   </label>
@@ -527,26 +609,22 @@ function AdminEnrollmentPending() {
                     Guardian's Name
                     <input
                       type="text"
-                      value={
-                        enrollment.guardianInfo
-                          ? `${enrollment.guardianInfo.firstName || ''} ${enrollment.guardianInfo.lastName || ''}`.trim()
-                          : ''
-                      }
+                      value={enrollment.guardianName || ''}
                       readOnly
                     />
                   </label>
                   <label>
-                    Contact Number
+                    Guardian's Contact Number
                     <input
                       type="text"
-                      value={enrollment.guardianInfo?.contact || ''}
+                      value={enrollment.guardianContact || ''}
                       readOnly
                     />
                   </label>
                 </div>
 
                 {enrollment.attachments && enrollment.attachments.length > 0 && (
-                <div className={styles.attachedFile}>
+                  <div className={styles.attachedFile}>
                     Attached Files:{' '}
                     {enrollment.attachments.map((file, idx) => (
                       <span key={idx}>
@@ -556,14 +634,14 @@ function AdminEnrollmentPending() {
                         {idx < enrollment.attachments.length - 1 && ', '}
                       </span>
                     ))}
-                </div>
+                  </div>
                 )}
 
                 <div className={styles.formActions}>
                   <button
                     type="button"
                     className={styles.declineBtn}
-                    onClick={handleDecline}
+                    onClick={handleDeclineClick}
                     disabled={processing}
                   >
                     {processing ? 'Processing...' : 'Decline'}
@@ -571,7 +649,7 @@ function AdminEnrollmentPending() {
                   <button
                     type="button"
                     className={styles.acceptBtn}
-                    onClick={handleAccept}
+                    onClick={handleAcceptClick}
                     disabled={processing}
                   >
                     {processing ? 'Processing...' : 'Accept'}
@@ -648,6 +726,71 @@ function AdminEnrollmentPending() {
                 onClick={() => setShowGradeModal(false)}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      {showConfirmModal && (
+        <div className={styles.confirmModal} onClick={() => setShowConfirmModal(false)}>
+          <div className={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.confirmModalHeader}>
+              <h3 className={styles.confirmModalTitle}>
+                {confirmAction === 'decline' ? 'Decline Enrollment?' : 'Accept Enrollment?'}
+              </h3>
+            </div>
+            <div className={styles.confirmModalBody}>
+              <p className={styles.confirmModalMessage}>
+                {confirmAction === 'decline'
+                  ? 'Are you sure you want to decline this enrollment? This action cannot be undone.'
+                  : 'Are you sure you want to accept and enroll this student?'}
+              </p>
+            </div>
+            <div className={styles.confirmModalActions}>
+              <button
+                type="button"
+                className={styles.confirmModalCancelBtn}
+                onClick={() => setShowConfirmModal(false)}
+                disabled={processing}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={confirmAction === 'decline' ? styles.confirmModalDeclineBtn : styles.confirmModalAcceptBtn}
+                onClick={confirmAction === 'decline' ? handleDecline : handleAccept}
+                disabled={processing}
+              >
+                {processing ? 'Processing...' : confirmAction === 'decline' ? 'Decline' : 'Accept'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Message Modal (Success/Error) */}
+      {showMessageModal && (
+        <div className={styles.confirmModal} onClick={() => setShowMessageModal(false)}>
+          <div className={styles.confirmModalContent} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.confirmModalHeader}>
+              <h3 className={styles.confirmModalTitle}>
+                {messageModalContent.type === 'success' ? 'Success' : 'Error'}
+              </h3>
+            </div>
+            <div className={styles.confirmModalBody}>
+              <p className={styles.confirmModalMessage}>
+                {messageModalContent.message}
+              </p>
+            </div>
+            <div className={styles.confirmModalActions}>
+              <button
+                type="button"
+                className={messageModalContent.type === 'success' ? styles.confirmModalAcceptBtn : styles.confirmModalDeclineBtn}
+                onClick={() => setShowMessageModal(false)}
+              >
+                OK
               </button>
             </div>
           </div>

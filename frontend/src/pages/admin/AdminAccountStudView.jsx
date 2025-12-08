@@ -1,14 +1,17 @@
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudView.module.css';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
+import AdminEnrollmentForm from '../../components/enrollment/AdminEnrollmentForm';
 
 function AdminAccountStudView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { id } = useParams();
   const { students, loading, error } = useSelector((state) => state.students);
+  const [showEnrollmentForm, setShowEnrollmentForm] = useState(false);
+  const [selectedStudentId, setSelectedStudentId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAllStudents());
@@ -16,6 +19,22 @@ function AdminAccountStudView() {
 
   const handleBack = () => {
     navigate('/admin/accounts');
+  };
+
+  const handleCreateEnrollment = (studentId) => {
+    setSelectedStudentId(studentId);
+    setShowEnrollmentForm(true);
+  };
+
+  const handleEnrollmentFormClose = () => {
+    setShowEnrollmentForm(false);
+    setSelectedStudentId(null);
+    // Refresh data
+    dispatch(fetchAllStudents());
+  };
+
+  const handleEnrollmentFormSuccess = () => {
+    handleEnrollmentFormClose();
   };
 
   if (loading) {
@@ -60,6 +79,7 @@ function AdminAccountStudView() {
             <th>Status</th>
             <th>Grade</th>
             <th>Total logins</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -79,12 +99,31 @@ function AdminAccountStudView() {
                 <td>{statusLabel}</td>
                 <td>{grade}</td>
                 <td>{totalLogins}</td>
+                <td>
+                  <button
+                    className={styles.createEnrollmentBtn}
+                    onClick={() => handleCreateEnrollment(student._id)}
+                    title="Create Enrollment Form"
+                  >
+                    Create Enrollment
+                  </button>
+                </td>
               </tr>
             )
           })}
 
         </tbody>
       </table>
+
+      {/* Enrollment Form Modal */}
+      {showEnrollmentForm && (
+        <AdminEnrollmentForm
+          key={selectedStudentId || 'new-enrollment'}
+          studentId={selectedStudentId}
+          onClose={handleEnrollmentFormClose}
+          onSuccess={handleEnrollmentFormSuccess}
+        />
+      )}
 
       <button className={styles.fabBtn} title="Back" onClick={handleBack}>
         <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">

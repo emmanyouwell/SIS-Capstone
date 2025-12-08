@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherDashboard.module.css';
+import ConfirmationModal from '../../components/ConfirmationModal';
 
 const calendarIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -107,11 +108,21 @@ function TeacherDashboard() {
     setDropdownOpen(null);
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this announcement?')) {
-      setAnnouncements(announcements.filter(a => a.id !== id));
-    }
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
+
+  const handleDeleteClick = (id) => {
+    setDeleteTargetId(id);
+    setShowConfirmModal(true);
     setDropdownOpen(null);
+  };
+
+  const handleDelete = () => {
+    if (deleteTargetId) {
+      setAnnouncements(announcements.filter(a => a.id !== deleteTargetId));
+      setShowConfirmModal(false);
+      setDeleteTargetId(null);
+    }
   };
 
   const handleSaveEdit = (e) => {
@@ -186,7 +197,7 @@ function TeacherDashboard() {
                         {canEditDelete(announcement) && (
                           <>
                             <button type="button" onClick={() => handleEdit(announcement)}>Edit</button>
-                            <button type="button" onClick={() => handleDelete(announcement.id)}>Delete</button>
+                            <button type="button" onClick={() => handleDeleteClick(announcement.id)}>Delete</button>
                           </>
                         )}
                       </div>
@@ -376,7 +387,21 @@ function TeacherDashboard() {
           </div>
         </div>
       )}
+      <ConfirmationModal
+        show={showConfirmModal}
+        title="Delete Announcement?"
+        message="Are you sure you want to delete this announcement? This action cannot be undone."
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setShowConfirmModal(false);
+          setDeleteTargetId(null);
+        }}
+      />
     </>
+
   );
 }
 

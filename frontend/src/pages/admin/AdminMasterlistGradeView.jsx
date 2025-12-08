@@ -5,6 +5,7 @@ import styles from './AdminMasterlistGradeView.module.css';
 import { fetchMasterlists, clearError } from '../../store/slices/masterlistSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import MessageModal from '../../components/MessageModal';
 
 function AdminMasterlistGradeView() {
   const { grade } = useParams();
@@ -13,6 +14,8 @@ function AdminMasterlistGradeView() {
 
   const gradeNumber = parseInt(grade?.replace('grade', '') || '7');
   const [selectedSection, setSelectedSection] = useState('');
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   const { masterlists, loading, error } = useSelector((state) => state.masterlists);
   const { students, loading: studentsLoading } = useSelector((state) => state.students);
@@ -111,9 +114,17 @@ function AdminMasterlistGradeView() {
   const copyToClipboard = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      alert('Masterlist copied to clipboard!');
+      setMessageModalContent({
+        type: 'success',
+        message: 'Masterlist copied to clipboard!',
+      });
+      setShowMessageModal(true);
     } catch (err) {
-      alert('Failed to copy to clipboard.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Failed to copy to clipboard.',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -218,6 +229,12 @@ function AdminMasterlistGradeView() {
           <path d="M15 18l-6-6 6-6" />
         </svg>
       </button>
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </div>
   );
 }

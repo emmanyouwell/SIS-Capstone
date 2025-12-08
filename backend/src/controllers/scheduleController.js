@@ -18,6 +18,21 @@ export const getSchedules = async (req, res) => {
     // Students see schedules for their section and enrolled subjects
     if (req.user.role === 'Student') {
       const student = await Student.findOne({ userId: req.user.id }).populate('subjects.subjectId');
+      if (!student) {
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
+      
+      // Check if student is enrolled
+      if (!student.enrollmentStatus) {
+        return res.status(400).json({ 
+          message: 'Student must complete enrollment before proceeding. Cannot view schedule.' 
+        });
+      }
+      
       if (student && student.sectionId) {
         filter.sectionId = student.sectionId;
         // Filter by subjects the student is enrolled in

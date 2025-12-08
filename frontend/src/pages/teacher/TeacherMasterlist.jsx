@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherMasterlist.module.css';
+import MessageModal from '../../components/MessageModal';
 
 const studentsIcon = (
   <img 
@@ -34,6 +35,8 @@ function TeacherMasterlist() {
     grade: '',
     note: ''
   });
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
   // Student data for each section
   const sectionStudents = {
@@ -88,7 +91,11 @@ function TeacherMasterlist() {
     const grade = Number(gradeForm.grade.trim());
     
     if (isNaN(grade) || grade < 60 || grade > 100) {
-      alert('Please enter a valid grade between 60 and 100.');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please enter a valid grade between 60 and 100.',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -217,6 +224,12 @@ function TeacherMasterlist() {
           </div>
         </div>
       )}
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
       </>
   );
 }

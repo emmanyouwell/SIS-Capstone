@@ -12,6 +12,7 @@ import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
 import { fetchMasterlists } from '../../store/slices/masterlistSlice';
+import MessageModal from '../../components/MessageModal';
 
 function AdminSchedule() {
   const dispatch = useDispatch();
@@ -39,6 +40,8 @@ function AdminSchedule() {
   const [currentSectionId, setCurrentSectionId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [uiSchedules, setUiSchedules] = useState({});
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
   const [saving, setSaving] = useState(false);
 
   // Get sections for current grade
@@ -291,7 +294,11 @@ function AdminSchedule() {
   // Transform UI structure to backend format and save
   const handleSave = async () => {
     if (!currentSectionId) {
-      alert('Please select a section');
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please select a section',
+      });
+      setShowMessageModal(true);
       return;
     }
 
@@ -357,9 +364,17 @@ function AdminSchedule() {
       await dispatch(fetchAllSchedules({ sectionId: currentSectionId }));
 
       setEditMode(false);
-      alert('Schedule successfully updated!');
+      setMessageModalContent({
+        type: 'success',
+        message: 'Schedule successfully updated!',
+      });
+      setShowMessageModal(true);
     } catch (error) {
-      alert(error || 'Failed to save schedule');
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to save schedule',
+      });
+      setShowMessageModal(true);
     } finally {
       setSaving(false);
     }
@@ -573,6 +588,12 @@ function AdminSchedule() {
           )}
         </div>
       </div>
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
     </div>
   );
 }

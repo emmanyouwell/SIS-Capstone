@@ -10,7 +10,7 @@ const studentSchema = new mongoose.Schema(
     },
     gradeLevel: {
       type: Number,
-      required: true,
+      required: false, // Can be added later via enrollment form
       min: 7,
       max: 10,
     },
@@ -31,6 +31,10 @@ const studentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
       unique: true,
+    },
+    enrollmentStatus: {
+      type: Boolean,
+      default: false,
     },
     subjects: [
       {
