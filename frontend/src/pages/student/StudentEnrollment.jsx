@@ -1,197 +1,171 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createEnrollment } from '../../store/slices/enrollmentSlice';
+import { createEnrollment, fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
+import { getMe } from '../../store/slices/authSlice';
+import BasicEnrollmentInfo from '../../components/enrollment/BasicEnrollmentInfo';
+import ReturningLearners from '../../components/enrollment/ReturningLearners';
 import styles from './StudentEnrollment.module.css';
 import MessageModal from '../../components/MessageModal';
 
 function StudentEnrollment() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const { enrollments, loading: enrollmentsLoading } = useSelector((state) => state.enrollments);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formData, setFormData] = useState({
-    // School Year Section
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  // Get student data
+  const student = user?.roleData;
+  const isPromoted = student?.isPromoted || false;
+  const enrollmentStatus = student?.enrollmentStatus || false;
+  const currentGradeLevel = student?.sectionId?.gradeLevel || student?.gradeLevel;
+  const studentName = user ? `${user.firstName}${user.middleName ? ` ${user.middleName}` : ''} ${user.lastName}${user.extensionName ? ` ${user.extensionName}` : ''}`.trim() : '';
+  const studentLRN = student?.lrn || 'N/A';
+  const sectionName = student?.sectionId?.sectionName || 'N/A';
+
+  // Get latest enrollment (create a copy before sorting to avoid mutating read-only array)
+  const latestEnrollment = enrollments && enrollments.length > 0 
+    ? [...enrollments].sort((a, b) => new Date(b.dateSubmitted) - new Date(a.dateSubmitted))[0]
+    : null;
+
+  // Initial form data structure
+  const getInitialFormData = () => ({
     schoolYear: '',
-    withLRN: false,
-    returningBalikAral: false,
-    gradeLevelToEnroll: '',
-    
-    // Learner Information
+    gradeLevelToEnroll: currentGradeLevel ? String(currentGradeLevel + 1) : '',
+    withLRN: !!studentLRN && studentLRN !== 'N/A',
+    returning: false,
+    // Personal info (auto-filled from user)
+    firstName: user?.firstName || '',
+    middleName: user?.middleName || '',
+    lastName: user?.lastName || '',
+    extensionName: user?.extensionName || '',
+    sex: user?.sex || '',
+    dateOfBirth: user?.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+    lrn: studentLRN !== 'N/A' ? studentLRN : '',
+    currentAddress: user?.address || '',
+    permanentAddress: user?.address || '',
+    // New enrollment fields
     psaCertificateNo: '',
-    learnerReferenceNo: '',
-    lastName: '',
-    firstName: '',
-    middleName: '',
-    sex: '',
-    birthdate: '',
-    age: '',
     placeOfBirth: '',
     motherTongue: '',
     religion: '',
-    extensionName: '',
-    indigenousPeoples: false,
-    family4Ps: false,
+    indigenousPeople: false,
+    beneficiaryOf4Ps: false,
     fourPsHouseholdId: '',
     learnerWithDisability: false,
     typeOfDisability: [],
-    
-    // Current Address
-    currentHouseNo: '',
-    currentBarangay: '',
-    currentProvince: '',
-    currentZipCode: '',
-    currentMunicipality: '',
-    currentCountry: '',
-    
-    // Permanent Address
-    sameAsCurrent: false,
-    permanentHouseNo: '',
-    permanentBarangay: '',
-    permanentProvince: '',
-    permanentZipCode: '',
-    permanentMunicipality: '',
-    permanentCountry: '',
-    
-    // Parent's/Guardian's Information
-    fatherLastName: '',
-    fatherFirstName: '',
-    fatherMiddleName: '',
+    // Parent/Guardian information
+    fatherName: '',
     fatherContact: '',
-    motherLastName: '',
-    motherFirstName: '',
-    motherMiddleName: '',
+    motherName: '',
     motherContact: '',
-    guardianLastName: '',
-    guardianFirstName: '',
-    guardianMiddleName: '',
-    guardianContact: '',
-    
-    // Returning learner fields (optional)
-    lastGradeLevelCompleted: '',
+    guardianName: student?.guardianName || '',
+    guardianContact: student?.guardianContact || '',
+    // Returning learner fields
+    lastGradeLevelCompleted: currentGradeLevel ? String(currentGradeLevel) : '',
     lastSchoolYearCompleted: '',
-    lastSchoolAttended: '',
+    lastSchoolEnrolled: '',
     schoolId: '',
   });
 
-  const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
-  const dispatch = useDispatch();
-  const { loading, error } = useSelector((state) => state.enrollments);
+  const [formData, setFormData] = useState(getInitialFormData);
 
-  // Pre-fill with student data (in a real app, this would come from API/auth context)
+  // Fetch user data and enrollments on mount
   useEffect(() => {
-    setFormData(prev => ({
-      ...prev,
-      firstName: 'Kiana Mae',
-      lastName: 'Alvarez',
-      middleName: 'L.',
-      learnerReferenceNo: '823194756201',
-      gradeLevelToEnroll: '8',
-    }));
-  }, []);
+    if (!user?.roleData) {
+      dispatch(getMe());
+    }
+    dispatch(fetchAllEnrollments());
+  }, [dispatch, user?.roleData]);
+
+  // Auto-fill form data when user data and enrollments are available
+  useEffect(() => {
+    if (user && student) {
+      // Get the latest enrollment to pre-fill form
+      const latestEnrollmentData = latestEnrollment || {};
+      
+      setFormData((prev) => ({
+        ...prev,
+        // Basic enrollment info
+        schoolYear: latestEnrollmentData.schoolYear || prev.schoolYear || '',
+        gradeLevelToEnroll: latestEnrollmentData.gradeLevelToEnroll 
+          ? String(latestEnrollmentData.gradeLevelToEnroll) 
+          : (currentGradeLevel ? String(currentGradeLevel + 1) : ''),
+        withLRN: latestEnrollmentData.withLRN !== undefined 
+          ? latestEnrollmentData.withLRN 
+          : (!!student.lrn),
+        returning: latestEnrollmentData.returning || false,
+        // Personal info (prefer enrollment data, fallback to user/student)
+        firstName: latestEnrollmentData.firstName || user.firstName || '',
+        middleName: latestEnrollmentData.middleName || user.middleName || '',
+        lastName: latestEnrollmentData.lastName || user.lastName || '',
+        extensionName: latestEnrollmentData.extensionName || user.extensionName || '',
+        sex: latestEnrollmentData.sex || user.sex || '',
+        dateOfBirth: latestEnrollmentData.dateOfBirth 
+          ? new Date(latestEnrollmentData.dateOfBirth).toISOString().split('T')[0] 
+          : (user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : ''),
+        lrn: latestEnrollmentData.lrn || student.lrn || '',
+        currentAddress: latestEnrollmentData.currentAddress || user.address || '',
+        permanentAddress: latestEnrollmentData.permanentAddress || user.address || '',
+        // Additional enrollment fields
+        psaCertificateNo: latestEnrollmentData.psaCertificateNo || '',
+        placeOfBirth: latestEnrollmentData.placeOfBirth || '',
+        motherTongue: latestEnrollmentData.motherTongue || '',
+        religion: latestEnrollmentData.religion || '',
+        indigenousPeople: latestEnrollmentData.indigenousPeople || false,
+        beneficiaryOf4Ps: latestEnrollmentData.beneficiaryOf4Ps || false,
+        fourPsHouseholdId: latestEnrollmentData.fourPsHouseholdId || '',
+        learnerWithDisability: latestEnrollmentData.learnerWithDisability || false,
+        typeOfDisability: latestEnrollmentData.typeOfDisability || [],
+        // Parent/Guardian information
+        fatherName: latestEnrollmentData.fatherName || '',
+        fatherContact: latestEnrollmentData.fatherContact || '',
+        motherName: latestEnrollmentData.motherName || '',
+        motherContact: latestEnrollmentData.motherContact || '',
+        guardianName: latestEnrollmentData.guardianName || student.guardianName || '',
+        guardianContact: latestEnrollmentData.guardianContact || student.guardianContact || '',
+        // Returning learner fields
+        lastGradeLevelCompleted: latestEnrollmentData.lastGradeLevelCompleted 
+          ? String(latestEnrollmentData.lastGradeLevelCompleted) 
+          : (currentGradeLevel ? String(currentGradeLevel) : ''),
+        lastSchoolYearCompleted: latestEnrollmentData.lastSchoolYearCompleted || '',
+        lastSchoolEnrolled: latestEnrollmentData.lastSchoolEnrolled || '',
+        schoolId: latestEnrollmentData.schoolId || '',
+      }));
+    }
+  }, [user, student, currentGradeLevel, latestEnrollment]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({
+      setErrors((prev) => ({
         ...prev,
         [name]: '',
       }));
     }
   };
 
-  const handleRadioChange = (e) => {
-    setFormData(prev => ({
+  const handleCheckboxChange = (e) => {
+    const { name, checked } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      sex: e.target.value,
+      [name]: checked,
     }));
-    if (errors.sex) {
-      setErrors(prev => ({
-        ...prev,
-        sex: '',
-      }));
-    }
-  };
-
-  const handleSameAsCurrentChange = (e) => {
-    const checked = e.target.checked;
-    setFormData(prev => ({
-      ...prev,
-      sameAsCurrent: checked,
-      ...(checked ? {
-        permanentHouseNo: prev.currentHouseNo,
-        permanentBarangay: prev.currentBarangay,
-        permanentProvince: prev.currentProvince,
-        permanentZipCode: prev.currentZipCode,
-        permanentMunicipality: prev.currentMunicipality,
-        permanentCountry: prev.currentCountry,
-      } : {
-        permanentHouseNo: '',
-        permanentBarangay: '',
-        permanentProvince: '',
-        permanentZipCode: '',
-        permanentMunicipality: '',
-        permanentCountry: '',
-      }),
-    }));
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Required text fields
-    const requiredFields = [
-      'schoolYear', 'gradeLevelToEnroll', 'psaCertificateNo', 'learnerReferenceNo',
-      'lastName', 'firstName', 'middleName', 'birthdate', 'age', 'placeOfBirth',
-      'motherTongue', 'religion', 'currentHouseNo', 'currentBarangay', 'currentProvince',
-      'currentZipCode', 'currentMunicipality', 'currentCountry',
-      'fatherLastName', 'fatherFirstName', 'fatherMiddleName', 'fatherContact',
-      'motherLastName', 'motherFirstName', 'motherMiddleName', 'motherContact',
-    ];
-
-    requiredFields.forEach(field => {
-      if (!formData[field] || formData[field].toString().trim() === '') {
-        newErrors[field] = 'This field is required';
-      }
-    });
-
-    // Validate sex (radio button)
-    if (!formData.sex) {
-      newErrors.sex = 'Please select sex';
-    }
-
-    // Validate permanent address if not same as current
-    if (!formData.sameAsCurrent) {
-      const permanentFields = [
-        'permanentHouseNo', 'permanentBarangay', 'permanentProvince',
-        'permanentZipCode', 'permanentMunicipality', 'permanentCountry',
-      ];
-      permanentFields.forEach(field => {
-        if (!formData[field] || formData[field].toString().trim() === '') {
-          newErrors[field] = 'This field is required';
-        }
-      });
-    }
-
-    // Validate 4Ps ID if family is 4Ps beneficiary
-    if (formData.family4Ps && (!formData.fourPsHouseholdId || formData.fourPsHouseholdId.trim() === '')) {
-      newErrors.fourPsHouseholdId = '4Ps Household ID is required';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const handleDisabilityChange = (disabilityType) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const currentTypes = prev.typeOfDisability || [];
       const updatedTypes = currentTypes.includes(disabilityType)
-        ? currentTypes.filter(t => t !== disabilityType)
+        ? currentTypes.filter((t) => t !== disabilityType)
         : [...currentTypes, disabilityType];
       return {
         ...prev,
@@ -200,9 +174,50 @@ function StudentEnrollment() {
     });
   };
 
+  const validateForm = () => {
+    const newErrors = {};
+    const gradeLevel = parseInt(formData.gradeLevelToEnroll);
+
+    // Basic required fields
+    if (!formData.schoolYear) {
+      newErrors.schoolYear = 'School year is required';
+    }
+    if (!formData.gradeLevelToEnroll) {
+      newErrors.gradeLevelToEnroll = 'Grade level to enroll is required';
+    }
+    if (!formData.firstName) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!formData.lastName) {
+      newErrors.lastName = 'Last name is required';
+    }
+    if (!formData.sex) {
+      newErrors.sex = 'Sex is required';
+    }
+
+    // For Grade 8 and above, check returning learner fields if returning is true
+    if (gradeLevel >= 8 && formData.returning === true) {
+      if (!formData.lastGradeLevelCompleted) {
+        newErrors.lastGradeLevelCompleted = 'Last grade level completed is required for returning learners';
+      }
+      if (!formData.lastSchoolYearCompleted) {
+        newErrors.lastSchoolYearCompleted = 'Last school year completed is required for returning learners';
+      }
+      if (!formData.lastSchoolEnrolled) {
+        newErrors.lastSchoolEnrolled = 'Last school enrolled is required for returning learners';
+      }
+      if (!formData.schoolId) {
+        newErrors.schoolId = 'School ID is required for returning learners';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       setMessageModalContent({
         type: 'error',
@@ -215,53 +230,50 @@ function StudentEnrollment() {
     setIsSubmitting(true);
 
     try {
-      // Construct current and permanent addresses
-      const currentAddress = [
-        formData.currentHouseNo,
-        formData.currentBarangay,
-        formData.currentMunicipality,
-        formData.currentProvince,
-        formData.currentZipCode,
-        formData.currentCountry,
-      ].filter(Boolean).join(', ');
-
-      const permanentAddress = formData.sameAsCurrent
-        ? currentAddress
-        : [
-            formData.permanentHouseNo,
-            formData.permanentBarangay,
-            formData.permanentMunicipality,
-            formData.permanentProvince,
-            formData.permanentZipCode,
-            formData.permanentCountry,
-          ].filter(Boolean).join(', ');
-
       // Prepare enrollment data
       const enrollmentData = {
         schoolYear: formData.schoolYear,
-        gradeToEnroll: parseInt(formData.gradeLevelToEnroll),
-        psaCertificateNo: formData.psaCertificateNo,
-        placeOfBirth: formData.placeOfBirth,
-        motherTongue: formData.motherTongue,
-        religion: formData.religion,
-        indigenousPeople: formData.indigenousPeoples,
-        beneficiaryOf4Ps: formData.family4Ps,
-        fourPsHouseholdId: formData.family4Ps ? formData.fourPsHouseholdId : undefined,
-        learnerWithDisability: formData.learnerWithDisability,
-        typeOfDisability: formData.typeOfDisability,
-        currentAddress,
-        permanentAddress,
-        // Returning learner fields (only if returningBalikAral is true)
-        ...(formData.returningBalikAral && {
+        gradeLevelToEnroll: parseInt(formData.gradeLevelToEnroll),
+        withLRN: formData.withLRN,
+        returning: formData.returning,
+        // Personal info snapshot
+        firstName: formData.firstName,
+        middleName: formData.middleName,
+        lastName: formData.lastName,
+        extensionName: formData.extensionName,
+        sex: formData.sex,
+        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth) : null,
+        lrn: formData.lrn || undefined,
+        currentAddress: formData.currentAddress,
+        permanentAddress: formData.permanentAddress,
+        // New enrollment fields
+        psaCertificateNo: formData.psaCertificateNo || undefined,
+        placeOfBirth: formData.placeOfBirth || undefined,
+        motherTongue: formData.motherTongue || undefined,
+        religion: formData.religion || undefined,
+        indigenousPeople: formData.indigenousPeople || false,
+        beneficiaryOf4Ps: formData.beneficiaryOf4Ps || false,
+        fourPsHouseholdId: formData.beneficiaryOf4Ps ? (formData.fourPsHouseholdId || undefined) : undefined,
+        learnerWithDisability: formData.learnerWithDisability || false,
+        typeOfDisability: formData.learnerWithDisability ? (formData.typeOfDisability || []) : [],
+        // Parent/Guardian information
+        fatherName: formData.fatherName || undefined,
+        fatherContact: formData.fatherContact || undefined,
+        motherName: formData.motherName || undefined,
+        motherContact: formData.motherContact || undefined,
+        guardianName: formData.guardianName || undefined,
+        guardianContact: formData.guardianContact || undefined,
+        // Returning learner fields (only if returning is true)
+        ...(formData.returning && {
           lastGradeLevelCompleted: formData.lastGradeLevelCompleted ? parseInt(formData.lastGradeLevelCompleted) : undefined,
           lastSchoolYearCompleted: formData.lastSchoolYearCompleted || undefined,
-          lastSchoolAttended: formData.lastSchoolAttended || undefined,
+          lastSchoolEnrolled: formData.lastSchoolEnrolled || undefined,
           schoolId: formData.schoolId || undefined,
         }),
       };
 
       const result = await dispatch(createEnrollment(enrollmentData));
-      
+
       if (createEnrollment.fulfilled.match(result)) {
         setMessageModalContent({
           type: 'success',
@@ -269,7 +281,10 @@ function StudentEnrollment() {
         });
         setShowMessageModal(true);
         setIsModalOpen(false);
-        // Optionally reset form
+        // Refresh enrollments
+        dispatch(fetchAllEnrollments());
+        // Reset form
+        setFormData(getInitialFormData());
       } else {
         setMessageModalContent({
           type: 'error',
@@ -294,207 +309,271 @@ function StudentEnrollment() {
     setErrors({});
   };
 
-  const handleModalOverlayClick = (e) => {
-    if (e.target === e.currentTarget) {
-      handleCloseModal();
+  const getEnrollmentStatusDisplay = () => {
+    if (!latestEnrollment) {
+      return { status: 'No Enrollment', color: '#6b7280', icon: '📋' };
+    }
+    switch (latestEnrollment.status) {
+      case 'pending':
+        return { status: 'Pending', color: '#f59e0b', icon: '⏳' };
+      case 'enrolled':
+        return { status: 'Enrolled', color: '#10b981', icon: '✅' };
+      case 'declined':
+        return { status: 'Declined', color: '#ef4444', icon: '❌' };
+      default:
+        return { status: 'Unknown', color: '#6b7280', icon: '❓' };
     }
   };
 
-  // Close modal on Escape key
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleEscape = (e) => {
-      if (e.key === 'Escape') {
-        handleCloseModal();
-      }
-    };
-
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
-  }, [isModalOpen]);
+  const statusDisplay = getEnrollmentStatusDisplay();
+  const gradeLevel = parseInt(formData.gradeLevelToEnroll);
+  const isGrade8Plus = gradeLevel >= 8;
 
   return (
     <>
-    <div className={styles.mainContent}>
+      <div className={styles.mainContent}>
         <h1>Enrollment</h1>
-        
+
+        {/* Student Information */}
         <div className={`${styles.enrollmentInfo} ${styles.fadeIn}`}>
-          <div><strong>Name:</strong> Kiana Mae L. Alvarez</div>
-          <div><strong>Grade & Section:</strong> 8-Lilac</div>
-          <div><strong>LRN:</strong> 823194756201</div>
+          <div>
+            <strong>Name:</strong> {studentName}
+          </div>
+          {currentGradeLevel && (
+            <div>
+              <strong>Current Grade & Section:</strong> {currentGradeLevel}
+              {sectionName !== 'N/A' && `-${sectionName}`}
+            </div>
+          )}
+          <div>
+            <strong>LRN:</strong> {studentLRN}
+          </div>
         </div>
 
-        <div className={`${styles.enrollmentStatusBox} ${styles.slideIn}`}>
-          <div className={styles.enrollmentStatusTitle}>Pending Enrollment</div>
-          <button
-            type="button"
-            className={styles.enrollmentFormBtn}
-            onClick={() => setIsModalOpen(true)}
-          >
-            Online Enrollment Form
-          </button>
-          <div className={styles.enrollmentSyNext}>S.Y. 2025 - 2026</div>
-        </div>
+        {/* Conditional UI based on isPromoted */}
+        {isPromoted ? (
+          /* When isPromoted === true: Show Returning Learner Form */
+          <div className={`${styles.enrollmentStatusBox} ${styles.slideIn}`}>
+            <div className={styles.enrollmentStatusTitle}>Enrollment for Next School Year</div>
+            <p style={{ marginBottom: '1.5rem', color: '#6b7280' }}>
+              You are eligible to enroll for the next school year. Please fill out the enrollment form below.
+            </p>
+            <button
+              type="button"
+              className={styles.enrollmentFormBtn}
+              onClick={() => setIsModalOpen(true)}
+            >
+              Online Enrollment Form
+            </button>
+            {latestEnrollment && (
+              <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#f3f4f6', borderRadius: '6px' }}>
+                <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  <strong>Latest Enrollment Status:</strong>{' '}
+                  <span style={{ color: statusDisplay.color, fontWeight: '600' }}>
+                    {statusDisplay.icon} {statusDisplay.status}
+                  </span>
+                </div>
+                {latestEnrollment.schoolYear && (
+                  <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
+                    <strong>School Year:</strong> {latestEnrollment.schoolYear}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        ) : (
+          /* When isPromoted === false: Show Instructions and Status */
+          <div className={`${styles.enrollmentStatusBox} ${styles.slideIn}`}>
+            <div className={styles.enrollmentStatusTitle}>Enrollment Process</div>
+            
+            {/* Enrollment Status Indicator */}
+            {latestEnrollment && (
+              <div
+                style={{
+                  marginBottom: '1.5rem',
+                  padding: '1rem',
+                  background: '#f9fafb',
+                  borderRadius: '8px',
+                  border: `2px solid ${statusDisplay.color}`,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                  <span style={{ fontSize: '1.5rem' }}>{statusDisplay.icon}</span>
+                  <div>
+                    <div style={{ fontWeight: '600', color: statusDisplay.color, fontSize: '1.1rem' }}>
+                      {statusDisplay.status}
+                    </div>
+                    {latestEnrollment.schoolYear && (
+                      <div style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.25rem' }}>
+                        School Year: {latestEnrollment.schoolYear}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                {latestEnrollment.remarks && (
+                  <div style={{ marginTop: '0.75rem', padding: '0.75rem', background: 'white', borderRadius: '4px', fontSize: '0.875rem', color: '#4b5563' }}>
+                    <strong>Remarks:</strong> {latestEnrollment.remarks}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Instructions Section */}
+            <div style={{ textAlign: 'left', marginTop: '1.5rem' }}>
+              <h3 style={{ color: '#4c7a67', marginBottom: '1rem', fontSize: '1.1rem' }}>
+                Next Steps for Enrollment
+              </h3>
+              <div style={{ background: '#f0f9ff', padding: '1.25rem', borderRadius: '8px', borderLeft: '4px solid #0ea5e9' }}>
+                <ol style={{ margin: 0, paddingLeft: '1.5rem', color: '#1e40af', lineHeight: '1.8' }}>
+                  <li style={{ marginBottom: '0.75rem' }}>
+                    <strong>Visit your Section Head</strong> to begin processing your enrollment requirements for the upcoming school year.
+                  </li>
+                  <li style={{ marginBottom: '0.75rem' }}>
+                    <strong>Wait for your enrollment status</strong> to be updated in the system.
+                  </li>
+                  <li>
+                    <strong>You will receive a notification</strong> once the admin reviews and accepts your enrollment form.
+                  </li>
+                </ol>
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: '#fef3c7', borderRadius: '8px', fontSize: '0.875rem', color: '#92400e' }}>
+              <strong>Note:</strong> Your enrollment status will be updated once all requirements are processed and approved by the administration.
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Enrollment Modal */}
-      {isModalOpen && (
-        <div className={styles.modalOverlay} onClick={handleModalOverlayClick}>
-          <div className={styles.modalContent}>
-            <button
-              className={styles.modalClose}
-              onClick={handleCloseModal}
-              aria-label="Close modal"
-            >
+      {/* Enrollment Modal - Only shown when isPromoted === true */}
+      {isModalOpen && isPromoted && (
+        <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
+          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <button className={styles.modalClose} onClick={handleCloseModal} aria-label="Close modal">
               &times;
             </button>
-            <img
-              src="/images/logo.jpg"
-              alt="School Logo"
-              className={styles.modalLogo}
-            />
+            <img src="/images/logo.jpg" alt="School Logo" className={styles.modalLogo} />
             <div className={styles.modalHeader}>
               <div className={styles.modalHeaderRow}>
                 <div>
-                  <div><b>Name:</b> Kiana Mae A. Alvarez</div>
-                  <div><b>LRN:</b> {formData.learnerReferenceNo || '0000000'}</div>
+                  <div>
+                    <b>Name:</b> {studentName}
+                  </div>
+                  <div>
+                    <b>LRN:</b> {studentLRN !== 'N/A' ? studentLRN : 'N/A'}
+                  </div>
                 </div>
                 <div className={styles.modalHeaderRight}>
-                  <div><b>Grade:</b> 7</div>
-                  <div><b>Grade to Enroll:</b> 8</div>
+                  {currentGradeLevel && (
+                    <div>
+                      <b>Current Grade:</b> {currentGradeLevel}
+                    </div>
+                  )}
+                  <div>
+                    <b>Grade to Enroll:</b> {formData.gradeLevelToEnroll || 'N/A'}
+                  </div>
                 </div>
               </div>
             </div>
             <form className={styles.modalForm} onSubmit={handleSubmit}>
-              {/* School Year Section */}
-              <div className={styles.modalSection}>
-                <div className={styles.modalRow}>
-                  <label>School Year</label>
-                  <input
-                    type="text"
-                    name="schoolYear"
-                    value={formData.schoolYear}
-                    onChange={handleInputChange}
-                    style={{ width: '120px' }}
-                    className={errors.schoolYear ? styles.inputError : ''}
-                  />
-                  <span style={{ marginLeft: '24px' }}>Check the appropriate box only</span>
-                  <label style={{ marginLeft: '12px' }}>With LRN?</label>
-                  <input
-                    type="checkbox"
-                    name="withLRN"
-                    checked={formData.withLRN}
-                    onChange={handleInputChange}
-                  />
-                  <label style={{ marginLeft: '12px' }}>Returning Balik-Aral?</label>
-                  <input
-                    type="checkbox"
-                    name="returningBalikAral"
-                    checked={formData.returningBalikAral}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className={styles.modalRow}>
-                  <label>Grade level to Enroll</label>
-                  <input
-                    type="text"
-                    name="gradeLevelToEnroll"
-                    value={formData.gradeLevelToEnroll}
-                    onChange={handleInputChange}
-                    style={{ width: '60px' }}
-                    className={errors.gradeLevelToEnroll ? styles.inputError : ''}
-                  />
-                </div>
-              </div>
+              {/* Basic Enrollment Info */}
+              <BasicEnrollmentInfo
+                formData={formData}
+                handleInputChange={handleInputChange}
+                handleCheckboxChange={handleCheckboxChange}
+                errors={errors}
+              />
 
-              {/* Learner Information Section */}
+              {/* Personal Information Section */}
               <div className={`${styles.modalSection} ${styles.sectionHeader}`}>
-                LEARNER INFORMATION
+                PERSONAL INFORMATION (SNAPSHOT)
               </div>
               <div className={styles.modalSection}>
                 <div className={styles.modalRow}>
-                  <label>PSA Certificate No.</label>
-                  <input
-                    type="text"
-                    name="psaCertificateNo"
-                    value={formData.psaCertificateNo}
-                    onChange={handleInputChange}
-                    style={{ width: '140px' }}
-                    className={errors.psaCertificateNo ? styles.inputError : ''}
-                  />
-                  <label style={{ marginLeft: '24px' }}>Learner Reference No. (LRN)</label>
-                  <input
-                    type="text"
-                    name="learnerReferenceNo"
-                    value={formData.learnerReferenceNo}
-                    onChange={handleInputChange}
-                    style={{ width: '140px' }}
-                    className={errors.learnerReferenceNo ? styles.inputError : ''}
-                  />
-                </div>
-                <div className={styles.modalRow}>
-                  <label>Student's Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleInputChange}
-                    placeholder="Last Name"
-                    style={{ width: '120px' }}
-                    className={errors.lastName ? styles.inputError : ''}
-                  />
+                  <label>First Name *</label>
                   <input
                     type="text"
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleInputChange}
-                    placeholder="First Name"
-                    style={{ width: '120px' }}
                     className={errors.firstName ? styles.inputError : ''}
+                    required
                   />
+                  {errors.firstName && <span className={styles.errorText}>{errors.firstName}</span>}
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Middle Name</label>
                   <input
                     type="text"
                     name="middleName"
                     value={formData.middleName}
                     onChange={handleInputChange}
-                    placeholder="Middle Name"
-                    style={{ width: '120px' }}
-                    className={errors.middleName ? styles.inputError : ''}
                   />
-                  <label style={{ marginLeft: '24px' }}>Sex</label>
-                  <input
-                    type="radio"
-                    name="sex"
-                    value="Male"
-                    checked={formData.sex === 'Male'}
-                    onChange={handleRadioChange}
-                  /> Male
-                  <input
-                    type="radio"
-                    name="sex"
-                    value="Female"
-                    checked={formData.sex === 'Female'}
-                    onChange={handleRadioChange}
-                  /> Female
-                  <label style={{ marginLeft: '24px' }}>Birthdate</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Last Name *</label>
                   <input
                     type="text"
-                    name="birthdate"
-                    value={formData.birthdate}
+                    name="lastName"
+                    value={formData.lastName}
                     onChange={handleInputChange}
-                    placeholder="MM/DD/YYYY"
-                    style={{ width: '110px' }}
-                    className={errors.birthdate ? styles.inputError : ''}
+                    className={errors.lastName ? styles.inputError : ''}
+                    required
                   />
-                  <label style={{ marginLeft: '12px' }}>Age</label>
+                  {errors.lastName && <span className={styles.errorText}>{errors.lastName}</span>}
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Extension Name</label>
                   <input
                     type="text"
-                    name="age"
-                    value={formData.age}
+                    name="extensionName"
+                    value={formData.extensionName}
                     onChange={handleInputChange}
-                    style={{ width: '40px' }}
-                    className={errors.age ? styles.inputError : ''}
+                    placeholder="e.g., Jr., III"
+                  />
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Sex *</label>
+                  <select
+                    name="sex"
+                    value={formData.sex}
+                    onChange={handleInputChange}
+                    className={errors.sex ? styles.inputError : ''}
+                    required
+                  >
+                    <option value="">Select Sex</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                  {errors.sex && <span className={styles.errorText}>{errors.sex}</span>}
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Date of Birth</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div className={styles.modalRow}>
+                  <label>LRN</label>
+                  <input
+                    type="text"
+                    name="lrn"
+                    value={formData.lrn}
+                    onChange={handleInputChange}
+                    placeholder="Can be added later if not available"
+                  />
+                </div>
+                <div className={styles.modalRow}>
+                  <label>PSA Birth Certificate No.</label>
+                  <input
+                    type="text"
+                    name="psaCertificateNo"
+                    value={formData.psaCertificateNo}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div className={styles.modalRow}>
@@ -504,391 +583,169 @@ function StudentEnrollment() {
                     name="placeOfBirth"
                     value={formData.placeOfBirth}
                     onChange={handleInputChange}
-                    style={{ width: '140px' }}
-                    className={errors.placeOfBirth ? styles.inputError : ''}
                   />
-                  <label style={{ marginLeft: '24px' }}>Mother Tongue</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Mother Tongue</label>
                   <input
                     type="text"
                     name="motherTongue"
                     value={formData.motherTongue}
                     onChange={handleInputChange}
-                    style={{ width: '120px' }}
-                    className={errors.motherTongue ? styles.inputError : ''}
                   />
-                  <label style={{ marginLeft: '24px' }}>Religion</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Religion</label>
                   <input
                     type="text"
                     name="religion"
                     value={formData.religion}
                     onChange={handleInputChange}
-                    style={{ width: '120px' }}
-                    className={errors.religion ? styles.inputError : ''}
                   />
                 </div>
                 <div className={styles.modalRow}>
-                  <label>Extension Name (e.g. Jr., III)</label>
-                  <input
-                    type="text"
-                    name="extensionName"
-                    value={formData.extensionName}
-                    onChange={handleInputChange}
-                    placeholder="Leave blank if not applicable"
-                    style={{ width: '180px' }}
-                  />
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="indigenousPeople"
+                      checked={formData.indigenousPeople}
+                      onChange={handleCheckboxChange}
+                    />
+                    Belonging to any Indigenous Peoples?
+                  </label>
                 </div>
                 <div className={styles.modalRow}>
-                  <label>Belonging to any indigenous Peoples?</label>
-                  <input
-                    type="checkbox"
-                    name="indigenousPeoples"
-                    checked={formData.indigenousPeoples}
-                    onChange={handleInputChange}
-                  />
-                  <label style={{ marginLeft: '24px' }}>Is your family beneficiary of 4Ps?</label>
-                  <input
-                    type="checkbox"
-                    name="family4Ps"
-                    checked={formData.family4Ps}
-                    onChange={handleInputChange}
-                  />
-                  {formData.family4Ps && (
-                    <>
-                      <label style={{ marginLeft: '24px' }}>If Yes, 4Ps Household ID number</label>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="beneficiaryOf4Ps"
+                      checked={formData.beneficiaryOf4Ps}
+                      onChange={handleCheckboxChange}
+                    />
+                    Is your family beneficiary of 4Ps?
+                  </label>
+                  {formData.beneficiaryOf4Ps && (
+                    <div style={{ marginTop: '8px' }}>
+                      <label>4Ps Household ID number</label>
                       <input
                         type="text"
                         name="fourPsHouseholdId"
                         value={formData.fourPsHouseholdId}
                         onChange={handleInputChange}
-                        style={{ width: '120px' }}
-                        className={errors.fourPsHouseholdId ? styles.inputError : ''}
                       />
-                    </>
-                  )}
-                </div>
-                <div className={styles.modalRow}>
-                  <label>Learner with Disability?</label>
-                  <input
-                    type="checkbox"
-                    name="learnerWithDisability"
-                    checked={formData.learnerWithDisability}
-                    onChange={handleInputChange}
-                  />
-                  {formData.learnerWithDisability && (
-                    <div style={{ marginLeft: '24px', display: 'inline-block' }}>
-                      <label>Type of Disability (check all that apply):</label>
-                      {['Visual', 'Hearing', 'Learning', 'Physical', 'Intellectual', 'Speech', 'Emotional', 'Other'].map((type) => (
-                        <label key={type} style={{ marginLeft: '12px' }}>
-                          <input
-                            type="checkbox"
-                            checked={formData.typeOfDisability.includes(type)}
-                            onChange={() => handleDisabilityChange(type)}
-                          />
-                          {type}
-                        </label>
-                      ))}
                     </div>
                   )}
                 </div>
-              </div>
-
-              {/* Address Section */}
-              <div className={styles.modalSection}>
+                <div className={styles.modalRow}>
+                  <label>
+                    <input
+                      type="checkbox"
+                      name="learnerWithDisability"
+                      checked={formData.learnerWithDisability}
+                      onChange={handleCheckboxChange}
+                    />
+                    Learner with Disability?
+                  </label>
+                  {formData.learnerWithDisability && (
+                    <div style={{ marginTop: '8px', marginLeft: '20px' }}>
+                      <label>Type of Disability (check all that apply):</label>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', marginTop: '8px' }}>
+                        {['Visual', 'Hearing', 'Learning', 'Physical', 'Intellectual', 'Speech', 'Emotional', 'Other'].map((type) => (
+                          <label key={type} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <input
+                              type="checkbox"
+                              checked={formData.typeOfDisability.includes(type)}
+                              onChange={() => handleDisabilityChange(type)}
+                            />
+                            {type}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
                 <div className={styles.modalRow}>
                   <label>Current Address</label>
                   <input
                     type="text"
-                    name="currentHouseNo"
-                    value={formData.currentHouseNo}
+                    name="currentAddress"
+                    value={formData.currentAddress}
                     onChange={handleInputChange}
-                    placeholder="House No./Street"
-                    style={{ width: '120px' }}
-                    className={errors.currentHouseNo ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="currentBarangay"
-                    value={formData.currentBarangay}
-                    onChange={handleInputChange}
-                    placeholder="Barangay"
-                    style={{ width: '100px' }}
-                    className={errors.currentBarangay ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="currentProvince"
-                    value={formData.currentProvince}
-                    onChange={handleInputChange}
-                    placeholder="Province"
-                    style={{ width: '100px' }}
-                    className={errors.currentProvince ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="currentZipCode"
-                    value={formData.currentZipCode}
-                    onChange={handleInputChange}
-                    placeholder="Zip Code"
-                    style={{ width: '80px' }}
-                    className={errors.currentZipCode ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="currentMunicipality"
-                    value={formData.currentMunicipality}
-                    onChange={handleInputChange}
-                    placeholder="Municipality/City"
-                    style={{ width: '120px' }}
-                    className={errors.currentMunicipality ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="currentCountry"
-                    value={formData.currentCountry}
-                    onChange={handleInputChange}
-                    placeholder="Country"
-                    style={{ width: '100px' }}
-                    className={errors.currentCountry ? styles.inputError : ''}
                   />
                 </div>
                 <div className={styles.modalRow}>
                   <label>Permanent Address</label>
                   <input
-                    type="checkbox"
-                    name="sameAsCurrent"
-                    checked={formData.sameAsCurrent}
-                    onChange={handleSameAsCurrentChange}
-                  /> Same with Current Address
-                  {!formData.sameAsCurrent && (
-                    <>
-                      <input
-                        type="text"
-                        name="permanentHouseNo"
-                        value={formData.permanentHouseNo}
-                        onChange={handleInputChange}
-                        placeholder="House No./Street"
-                        style={{ width: '120px' }}
-                        className={errors.permanentHouseNo ? styles.inputError : ''}
-                      />
-                      <input
-                        type="text"
-                        name="permanentBarangay"
-                        value={formData.permanentBarangay}
-                        onChange={handleInputChange}
-                        placeholder="Barangay"
-                        style={{ width: '100px' }}
-                        className={errors.permanentBarangay ? styles.inputError : ''}
-                      />
-                      <input
-                        type="text"
-                        name="permanentProvince"
-                        value={formData.permanentProvince}
-                        onChange={handleInputChange}
-                        placeholder="Province"
-                        style={{ width: '100px' }}
-                        className={errors.permanentProvince ? styles.inputError : ''}
-                      />
-                      <input
-                        type="text"
-                        name="permanentZipCode"
-                        value={formData.permanentZipCode}
-                        onChange={handleInputChange}
-                        placeholder="Zip Code"
-                        style={{ width: '80px' }}
-                        className={errors.permanentZipCode ? styles.inputError : ''}
-                      />
-                      <input
-                        type="text"
-                        name="permanentMunicipality"
-                        value={formData.permanentMunicipality}
-                        onChange={handleInputChange}
-                        placeholder="Municipality/City"
-                        style={{ width: '120px' }}
-                        className={errors.permanentMunicipality ? styles.inputError : ''}
-                      />
-                      <input
-                        type="text"
-                        name="permanentCountry"
-                        value={formData.permanentCountry}
-                        onChange={handleInputChange}
-                        placeholder="Country"
-                        style={{ width: '100px' }}
-                        className={errors.permanentCountry ? styles.inputError : ''}
-                      />
-                    </>
-                  )}
+                    type="text"
+                    name="permanentAddress"
+                    value={formData.permanentAddress}
+                    onChange={handleInputChange}
+                  />
                 </div>
-              </div>
-
-              {/* Returning Learner Section (if returningBalikAral is checked) */}
-              {formData.returningBalikAral && (
-                <>
-                  <div className={`${styles.modalSection} ${styles.sectionHeader}`}>
-                    RETURNING LEARNER INFORMATION
-                  </div>
-                  <div className={styles.modalSection}>
-                    <div className={styles.modalRow}>
-                      <label>Last Grade Level Completed</label>
-                      <input
-                        type="number"
-                        name="lastGradeLevelCompleted"
-                        value={formData.lastGradeLevelCompleted}
-                        onChange={handleInputChange}
-                        min="1"
-                        max="10"
-                        style={{ width: '80px' }}
-                      />
-                      <label style={{ marginLeft: '24px' }}>Last School Year Completed</label>
-                      <input
-                        type="text"
-                        name="lastSchoolYearCompleted"
-                        value={formData.lastSchoolYearCompleted}
-                        onChange={handleInputChange}
-                        placeholder="e.g., 2023-2024"
-                        style={{ width: '120px' }}
-                      />
-                    </div>
-                    <div className={styles.modalRow}>
-                      <label>Last School Attended</label>
-                      <input
-                        type="text"
-                        name="lastSchoolAttended"
-                        value={formData.lastSchoolAttended}
-                        onChange={handleInputChange}
-                        style={{ width: '200px' }}
-                      />
-                      <label style={{ marginLeft: '24px' }}>School ID</label>
-                      <input
-                        type="text"
-                        name="schoolId"
-                        value={formData.schoolId}
-                        onChange={handleInputChange}
-                        style={{ width: '120px' }}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* Parent's/Guardian's Information Section */}
-              <div className={`${styles.modalSection} ${styles.sectionHeader}`}>
-                PARENT'S/GUARDIAN'S INFORMATION
-              </div>
-              <div className={styles.modalSection}>
                 <div className={styles.modalRow}>
                   <label>Father's Name</label>
                   <input
                     type="text"
-                    name="fatherLastName"
-                    value={formData.fatherLastName}
+                    name="fatherName"
+                    value={formData.fatherName}
                     onChange={handleInputChange}
-                    placeholder="Last Name"
-                    style={{ width: '100px' }}
-                    className={errors.fatherLastName ? styles.inputError : ''}
                   />
-                  <input
-                    type="text"
-                    name="fatherFirstName"
-                    value={formData.fatherFirstName}
-                    onChange={handleInputChange}
-                    placeholder="First Name"
-                    style={{ width: '100px' }}
-                    className={errors.fatherFirstName ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="fatherMiddleName"
-                    value={formData.fatherMiddleName}
-                    onChange={handleInputChange}
-                    placeholder="Middle Name"
-                    style={{ width: '100px' }}
-                    className={errors.fatherMiddleName ? styles.inputError : ''}
-                  />
-                  <label style={{ marginLeft: '24px' }}>Contact Number</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Father's Contact Number</label>
                   <input
                     type="text"
                     name="fatherContact"
                     value={formData.fatherContact}
                     onChange={handleInputChange}
-                    style={{ width: '120px' }}
-                    className={errors.fatherContact ? styles.inputError : ''}
                   />
                 </div>
                 <div className={styles.modalRow}>
                   <label>Mother's Name</label>
                   <input
                     type="text"
-                    name="motherLastName"
-                    value={formData.motherLastName}
+                    name="motherName"
+                    value={formData.motherName}
                     onChange={handleInputChange}
-                    placeholder="Last Name"
-                    style={{ width: '100px' }}
-                    className={errors.motherLastName ? styles.inputError : ''}
                   />
-                  <input
-                    type="text"
-                    name="motherFirstName"
-                    value={formData.motherFirstName}
-                    onChange={handleInputChange}
-                    placeholder="First Name"
-                    style={{ width: '100px' }}
-                    className={errors.motherFirstName ? styles.inputError : ''}
-                  />
-                  <input
-                    type="text"
-                    name="motherMiddleName"
-                    value={formData.motherMiddleName}
-                    onChange={handleInputChange}
-                    placeholder="Middle Name"
-                    style={{ width: '100px' }}
-                    className={errors.motherMiddleName ? styles.inputError : ''}
-                  />
-                  <label style={{ marginLeft: '24px' }}>Contact Number</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Mother's Contact Number</label>
                   <input
                     type="text"
                     name="motherContact"
                     value={formData.motherContact}
                     onChange={handleInputChange}
-                    style={{ width: '120px' }}
-                    className={errors.motherContact ? styles.inputError : ''}
                   />
                 </div>
                 <div className={styles.modalRow}>
-                  <label>Guardian's Name</label>
+                  <label>Guardian Name</label>
                   <input
                     type="text"
-                    name="guardianLastName"
-                    value={formData.guardianLastName}
+                    name="guardianName"
+                    value={formData.guardianName}
                     onChange={handleInputChange}
-                    placeholder="Last Name"
-                    style={{ width: '100px' }}
                   />
-                  <input
-                    type="text"
-                    name="guardianFirstName"
-                    value={formData.guardianFirstName}
-                    onChange={handleInputChange}
-                    placeholder="First Name"
-                    style={{ width: '100px' }}
-                  />
-                  <input
-                    type="text"
-                    name="guardianMiddleName"
-                    value={formData.guardianMiddleName}
-                    onChange={handleInputChange}
-                    placeholder="Middle Name"
-                    style={{ width: '100px' }}
-                  />
-                  <label style={{ marginLeft: '24px' }}>Contact Number</label>
+                </div>
+                <div className={styles.modalRow}>
+                  <label>Guardian Contact</label>
                   <input
                     type="text"
                     name="guardianContact"
                     value={formData.guardianContact}
                     onChange={handleInputChange}
-                    style={{ width: '120px' }}
                   />
                 </div>
               </div>
+
+              {/* Returning Learners - Only for Grade 8+ and if returning is true */}
+              {isGrade8Plus && formData.returning && (
+                <ReturningLearners
+                  formData={formData}
+                  handleInputChange={handleInputChange}
+                  errors={errors}
+                />
+              )}
 
               {/* Modal Footer Buttons */}
               <div className={styles.modalFooter}>
@@ -896,30 +753,31 @@ function StudentEnrollment() {
                   type="button"
                   onClick={handleCloseModal}
                   className={styles.btnExit}
+                  disabled={isSubmitting}
                 >
                   Exit
                 </button>
                 <button
                   type="submit"
                   className={styles.btnSave}
-                  disabled={isSubmitting || loading}
+                  disabled={isSubmitting || enrollmentsLoading}
                 >
-                  {isSubmitting || loading ? 'Saving...' : 'Save Changes'}
+                  {isSubmitting || enrollmentsLoading ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
+
       <MessageModal
         show={showMessageModal}
         type={messageModalContent.type}
         message={messageModalContent.message}
         onClose={() => setShowMessageModal(false)}
       />
-      </>
+    </>
   );
 }
 
 export default StudentEnrollment;
-

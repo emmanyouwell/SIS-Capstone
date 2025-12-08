@@ -1,56 +1,79 @@
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchAllNotifications,
+  deleteNotification,
+  updateNotification,
+  markAllAsRead,
+  clearError,
+} from '../../store/slices/notificationSlice';
 import styles from './StudentNotifications.module.css';
 
-// Initial notifications data
-const initialNotifications = [
-  {
-    id: 1,
-    type: 'Enrollment',
-    message: '3 Students submitted their documents for enrollment.',
-    date: 'June 10',
-    read: false,
-  },
-  {
-    id: 2,
-    type: 'Message',
-    message: 'Ms. Mariah A. Lordez sent a message.',
-    date: 'June 3',
-    read: false,
-  },
-  {
-    id: 3,
-    type: 'Message',
-    message: 'Mr. Jason K. Yason sent a message.',
-    date: 'June 3',
-    read: false,
-  },
-  {
-    id: 4,
-    type: 'Subject Materials',
-    message: 'Mr. James B. Ramos posted a file in Science Grade 8 Section 2.',
-    date: 'May 28',
-    read: false,
-  },
-  {
-    id: 5,
-    type: 'Announcement',
-    message: 'Ms. Karla D. Sales posted a class announcement.',
-    date: 'May 27',
-    read: false,
-  },
-  {
-    id: 6,
-    type: 'Announcement',
-    message: 'Your post has been archived.',
-    date: 'May 25',
-    read: false,
-  },
-];
+/**
+ * Format date to readable string (e.g., "June 10", "May 28")
+ */
+const formatDate = (dateString) => {
+  const date = new Date(dateString);
+  const months = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  return `${months[date.getMonth()]} ${date.getDate()}`;
+};
+
+/**
+ * Capitalize first letter of notification type
+ */
+const formatType = (type) => {
+  if (!type) return 'Other';
+  return type.charAt(0).toUpperCase() + type.slice(1);
+};
 
 function StudentNotifications() {
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const dispatch = useDispatch();
+  const { notifications: apiNotifications, loading, error } = useSelector(
+    (state) => state.notifications
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIds, setSelectedIds] = useState(new Set());
+
+  // Fetch notifications on mount
+  useEffect(() => {
+    dispatch(fetchAllNotifications());
+  }, [dispatch]);
+
+  // Clear error after 5 seconds
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [error, dispatch]);
+
+  // Transform API notifications to component format
+  const notifications = useMemo(() => {
+    if (!apiNotifications || apiNotifications.length === 0) return [];
+    return apiNotifications.map((notification) => ({
+      id: notification._id,
+      type: formatType(notification.type),
+      message: notification.message,
+      date: formatDate(notification.dateCreated),
+      read: notification.status === 'read',
+      _id: notification._id, // Keep original _id for API calls
+    }));
+  }, [apiNotifications]);
 
   // Filter notifications based on search query
   const filteredNotifications = useMemo(() => {
@@ -101,122 +124,161 @@ function StudentNotifications() {
   };
 
   // Handle delete selected notifications
-  const handleDelete = () => {
+  const handleDelete = async () => {
     if (selectedIds.size === 0) return;
-    setNotifications((prev) => prev.filter((n) => !selectedIds.has(n.id)));
+    
+    // Delete all selected notifications
+    const deletePromises = Array.from(selectedIds)
+      .map((id) => {
+        const notification = notifications.find((n) => n.id === id);
+        return notification ? dispatch(deleteNotification(notification._id)) : null;
+      })
+      .filter((promise) => promise !== null);
+    
+    await Promise.all(deletePromises);
     setSelectedIds(new Set());
   };
 
   // Handle mark selected as read
-  const handleMarkAsRead = () => {
+  const handleMarkAsRead = async () => {
     if (selectedIds.size === 0) return;
-    setNotifications((prev) =>
-      prev.map((n) => (selectedIds.has(n.id) ? { ...n, read: true } : n))
-    );
+    
+    // Mark all selected notifications as read
+    const updatePromises = Array.from(selectedIds).map((id) => {
+      const notification = notifications.find((n) => n.id === id);
+      if (notification && !notification.read) {
+        return dispatch(
+          updateNotification({
+            id: notification._id,
+            data: { status: 'read' },
+          })
+        );
+      }
+      return Promise.resolve();
+    });
+    
+    await Promise.all(updatePromises);
     setSelectedIds(new Set());
   };
 
   // Handle mark all as read
-  const handleMarkAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const handleMarkAllAsRead = async () => {
+    await dispatch(markAllAsRead());
     setSelectedIds(new Set());
   };
 
   // Handle refresh
   const handleRefresh = () => {
-    setNotifications(initialNotifications.map((n) => ({ ...n })));
+    dispatch(fetchAllNotifications());
     setSearchQuery('');
     setSelectedIds(new Set());
   };
 
   return (
     <div className={styles.mainContent}>
-        <div className={styles.notificationPanel}>
-          <div className={styles.notificationToolbar}>
-            <div className={styles.notificationSearch}>
-              <input
-                type="text"
-                placeholder="Search..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+      <div className={styles.notificationPanel}>
+        {error && (
+          <div className={styles.errorMessage} style={{ padding: '10px', marginBottom: '10px', backgroundColor: '#fee', color: '#c33', borderRadius: '4px' }}>
+            {error}
+          </div>
+        )}
+        <div className={styles.notificationToolbar}>
+          <div className={styles.notificationSearch}>
+            <input
+              type="text"
+              placeholder="Search..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <button
+            className={styles.markAllBtn}
+            onClick={handleMarkAllAsRead}
+            disabled={loading || notifications.length === 0}
+          >
+            Mark all as Read
+          </button>
+          <button
+            className={styles.refreshBtn}
+            title="Refresh"
+            onClick={handleRefresh}
+            disabled={loading}
+            aria-label="Refresh notifications"
+          >
+            <svg
+              width="22"
+              height="22"
+              fill="none"
+              stroke="#222"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <polyline points="23 4 23 10 17 10" />
+              <polyline points="1 20 1 14 7 14" />
+              <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0 0 20.49 15" />
+            </svg>
+          </button>
+        </div>
+        <div className={styles.notificationActionsRow}>
+          <label>
+            <input
+              type="checkbox"
+              id="select-all"
+              checked={isAllSelected}
+              onChange={handleSelectAll}
+              disabled={loading || filteredNotifications.length === 0}
+            />
+            Select All
+          </label>
+          <button
+            className={`${styles.deleteBtn} ${styles.actionBtn}`}
+            onClick={handleDelete}
+            disabled={selectedIds.size === 0 || loading}
+          >
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              stroke="#e53e3e"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+            </svg>
+            Delete
+          </button>
+          <button
+            className={`${styles.markReadBtn} ${styles.actionBtn}`}
+            onClick={handleMarkAsRead}
+            disabled={selectedIds.size === 0 || loading}
+          >
+            <svg
+              width="18"
+              height="18"
+              fill="none"
+              stroke="#4c7a67"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              viewBox="0 0 24 24"
+            >
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            Mark as read
+          </button>
+        </div>
+        <div className={styles.notificationTableWrapper}>
+          {loading && notifications.length === 0 ? (
+            <div className={styles.emptyState} style={{ padding: '20px', textAlign: 'center' }}>
+              Loading notifications...
             </div>
-            <button className={styles.markAllBtn} onClick={handleMarkAllAsRead}>
-              Mark all as Read
-            </button>
-            <button
-              className={styles.refreshBtn}
-              title="Refresh"
-              onClick={handleRefresh}
-              aria-label="Refresh notifications"
-            >
-              <svg
-                width="22"
-                height="22"
-                fill="none"
-                stroke="#222"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0 1 14.13-3.36L23 10M1 14l5.36 4.36A9 9 0 0 0 20.49 15" />
-              </svg>
-            </button>
-          </div>
-          <div className={styles.notificationActionsRow}>
-            <label>
-              <input
-                type="checkbox"
-                id="select-all"
-                checked={isAllSelected}
-                onChange={handleSelectAll}
-              />
-              Select All
-            </label>
-            <button
-              className={`${styles.deleteBtn} ${styles.actionBtn}`}
-              onClick={handleDelete}
-              disabled={selectedIds.size === 0}
-            >
-              <svg
-                width="18"
-                height="18"
-                fill="none"
-                stroke="#e53e3e"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-              </svg>
-              Delete
-            </button>
-            <button
-              className={`${styles.markReadBtn} ${styles.actionBtn}`}
-              onClick={handleMarkAsRead}
-              disabled={selectedIds.size === 0}
-            >
-              <svg
-                width="18"
-                height="18"
-                fill="none"
-                stroke="#4c7a67"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                viewBox="0 0 24 24"
-              >
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-              Mark as read
-            </button>
-          </div>
-          <div className={styles.notificationTableWrapper}>
+          ) : (
             <table className={styles.notificationTable}>
               <tbody>
                 {filteredNotifications.length === 0 ? (
@@ -236,6 +298,7 @@ function StudentNotifications() {
                           type="checkbox"
                           checked={selectedIds.has(notification.id)}
                           onChange={() => handleCheckboxChange(notification.id)}
+                          disabled={loading}
                         />
                       </td>
                       <td>
@@ -248,9 +311,10 @@ function StudentNotifications() {
                 )}
               </tbody>
             </table>
-          </div>
+          )}
         </div>
       </div>
+    </div>
   );
 }
 

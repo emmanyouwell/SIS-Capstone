@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/api';
+import { getMe } from './authSlice';
 
 // Async thunks
 export const fetchGrades = createAsyncThunk(
@@ -28,9 +29,11 @@ export const fetchGradeById = createAsyncThunk(
 
 export const createGrade = createAsyncThunk(
   'grades/create',
-  async (gradeData, { rejectWithValue }) => {
+  async (gradeData, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.post('/grades', gradeData);
+      // Refresh user data to get updated isPromoted status
+      dispatch(getMe());
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create grade');
@@ -40,9 +43,11 @@ export const createGrade = createAsyncThunk(
 
 export const updateGrade = createAsyncThunk(
   'grades/update',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.patch(`/grades/${id}`, data);
+      // Refresh user data to get updated isPromoted status
+      dispatch(getMe());
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update grade');

@@ -317,7 +317,7 @@ export const updateEnrollment = async (req, res) => {
       return res.status(404).json({ message: 'Enrollment not found' });
     }
 
-    // If status is being changed to 'enrolled', update student's gradeLevel, sectionId, and enrollmentStatus
+    // If status is being changed to 'enrolled', update student's gradeLevel, sectionId, enrollmentStatus, and isPromoted
     if (req.body.status === 'enrolled' && enrollment.status !== 'enrolled') {
       const Student = (await import('../models/Student.js')).default;
       const gradeLevel = enrollment.gradeLevelToEnroll || enrollment.gradeToEnroll;
@@ -325,6 +325,7 @@ export const updateEnrollment = async (req, res) => {
         gradeLevel: gradeLevel,
         sectionId: req.body.sectionId,
         enrollmentStatus: true,
+        isPromoted: false, // Reset promotion status when enrollment is accepted
       };
       // Update LRN if provided in the enrollment update
       if (req.body.lrn && req.body.lrn.trim() !== '') {

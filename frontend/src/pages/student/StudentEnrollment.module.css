@@ -215,9 +215,9 @@
 .modalRow {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .modalRow label {
@@ -225,31 +225,123 @@
   color: #2d3748;
   font-weight: 500;
   white-space: nowrap;
+  min-width: 180px;
+  flex-shrink: 0;
 }
 
-.modalRow input[type="text"] {
-  padding: 6px 8px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+.modalRow input[type="text"],
+.modalRow input[type="date"],
+.modalRow input[type="number"],
+.modalRow select,
+.modalRow textarea {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   font-size: 0.9rem;
   font-family: 'Inter', sans-serif;
-  transition: border-color 0.2s;
+  transition: all 0.2s;
+  background-color: #fff;
 }
 
-.modalRow input[type="text"]:focus {
+.modalRow input[type="text"]:focus,
+.modalRow input[type="date"]:focus,
+.modalRow input[type="number"]:focus,
+.modalRow select:focus,
+.modalRow textarea:focus {
   outline: none;
   border-color: var(--primary-green);
-  box-shadow: 0 0 0 2px rgba(76, 122, 103, 0.1);
+  box-shadow: 0 0 0 3px rgba(76, 122, 103, 0.1);
+}
+
+.modalRow select {
+  cursor: pointer;
 }
 
 .modalRow input[type="checkbox"],
 .modalRow input[type="radio"] {
-  margin: 0 4px;
+  margin: 0 6px 0 0;
   cursor: pointer;
+  width: auto;
+  min-width: auto;
+  flex: none;
 }
 
 .modalRow input[type="radio"] {
-  margin-right: 8px;
+  margin-right: 4px;
+}
+
+.modalRow label:has(input[type="checkbox"]),
+.modalRow label:has(input[type="radio"]) {
+  display: flex;
+  align-items: center;
+  min-width: auto;
+  flex: 1;
+  cursor: pointer;
+}
+
+.errorText {
+  color: #dc3545;
+  font-size: 0.8rem;
+  margin-top: 4px;
+  width: 100%;
+  flex-basis: 100%;
+}
+
+/* Nested input styling for conditional fields */
+.modalRow > div {
+  width: 100%;
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding-left: 24px;
+}
+
+.modalRow > div > label {
+  display: block;
+  margin-bottom: 6px;
+  min-width: auto;
+}
+
+.modalRow > div > input[type="text"],
+.modalRow > div > input[type="number"] {
+  width: 100%;
+  min-width: 100%;
+}
+
+/* Disability checkbox container */
+.modalRow > div[style*="marginLeft"] {
+  width: 100%;
+  flex-basis: 100%;
+  margin-top: 12px;
+  padding-left: 24px;
+}
+
+.modalRow > div[style*="marginLeft"] > label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.modalRow > div[style*="marginLeft"] > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.modalRow > div[style*="marginLeft"] > div > label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: normal;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.modalRow > div[style*="marginLeft"] > div > label:hover {
+  background-color: #f3f4f6;
 }
 
 .inputError {
@@ -348,8 +440,18 @@
     margin-bottom: 4px;
   }
 
-  .modalRow input[type="text"] {
+  .modalRow input[type="text"],
+  .modalRow input[type="date"],
+  .modalRow input[type="number"],
+  .modalRow select,
+  .modalRow textarea {
     width: 100% !important;
+    min-width: 100% !important;
+  }
+  
+  .modalRow label {
+    min-width: 100%;
+    margin-bottom: 6px;
   }
 
   .modalHeaderRow {

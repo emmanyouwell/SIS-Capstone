@@ -36,6 +36,10 @@ const studentSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isPromoted: {
+      type: Boolean,
+      default: false,
+    },
     subjects: [
       {
         subjectId: {

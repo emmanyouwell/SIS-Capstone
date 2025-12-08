@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import api from '../../utils/api';
+import { getMe } from './authSlice';
 
 // Async thunks
 export const fetchAllEnrollments = createAsyncThunk(
@@ -28,9 +29,11 @@ export const fetchEnrollmentById = createAsyncThunk(
 
 export const createEnrollment = createAsyncThunk(
   'enrollments/create',
-  async (enrollmentData, { rejectWithValue }) => {
+  async (enrollmentData, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.post('/enrollments', enrollmentData);
+      // Refresh user data to get updated enrollment status
+      dispatch(getMe());
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create enrollment');
@@ -52,9 +55,11 @@ export const adminCreateEnrollment = createAsyncThunk(
 
 export const updateEnrollment = createAsyncThunk(
   'enrollments/update',
-  async ({ id, data }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue, dispatch }) => {
     try {
       const response = await api.patch(`/enrollments/${id}`, data);
+      // Refresh user data to get updated isPromoted status
+      dispatch(getMe());
       return response.data.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to update enrollment');

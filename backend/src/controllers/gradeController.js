@@ -4,7 +4,7 @@ import Subject from '../models/Subject.js';
 import Teacher from '../models/Teacher.js';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
-import { getGradeDescriptor, isGradeComplete } from '../utils/gradeUtils.js';
+import { getGradeDescriptor, isGradeComplete, shouldPromoteStudent } from '../utils/gradeUtils.js';
 
 // @desc    Get all grades
 // @route   GET /api/v1/grades
@@ -174,6 +174,12 @@ export const createGrade = async (req, res) => {
       await grade.save();
     }
 
+    // Update student promotion status based on grades
+    if (isGradeComplete(grade.grades) && grade.finalGrade !== null && grade.finalGrade !== undefined) {
+      const shouldPromote = shouldPromoteStudent(grade);
+      await Student.findByIdAndUpdate(grade.studentId, { isPromoted: shouldPromote });
+    }
+
     res.status(201).json({
       success: true,
       data: grade,
@@ -246,6 +252,12 @@ export const updateGrade = async (req, res) => {
       await sendGradeCompleteMessage(grade);
       grade.gradeCompleteMessageSent = true;
       await grade.save();
+    }
+
+    // Update student promotion status based on grades
+    if (isNowComplete && grade.finalGrade !== null && grade.finalGrade !== undefined) {
+      const shouldPromote = shouldPromoteStudent(grade);
+      await Student.findByIdAndUpdate(grade.studentId, { isPromoted: shouldPromote });
     }
 
     res.json({

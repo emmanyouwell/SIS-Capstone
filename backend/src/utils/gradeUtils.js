@@ -61,3 +61,53 @@ export const isGradeComplete = (grades) => {
   });
 };
 
+/**
+ * Calculate subject final grade from quarters
+ * @param {Object} subjectGrade - Subject grade object with q1, q2, q3, q4
+ * @returns {number|null} Final grade or null if incomplete
+ */
+const calculateSubjectFinalGrade = (subjectGrade) => {
+  const quarters = ['q1', 'q2', 'q3', 'q4'];
+  const quarterGrades = quarters
+    .map((q) => subjectGrade[q])
+    .filter((val) => val !== null && val !== undefined && typeof val === 'number');
+  
+  if (quarterGrades.length === 0) {
+    return null;
+  }
+  
+  return quarterGrades.reduce((sum, val) => sum + val, 0) / quarterGrades.length;
+};
+
+/**
+ * Check if student should be promoted based on grades
+ * Promotion rules:
+ * - All subject grades >= 75 AND final grade >= 75 → promoted
+ * - Otherwise → not promoted
+ * @param {Object} grade - Grade document with grades array and finalGrade
+ * @returns {boolean} True if student should be promoted
+ */
+export const shouldPromoteStudent = (grade) => {
+  if (!grade || !grade.grades || grade.grades.length === 0) {
+    return false;
+  }
+
+  // Check if all quarters are complete for all subjects
+  if (!isGradeComplete(grade.grades)) {
+    return false;
+  }
+
+  // Check if final grade exists and is >= 75
+  if (!grade.finalGrade || grade.finalGrade < 75) {
+    return false;
+  }
+
+  // Check if all subject final grades are >= 75
+  const allSubjectsPassed = grade.grades.every((subjectGrade) => {
+    const subjectFinal = calculateSubjectFinalGrade(subjectGrade);
+    return subjectFinal !== null && subjectFinal >= 75;
+  });
+
+  return allSubjectsPassed;
+};
+
