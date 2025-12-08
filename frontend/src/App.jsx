@@ -34,6 +34,7 @@ import AdminMessageView from './pages/admin/AdminMessageView';
 import AdminProfile from './pages/admin/AdminProfile';
 import StudentDashboard from './pages/student/StudentDashboard';
 import StudentSubjects from './pages/student/StudentSubjects';
+import StudentSubjectMaterials from './pages/student/StudentSubjectMaterials';
 import StudentGrades from './pages/student/StudentGrades';
 import StudentSchedule from './pages/student/StudentSchedule';
 import StudentEnrollment from './pages/student/StudentEnrollment';
@@ -108,6 +109,7 @@ function App() {
         >
           <Route path="dashboard" element={<StudentDashboard />} />
           <Route path="subjects" element={<StudentSubjects />} />
+          <Route path="subjects/:subjectId/materials" element={<StudentSubjectMaterials />} />
           <Route path="grades" element={<StudentGrades />} />
           <Route path="schedule" element={<StudentSchedule />} />
           <Route path="enrollment" element={<StudentEnrollment />} />

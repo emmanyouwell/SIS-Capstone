@@ -1,62 +1,98 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './StudentDashboard.module.css';
+import { fetchAnnouncements } from '../../store/slices/announcementSlice';
+import { fetchAllMessages } from '../../store/slices/messageSlice';
 
-const calendarIcon = (
+const announcementIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
   </svg>
 );
 
 const viewedIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/>
+    <rect x="3" y="5" width="18" height="14" rx="2" /><polyline points="3 7 12 13 21 7" />
   </svg>
 );
 
 const unreadIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-    <rect x="3" y="5" width="18" height="14" rx="2"/><polyline points="3 7 12 13 21 7"/>
+    <rect x="3" y="5" width="18" height="14" rx="2" /><polyline points="3 7 12 13 21 7" />
   </svg>
 );
 
-// Announcements data
-const announcements = [
-  {
-    id: 1,
-    subject: "School Reopening",
-    date: "August 1, 2025",
-    sender: "Admin",
-    recipient: "All",
-    message: "Ang Sto. Niño National High School ay magsasagawa ng Early Registration simula Enero 25, 2025 hanggang Pebrero 28, 2025.\n\nMagtungo lamang sa paaralan at dalhin ang mga sumusunod na REQUIREMENTS:\n✅ PSA BIRTH CERTIFICATE (PHOTOCOPY)\n✅ COPY OF SF9 O REPORT CARD (LATEST)\n✅ BALLPEN\nPara sa pagpaparehistro:\n1. Dalhin ang mga requirement sa araw ng pagpapatala.\n2. Hanapin lamang ang mga naka-assign na focal person para maipasa ang inyong mga requirement at para makapagpatala.\n\nFocal Persons:\nMorning:\nMr. Dunstan Glorioso\nMrs. Glaiza Madridano\nAfternoon:\nMrs. Pia Shodhnani\nMr. Rolando Gading\n#EngagingtheHeartof21stCenturyLearners",
-    image: ""
-  },
-  {
-    id: 2,
-    subject: "Official List of Grade 7 Students",
-    date: "June 1, 2025",
-    sender: "Admin",
-    recipient: "All",
-    message: "Official List of Grade 7 Students",
-    image: "/images/mamamo.png"
-  },
-  {
-    id: 3,
-    subject: "IMPORTANT",
-    date: "June 1, 2025",
-    sender: "Sir JP",
-    recipient: "All",
-    message: "Greetings, Admin! I have a student named James Trio. He said he already passed the soft copy of his form 138. Can you please check whether he passed it already?"
-  }
-];
-
 function StudentDashboard() {
+  const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { announcements, loading: announcementsLoading } = useSelector((state) => state.announcements);
+  const { messages, loading: messagesLoading } = useSelector((state) => state.messages);
+  const { user } = useSelector((state) => state.auth);
+
   const [selectedAnnouncement, setSelectedAnnouncement] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const dropdownRefs = useRef({});
+
+  // Fetch announcements and messages on component mount
+  useEffect(() => {
+    dispatch(fetchAnnouncements());
+    dispatch(fetchAllMessages());
+  }, [dispatch]);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    // Count announcements
+    const announcementCount = announcements.length;
+
+    // Filter messages relevant to the current user
+    const userMessages = messages.filter((msg) => {
+      const isSender = msg.senderId?._id?.toString() === user?.id?.toString();
+      const isReceiver = msg.receiverId?._id?.toString() === user?.id?.toString();
+      const isRoleReceiver = msg.receiverRole === user?.role || msg.receiverRole === 'All';
+      return (isSender || isReceiver || isRoleReceiver) && msg.status !== 'deleted';
+    });
+
+    // Count read messages (viewed)
+    const readCount = userMessages.filter((m) => m.status === 'read').length;
+
+    // Count unread messages
+    const unreadCount = userMessages.filter((m) => m.status === 'sent').length;
+
+    return {
+      announcements: announcementCount,
+      viewed: readCount,
+      unread: unreadCount,
+    };
+  }, [announcements, messages, user]);
+
+  // Format date helper
+  const formatDate = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
+  // Get poster name helper
+  const getPosterName = (postedBy) => {
+    if (!postedBy) return 'Unknown';
+    if (typeof postedBy === 'object') {
+      return `${postedBy.firstName || ''} ${postedBy.lastName || ''}`.trim() || 'Admin';
+    }
+    return 'Admin';
+  };
+
+  // Get user display name
+  const getUserDisplayName = () => {
+    if (!user) return 'Student';
+    return `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Student';
+  };
 
   const handleViewAnnouncement = (announcement) => {
     setSelectedAnnouncement(announcement);
@@ -69,106 +105,84 @@ function StudentDashboard() {
     setSelectedAnnouncement(null);
   };
 
-  const handleToggleDropdown = (id, e) => {
-    e.stopPropagation();
+  const toggleDropdown = (id) => {
     setOpenDropdown(openDropdown === id ? null : id);
-  };
-
-  const handleViewClick = (announcement, e) => {
-    e.stopPropagation();
-    handleViewAnnouncement(announcement);
   };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (!e.target.closest(`.${styles.dropdownContainer}`)) {
+    const handleClickOutside = (event) => {
+      if (openDropdown && dropdownRefs.current[openDropdown] && !dropdownRefs.current[openDropdown].contains(event.target)) {
         setOpenDropdown(null);
       }
     };
-
-    if (openDropdown !== null) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [openDropdown]);
-
-  // Close modal when clicking outside
-  useEffect(() => {
-    const handleModalClick = (e) => {
-      if (e.target.classList.contains(styles.modal)) {
-        handleCloseModal();
-      }
-    };
-
-    if (isModalOpen) {
-      document.addEventListener('click', handleModalClick);
-      return () => document.removeEventListener('click', handleModalClick);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isModalOpen]);
 
   return (
     <>
-    <div className={styles.mainContent}>
-        <div style={{ flex: 2, minWidth: 0 }}>
-          <h1>Announcements</h1>
+      <div className={styles.mainContent}>
+        <div className={styles.announcementsLeft}>
+          <div className={styles.announcementsHeader}>
+            <h2>Announcements</h2>
+          </div>
           <div className={styles.profileBox}>
-            <div className={styles.greeting}>Welcome, Kiana Mae</div>
+            <div className={styles.greeting}>Welcome, {getUserDisplayName()}</div>
             <button onClick={() => navigate('/student/profile')}>View Profile</button>
           </div>
           <div className={styles.infoCards}>
-            <InfoCard icon={calendarIcon} title="Events" number="0" subtext="Upcoming" />
-            <InfoCard icon={viewedIcon} title="Viewed" number="1" subtext="Today" />
-            <InfoCard icon={unreadIcon} title="Unread" number="4" subtext="Messages" />
+            <InfoCard icon={announcementIcon} title="Announcements" number={stats.announcements.toString()} subtext="Total" />
+            <InfoCard icon={viewedIcon} title="Viewed" number={stats.viewed.toString()} subtext="Read Messages" />
+            <InfoCard icon={unreadIcon} title="Unread" number={stats.unread.toString()} subtext="Messages" />
           </div>
           <div className={styles.announcementsList}>
-            {announcements.map((announcement) => (
-              <div key={announcement.id} className={styles.announcementCard}>
-                <div className={styles.announcementHeader}>
-                  <div>
-                    <div className={styles.announcementSubject}>{announcement.subject}</div>
-                    <div className={styles.announcementDate}>{announcement.date}</div>
-                    <div className={styles.announcementSender}>From: {announcement.sender}</div>
+            {announcementsLoading ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>Loading announcements...</div>
+            ) : announcements.length === 0 ? (
+              <div style={{ padding: '2rem', textAlign: 'center' }}>No announcements available</div>
+            ) : (
+              announcements.map((announcement) => (
+                <div key={announcement._id} className={styles.announcementCard}>
+                  <div className={styles.announcementHeader}>
+                    <div>
+                      <div className={styles.announcementSubject}>{announcement.title}</div>
+                      <div className={styles.announcementDate}>{formatDate(announcement.datePosted)}</div>
+                      <div className={styles.announcementSender}>From: {getPosterName(announcement.postedBy)}</div>
+                      <div className={styles.announcementSender}>To: {announcement.audience}</div>
+                    </div>
+                    <div className={styles.dropdownContainer} ref={el => dropdownRefs.current[announcement._id] = el}>
+                      <button
+                        type="button"
+                        className={styles.dotsBtn}
+                        onClick={() => toggleDropdown(announcement._id)}
+                        aria-label="More options"
+                      >
+                        ⋮
+                      </button>
+                      {openDropdown === announcement._id && (
+                        <div className={styles.dropdownMenu}>
+                          <button type="button" onClick={() => handleViewAnnouncement(announcement)}>View</button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.dropdownContainer}>
-                    <button
-                      type="button"
-                      className={styles.dotsBtn}
-                      aria-label="More options"
-                      onClick={(e) => handleToggleDropdown(announcement.id, e)}
-                    >
-                      ⋮
-                    </button>
-                    {openDropdown === announcement.id && (
-                      <div className={styles.dropdownMenu}>
-                        <button
-                          type="button"
-                          className={styles.viewBtn}
-                          onClick={(e) => handleViewClick(announcement, e)}
-                        >
-                          View
-                        </button>
-                      </div>
-                    )}
+                  {announcement.image && (
+                    <div className={styles.announcementImage}>
+                      <img src={announcement.image} alt="Announcement" />
+                    </div>
+                  )}
+                  <div className={styles.announcementMessage}>
+                    {announcement.content.length > 100 
+                      ? announcement.content.substring(0, 100) + '...' 
+                      : announcement.content}
                   </div>
                 </div>
-                {announcement.image && (
-                  <div className={styles.announcementImage}>
-                    <img src={announcement.image} alt="Announcement" />
-                  </div>
-                )}
-                <div className={styles.announcementMessage}>
-                  {announcement.message.length > 25
-                    ? announcement.message.substring(0, 25) + ' See more...'
-                    : announcement.message}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          {/* LOCATION Card */}
+        <div className={styles.announcementsRight}>
           <div className={styles.locationCard} tabIndex="0">
             <h3>LOCATION</h3>
             <div className={styles.mapContainer}>
@@ -184,7 +198,6 @@ function StudentDashboard() {
               ></iframe>
             </div>
           </div>
-          {/* MISSION Card */}
           <div className={styles.missionCard} tabIndex="0">
             <h3>MISSION</h3>
             <div className={styles.missionContent}>
@@ -195,7 +208,6 @@ function StudentDashboard() {
               <div><b>Family, community, and other stakeholders</b> are actively engaged and share responsibility for developing life-long learners.</div>
             </div>
           </div>
-          {/* VISION Card */}
           <div className={styles.visionCard} tabIndex="0">
             <h3>VISION</h3>
             <div className={styles.visionContent}>
@@ -212,38 +224,41 @@ function StudentDashboard() {
             </div>
           </div>
         </div>
-    </div>
-    
+      </div>
+
       {/* Announcement View Modal */}
       {isModalOpen && selectedAnnouncement && (
-        <div className={`${styles.modal} ${styles.show}`} onClick={handleCloseModal}>
+        <div className={styles.modal} onClick={handleCloseModal}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={handleCloseModal}>&times;</button>
             <h3>Announcement Details</h3>
-            <div className={styles.viewAnnouncementDetails}>
+            <div className={styles.viewDetails}>
               <div className={styles.viewRow}>
-                <span className={styles.viewLabel}>Subject:</span>
-                <span>{selectedAnnouncement.subject}</span>
+                <span className={styles.viewLabel}>Title:</span> <span>{selectedAnnouncement.title}</span>
               </div>
               <div className={styles.viewRow}>
-                <span className={styles.viewLabel}>Date:</span>
-                <span>{selectedAnnouncement.date}</span>
+                <span className={styles.viewLabel}>Date Posted:</span> <span>{formatDate(selectedAnnouncement.datePosted)}</span>
               </div>
               <div className={styles.viewRow}>
-                <span className={styles.viewLabel}>Message:</span>
-                <span className={styles.viewMessage}>{selectedAnnouncement.message}</span>
+                <span className={styles.viewLabel}>Posted By:</span> <span>{getPosterName(selectedAnnouncement.postedBy)}</span>
+              </div>
+              <div className={styles.viewRow}>
+                <span className={styles.viewLabel}>Audience:</span> <span>{selectedAnnouncement.audience}</span>
+              </div>
+              <div className={styles.viewRow}>
+                <span className={styles.viewLabel}>Content:</span> <span className={styles.viewMessage}>{selectedAnnouncement.content}</span>
               </div>
               {selectedAnnouncement.image && (
-                <div className={styles.viewImageRow}>
+                <div className={styles.viewRow}>
                   <span className={styles.viewLabel}>Image:</span>
-                  <img src={selectedAnnouncement.image} alt="Announcement" />
+                  <img src={selectedAnnouncement.image} alt="Announcement" className={styles.viewImage} />
                 </div>
               )}
             </div>
           </div>
         </div>
       )}
-  </>
+    </>
   );
 }
 
