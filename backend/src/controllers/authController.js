@@ -186,6 +186,7 @@ export const getMe = async (req, res) => {
         contactNumber: user.contactNumber,
         address: user.address,
         dateOfBirth: user.dateOfBirth,
+        profileImage: user.profileImage,
         roleData,
       },
     });

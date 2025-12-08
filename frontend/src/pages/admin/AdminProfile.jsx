@@ -1,27 +1,62 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminProfile.module.css';
+import api from '../../utils/api';
+import { getMe } from '../../store/slices/authSlice';
+import { updateUser } from '../../store/slices/userSlice';
 
 function AdminProfile() {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const [isEditing, setIsEditing] = useState(false);
-  const [profileImage, setProfileImage] = useState('https://cdn-icons-png.flaticon.com/128/3135/3135715.png');
-  const [personalInfo, setPersonalInfo] = useState({
-    fullName: 'Erwin Acorda',
-    email: 'admin@stnhs.edu.ph',
-    contact: '+63 900 000 0000',
-    dob: '1980-01-01',
-    address: 'School Campus, Cebu City',
-    emergencyContact: 'Jane Doe (Spouse) - +63 911 111 1111'
-  });
-  const [formData, setFormData] = useState(personalInfo);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState(null);
   const fileInputRef = useRef(null);
+
+  // Initialize form data from user
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    contact: '',
+    dob: '',
+    address: '',
+    emergencyContact: '',
+  });
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        await dispatch(getMe()).unwrap();
+      } catch (error) {
+        showMessage('Failed to load profile data', 'error');
+      }
+    };
+    fetchUserData();
+  }, [dispatch]);
+
+  // Update form data when user data changes
+  useEffect(() => {
+    if (user) {
+      const fullName = `${user.firstName}${user.middleName ? ` ${user.middleName}` : ''} ${user.lastName}${user.extensionName ? ` ${user.extensionName}` : ''}`.trim();
+
+      setFormData({
+        fullName,
+        email: user.email || '',
+        contact: user.contactNumber || '',
+        dob: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        address: user.address || '',
+        emergencyContact: '',
+      });
+    }
+  }, [user]);
 
   const handleChangePhoto = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
@@ -37,37 +72,87 @@ function AdminProfile() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const img = new Image();
-      img.onload = () => {
-        // Check image dimensions (max 2000x2000)
-        if (img.width > 2000 || img.height > 2000) {
-          showMessage('Image dimensions should be less than 2000x2000 pixels', 'error');
-          return;
+    // Validate image dimensions
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    
+    img.onload = async () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      // Check image dimensions (max 2000x2000)
+      if (img.width > 2000 || img.height > 2000) {
+        showMessage('Image dimensions should be less than 2000x2000 pixels', 'error');
+        return;
+      }
+
+      // Upload image
+      setIsUploading(true);
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const uploadResponse = await api.post('/uploads/image', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (uploadResponse.data.success && uploadResponse.data.url) {
+          // Update user profile image
+          await dispatch(updateUser({ id: user.id, data: { profileImage: uploadResponse.data.url } })).unwrap();
+          
+          // Refresh user data
+          await dispatch(getMe()).unwrap();
+          
+          showMessage('Profile photo updated successfully!', 'success');
+        } else {
+          throw new Error('Upload failed');
         }
-        setProfileImage(e.target.result);
-        showMessage('Profile photo updated successfully!', 'success');
-      };
-      img.src = e.target.result;
+      } catch (error) {
+        showMessage(error.response?.data?.message || 'Failed to upload image. Please try again.', 'error');
+      } finally {
+        setIsUploading(false);
+        // Reset file input
+        if (fileInputRef.current) {
+          fileInputRef.current.value = '';
+        }
+      }
     };
-    reader.readAsDataURL(file);
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      showMessage('Invalid image file', 'error');
+    };
+
+    img.src = objectUrl;
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEdit = () => {
     setIsEditing(true);
-    setFormData(personalInfo);
+    setMessage(null);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    setFormData(personalInfo);
     setMessage(null);
+    // Reset form data to current user data
+    if (user) {
+      const fullName = `${user.firstName}${user.middleName ? ` ${user.middleName}` : ''} ${user.lastName}${user.extensionName ? ` ${user.extensionName}` : ''}`.trim();
+
+      setFormData({
+        fullName,
+        email: user.email || '',
+        contact: user.contactNumber || '',
+        dob: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString().split('T')[0] : '',
+        address: user.address || '',
+        emergencyContact: '',
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -88,15 +173,32 @@ function AdminProfile() {
         throw new Error('Please enter a valid Philippine phone number (e.g., +63 900 000 0000)');
       }
 
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Parse full name into components
+      const nameParts = formData.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts[nameParts.length - 1] || '';
+      const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
 
-      // Update personal info (keep dob in ISO format for editing)
-      setPersonalInfo(formData);
+      // Update user data
+      const updateData = {
+        firstName,
+        middleName,
+        lastName,
+        email: formData.email,
+        contactNumber: formData.contact,
+        address: formData.address,
+        dateOfBirth: formData.dob ? new Date(formData.dob) : null,
+      };
+
+      await dispatch(updateUser({ id: user.id, data: updateData })).unwrap();
+
+      // Refresh user data
+      await dispatch(getMe()).unwrap();
+
       setIsEditing(false);
       showMessage('Changes saved successfully!', 'success');
     } catch (error) {
-      showMessage(error.message, 'error');
+      showMessage(error.response?.data?.message || error.message || 'An error occurred while saving. Please try again.', 'error');
     } finally {
       setIsSaving(false);
     }
@@ -115,9 +217,15 @@ function AdminProfile() {
     return date.toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
+
+  // Get display values
+  const displayName = user
+    ? `${user.firstName}${user.middleName ? ` ${user.middleName}` : ''} ${user.lastName}${user.extensionName ? ` ${user.extensionName}` : ''}`.trim()
+    : '';
+  const profileImageUrl = user?.profileImage || 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png';
 
   return (
     <div className={styles.mainContent}>
@@ -127,22 +235,27 @@ function AdminProfile() {
           <div className={styles.profileCover}></div>
           <div className={styles.profileInfo}>
             <div className={styles.profileAvatar}>
-              <img src={profileImage} alt="Profile Picture" id="profile-image" />
+              <img src={profileImageUrl} alt="Profile Picture" id="profile-image" />
               <input
                 type="file"
                 ref={fileInputRef}
                 accept="image/*"
                 style={{ display: 'none' }}
                 onChange={handleFileChange}
+                disabled={isUploading}
               />
-              <button className={styles.changeAvatarBtn} onClick={handleChangePhoto}>
-                Change Photo
+              <button
+                className={styles.changeAvatarBtn}
+                onClick={handleChangePhoto}
+                disabled={isUploading}
+              >
+                {isUploading ? 'Uploading...' : 'Change Photo'}
               </button>
             </div>
             <div className={styles.profileDetails}>
-              <h2>{personalInfo.fullName}</h2>
+              <h2>{displayName}</h2>
               <p className={styles.role}>Administrator</p>
-              <p className={styles.department}>School Administration</p>
+              <p className={styles.department}>{user?.roleData?.department || 'School Administration'}</p>
             </div>
           </div>
         </div>
@@ -151,33 +264,29 @@ function AdminProfile() {
           {/* Personal Information Section */}
           <div className={styles.profileSection}>
             <h3>Personal Information</h3>
-            
+
             {!isEditing ? (
               <>
                 <div className={styles.infoGrid}>
                   <div className={styles.infoItem}>
                     <label>Full Name</label>
-                    <p>{personalInfo.fullName}</p>
+                    <p>{formData.fullName || displayName}</p>
                   </div>
                   <div className={styles.infoItem}>
                     <label>Email</label>
-                    <p>{personalInfo.email}</p>
+                    <p>{formData.email || user?.email || ''}</p>
                   </div>
                   <div className={styles.infoItem}>
                     <label>Contact Number</label>
-                    <p>{personalInfo.contact}</p>
+                    <p>{formData.contact || user?.contactNumber || ''}</p>
                   </div>
                   <div className={styles.infoItem}>
                     <label>Date of Birth</label>
-                    <p>{personalInfo.dob ? formatDisplayDate(personalInfo.dob) : ''}</p>
+                    <p>{user?.dateOfBirth ? formatDisplayDate(user.dateOfBirth) : ''}</p>
                   </div>
                   <div className={styles.infoItem}>
                     <label>Address</label>
-                    <p>{personalInfo.address}</p>
-                  </div>
-                  <div className={styles.infoItem}>
-                    <label>Emergency Contact</label>
-                    <p>{personalInfo.emergencyContact}</p>
+                    <p>{formData.address || user?.address || ''}</p>
                   </div>
                 </div>
                 <button className={styles.editBtn} onClick={handleEdit}>
@@ -255,17 +364,6 @@ function AdminProfile() {
                         required
                       />
                     </div>
-                    <div className={styles.formGroup}>
-                      <label htmlFor="emergencyContact">Emergency Contact</label>
-                      <input
-                        type="text"
-                        id="emergencyContact"
-                        name="emergencyContact"
-                        value={formData.emergencyContact}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
                   </div>
                   <div className={styles.formButtons}>
                     <button
@@ -295,19 +393,19 @@ function AdminProfile() {
             <div className={styles.infoGrid}>
               <div className={styles.infoItem}>
                 <label>Employee ID</label>
-                <p>ADM-2023-0001</p>
+                <p>{user?.roleData?.employeeId || 'N/A'}</p>
               </div>
               <div className={styles.infoItem}>
                 <label>Department</label>
-                <p>School Administration</p>
+                <p>{user?.roleData?.department || 'N/A'}</p>
               </div>
               <div className={styles.infoItem}>
                 <label>Position</label>
-                <p>School Administrator</p>
+                <p>{user?.roleData?.position || 'N/A'}</p>
               </div>
               <div className={styles.infoItem}>
                 <label>Date Joined</label>
-                <p>January 1, 2010</p>
+                <p>{user?.roleData?.createdAt ? formatDisplayDate(user.roleData.createdAt) : 'N/A'}</p>
               </div>
               <div className={styles.infoItem}>
                 <label>Admin Level</label>
@@ -315,7 +413,7 @@ function AdminProfile() {
               </div>
               <div className={styles.infoItem}>
                 <label>Assigned Office</label>
-                <p>Main Office</p>
+                <p>{user?.roleData?.assignedOffice || 'N/A'}</p>
               </div>
             </div>
           </div>
@@ -326,4 +424,3 @@ function AdminProfile() {
 }
 
 export default AdminProfile;
-
