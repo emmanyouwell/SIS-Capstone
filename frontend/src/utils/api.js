@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api/v1';
+// Get root URL from env and automatically append /api/v1
+const ROOT_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_URL = `${ROOT_URL.replace(/\/$/, '')}/api/v1`;
 
 const api = axios.create({
   baseURL: API_URL,
