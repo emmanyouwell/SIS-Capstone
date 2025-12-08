@@ -59,7 +59,7 @@ function AdminMasterlistGradeView() {
     (s) => s.gradeLevel === gradeNumber && s.sectionName === currentSectionName
   );
   
-  // Display all students for the grade, regardless of masterlist status
+  // Display only enrolled students for the grade
   const allStudentsForGrade = students
     .filter((student) => student.gradeLevel === gradeNumber && student.userId)
     .map((student) => {
@@ -76,10 +76,9 @@ function AdminMasterlistGradeView() {
         sectionId: student.sectionId,
       };
     })
+    .filter((student) => student.isEnrolled) // Filter out not enrolled students
     .sort((a, b) => {
-      // Sort by enrollment status (enrolled first), then by gender (Female first), then by last name
-      if (a.isEnrolled && !b.isEnrolled) return -1;
-      if (!a.isEnrolled && b.isEnrolled) return 1;
+      // Sort by gender (Female first), then by last name
       if (a.sex === 'Female' && b.sex !== 'Female') return -1;
       if (a.sex !== 'Female' && b.sex === 'Female') return 1;
       return (a.lastName || '').localeCompare(b.lastName || '');
