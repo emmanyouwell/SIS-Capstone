@@ -2,6 +2,8 @@ import Enrollment from '../models/Enrollment.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
 import EnrollmentPeriod from '../models/EnrollmentPeriod.js';
+import Message from '../models/Message.js';
+import Notification from '../models/Notification.js';
 
 /**
  * Auto-fill enrollment data from student information
@@ -27,6 +29,84 @@ const autoFillFromStudent = (student, enrollmentData = {}) => {
     guardianContact: enrollmentData.guardianContact || student?.guardianContact || '',
   };
   return filledData;
+};
+
+/**
+ * Send enrollment declined message to student
+ * @param {Object} enrollment - The enrollment document with populated studentId
+ */
+const sendEnrollmentDeclinedMessage = async (enrollment) => {
+  try {
+    // Get student with populated userId
+    let student;
+    if (enrollment.studentId && enrollment.studentId.userId) {
+      student = enrollment.studentId;
+      if (typeof student.userId === 'object' && student.userId._id) {
+        // Already populated
+      } else {
+        await student.populate('userId', 'firstName lastName email');
+      }
+    } else {
+      const studentId = enrollment.studentId._id || enrollment.studentId;
+      student = await Student.findById(studentId).populate('userId', 'firstName lastName email');
+    }
+
+    if (!student || !student.userId) {
+      console.error('Student or userId not found for enrollment:', enrollment._id);
+      return;
+    }
+
+    // Get student name
+    const studentName = student.userId.firstName + (student.userId.lastName ? ` ${student.userId.lastName}` : '');
+    const userId = student.userId._id || student.userId;
+
+    // Get admin user to send as sender
+    const adminUser = await User.findOne({ role: 'Admin' }).select('_id');
+    
+    if (!adminUser) {
+      console.error('No admin user found to send enrollment declined message');
+      return;
+    }
+
+    // Create message subject and content
+    const subject = 'Enrollment Form Declined';
+    const messageText = `Dear ${studentName},
+
+We regret to inform you that your enrollment form has been declined.
+
+Please contact the administration for further assistance or clarification.
+
+Thank you.`;
+
+    // Create the message
+    const message = await Message.create({
+      senderRole: 'Admin',
+      senderId: adminUser._id,
+      receiverRole: 'Student',
+      receiverId: userId,
+      subject,
+      messageText,
+      dateSent: new Date(),
+      status: 'sent',
+    });
+
+    // Create notification for the student
+    await Notification.create({
+      userId: userId,
+      userRole: 'Student',
+      message: `New message from Admin: ${subject}`,
+      type: 'message',
+      link: `/student/message/${message._id}`,
+      relatedId: message._id,
+      status: 'unread',
+      dateCreated: new Date(),
+    });
+
+    console.log(`Enrollment declined message sent to student: ${userId}`);
+  } catch (error) {
+    console.error('Error sending enrollment declined message:', error);
+    // Don't throw error - we don't want to fail the enrollment update if message fails
+  }
 };
 
 /**
@@ -117,10 +197,16 @@ export const getEnrollments = async (req, res) => {
     const enrollments = await Enrollment.find(filter)
       .populate({
         path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email contactNumber sex extensionName',
-        },
+        populate: [
+          {
+            path: 'userId',
+            select: 'firstName lastName middleName email contactNumber sex extensionName',
+          },
+          {
+            path: 'sectionId',
+            select: 'sectionName gradeLevel',
+          },
+        ],
       })
       .sort({ dateSubmitted: -1 });
 
@@ -142,10 +228,16 @@ export const getEnrollment = async (req, res) => {
     const enrollment = await Enrollment.findById(req.params.id)
       .populate({
         path: 'studentId',
-        populate: {
-          path: 'userId',
-          select: 'firstName lastName middleName email contactNumber sex extensionName',
-        },
+        populate: [
+          {
+            path: 'userId',
+            select: 'firstName lastName middleName email contactNumber sex extensionName',
+          },
+          {
+            path: 'sectionId',
+            select: 'sectionName gradeLevel',
+          },
+        ],
       });
 
     if (!enrollment) {
@@ -364,11 +456,32 @@ export const updateEnrollment = async (req, res) => {
       });
     }
 
-    // If status is being changed to 'declined', set enrollmentStatus to false
+    // If status is being changed to 'declined', notify student and delete enrollment
     if (req.body.status === 'declined' && enrollment.status !== 'declined') {
-      const Student = (await import('../models/Student.js')).default;
+      // Update student's enrollmentStatus to false
       await Student.findByIdAndUpdate(enrollment.studentId, {
         enrollmentStatus: false,
+      });
+
+      // Populate enrollment with student data for message
+      await enrollment.populate({
+        path: 'studentId',
+        populate: {
+          path: 'userId',
+          select: 'firstName lastName middleName email contactNumber sex extensionName',
+        },
+      });
+
+      // Send notification message to student
+      await sendEnrollmentDeclinedMessage(enrollment);
+
+      // Delete the enrollment document
+      await enrollment.deleteOne();
+
+      return res.json({
+        success: true,
+        message: 'Enrollment declined. Student has been notified and enrollment form has been deleted.',
+        data: null,
       });
     }
 

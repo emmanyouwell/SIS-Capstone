@@ -325,6 +325,8 @@ function StudentEnrollment() {
         return { status: 'Enrolled', color: '#10b981', icon: '✅' };
       case 'declined':
         return { status: 'Declined', color: '#ef4444', icon: '❌' };
+      case 'not enrolled':
+        return { status: 'Not Enrolled', color: '#6b7280', icon: '📋' };
       default:
         return { status: 'Unknown', color: '#6b7280', icon: '❓' };
     }

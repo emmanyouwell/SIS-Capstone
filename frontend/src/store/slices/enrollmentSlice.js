@@ -60,9 +60,12 @@ export const updateEnrollment = createAsyncThunk(
       const response = await api.patch(`/enrollments/${id}`, data);
       // Refresh user data to get updated isPromoted status
       dispatch(getMe());
-      return response.data.data;
+      // Return null if data is null (e.g., when enrollment is declined and deleted)
+      return response.data.data || null;
     } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Failed to update enrollment');
+      // Extract error message properly
+      const errorMessage = error.response?.data?.message || error.message || 'Failed to update enrollment';
+      return rejectWithValue(errorMessage);
     }
   }
 );
@@ -162,6 +165,12 @@ const enrollmentSlice = createSlice({
       })
       .addCase(updateEnrollment.fulfilled, (state, action) => {
         state.loading = false;
+        // Handle case when enrollment is declined and deleted (payload is null)
+        if (!action.payload) {
+          // Enrollment was deleted, but we don't know which one from the response
+          // The component should refresh the enrollments list
+          return;
+        }
         const index = state.enrollments.findIndex((e) => e._id === action.payload._id);
         if (index !== -1) {
           state.enrollments[index] = action.payload;

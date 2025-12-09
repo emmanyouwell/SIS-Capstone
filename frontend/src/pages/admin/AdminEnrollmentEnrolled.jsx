@@ -92,6 +92,9 @@ function AdminEnrollmentEnrolled() {
     if (chartRef.current && chartData.data.some((val) => val > 0)) {
       // Dynamically import Chart.js
       import('chart.js/auto').then(({ default: Chart }) => {
+        // Double-check chartRef is still available after async import
+        if (!chartRef.current) return;
+        
         const ctx = chartRef.current.getContext('2d');
         
         // Destroy existing chart if it exists
@@ -288,9 +291,10 @@ function AdminEnrollmentEnrolled() {
       // Refresh enrollments
       dispatch(fetchAllEnrollments({ status: 'enrolled' }));
     } catch (err) {
+      const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to update enrollment information';
       setMessageModalContent({
         type: 'error',
-        message: err || 'Failed to update enrollment information',
+        message: errorMessage,
       });
       setShowMessageModal(true);
     } finally {

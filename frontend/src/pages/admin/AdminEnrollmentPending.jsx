@@ -8,6 +8,8 @@ import {
   clearError,
 } from '../../store/slices/enrollmentSlice';
 
+const ITEMS_PER_PAGE = 15;
+
 function AdminEnrollmentPending() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -21,6 +23,8 @@ function AdminEnrollmentPending() {
   const [confirmAction, setConfirmAction] = useState(null); // 'accept' or 'decline'
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'success', message: '' });
+  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const { enrollments, loading, error } = useSelector((state) => state.enrollments);
 
@@ -32,6 +36,40 @@ function AdminEnrollmentPending() {
   const pendingEnrollments = useMemo(() => {
     return enrollments.filter((e) => e.status === 'pending');
   }, [enrollments]);
+
+  // Filter enrollments by search term
+  const filteredEnrollments = useMemo(() => {
+    return pendingEnrollments.filter((enrollment) => {
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase().trim();
+        const student = enrollment.studentId;
+        const studentUser = student?.userId || {};
+        const name = enrollment.firstName && enrollment.lastName
+          ? `${enrollment.firstName} ${enrollment.middleName || ''} ${enrollment.lastName} ${enrollment.extensionName || ''}`.trim().toLowerCase()
+          : studentUser.firstName && studentUser.lastName
+            ? `${studentUser.firstName} ${studentUser.middleName || ''} ${studentUser.lastName} ${studentUser.extensionName || ''}`.trim().toLowerCase()
+            : 'unknown student';
+        const lrn = (enrollment.lrn || student?.lrn || '').toLowerCase();
+        const grade = `grade ${enrollment.gradeToEnroll || enrollment.gradeLevelToEnroll || ''}`.toLowerCase();
+        
+        if (!name.includes(term) && !lrn.includes(term) && !grade.includes(term)) {
+          return false;
+        }
+      }
+      return true;
+    });
+  }, [pendingEnrollments, searchTerm]);
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEnrollments.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedEnrollments = filteredEnrollments.slice(startIndex, endIndex);
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   // Group pending enrollments by grade
   const pendingGradeData = useMemo(() => {
@@ -151,9 +189,10 @@ function AdminEnrollmentPending() {
       // Refresh enrollments
       dispatch(fetchAllEnrollments({ status: 'pending' }));
     } catch (err) {
+      const errorMessage = typeof err === 'string' ? err : err?.message || 'Failed to decline enrollment';
       setMessageModalContent({
         type: 'error',
-        message: err || 'Failed to decline enrollment',
+        message: errorMessage,
       });
       setShowMessageModal(true);
     } finally {
@@ -212,11 +251,39 @@ function AdminEnrollmentPending() {
         <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>
       ) : (
         <div className={styles.pendingCard}>
-          {pendingEnrollments.length > 0 ? (
+          <div className={styles.tableFilters}>
+            <div className={styles.searchContainer}>
+              <input
+                type="text"
+                placeholder="Search by name, LRN, or grade..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.searchInput}
+              />
+            </div>
+          </div>
+          <div className={styles.tableInfo}>
+            Showing {filteredEnrollments.length} student{filteredEnrollments.length !== 1 ? 's' : ''}
+            {filteredEnrollments.length > 0 && (
+              <span className={styles.pageInfo}>
+                {' '}
+                (Page {currentPage} of {totalPages})
+              </span>
+            )}
+          </div>
+          {filteredEnrollments.length > 0 ? (
             <>
               <table className={styles.pendingTable}>
+                <thead>
+                  <tr>
+                    <th>Name</th>
+                    <th>Grade</th>
+                    <th>LRN</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  {pendingEnrollments.slice(0, 10).map((enrollment) => {
+                  {paginatedEnrollments.map((enrollment) => {
                     // Get student name from populated studentId or from snapshot
                     const student = enrollment.studentId;
                     const studentUser = student?.userId || {};
@@ -229,6 +296,7 @@ function AdminEnrollmentPending() {
                       <tr key={enrollment._id}>
                         <td>{studentName}</td>
                         <td>Grade {enrollment.gradeLevelToEnroll || enrollment.gradeToEnroll}</td>
+                        <td>{enrollment.lrn || student?.lrn || 'N/A'}</td>
                         <td>
                           <button
                             className={styles.pendingViewBtn}
@@ -242,17 +310,31 @@ function AdminEnrollmentPending() {
                   })}
                 </tbody>
               </table>
-              {pendingEnrollments.length > 10 && (
-                <div className={styles.pendingViewall}>
-                  <a href="#" onClick={(e) => { e.preventDefault(); }}>
-                    &raquo; view all ({pendingEnrollments.length} total)
-                  </a>
+              {totalPages > 1 && (
+                <div className={styles.pagination}>
+                  <button
+                    className={styles.paginationBtn}
+                    onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
+                    disabled={currentPage === 1}
+                  >
+                    Previous
+                  </button>
+                  <span className={styles.paginationInfo}>
+                    Page {currentPage} of {totalPages}
+                  </span>
+                  <button
+                    className={styles.paginationBtn}
+                    onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                    disabled={currentPage === totalPages}
+                  >
+                    Next
+                  </button>
                 </div>
               )}
             </>
           ) : (
-            <div style={{ padding: '2rem', textAlign: 'center', color: '#999' }}>
-              No pending enrollments
+            <div className={styles.emptyState}>
+              {searchTerm ? 'No pending enrollments found matching your search.' : 'No pending enrollments'}
             </div>
           )}
         </div>

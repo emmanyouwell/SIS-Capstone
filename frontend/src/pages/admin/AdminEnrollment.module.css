@@ -198,6 +198,280 @@
   font-style: italic;
 }
 
+/* Table Styles for Not Enrolled Section */
+.pendingTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.pendingTable thead {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.pendingTable th {
+  padding: 14px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #184d27;
+  border-bottom: 2px solid #dee2e6;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pendingTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  color: #333;
+}
+
+.pendingTable tbody tr {
+  transition: background-color 0.2s;
+}
+
+.pendingTable tbody tr:hover {
+  background: #f0f7f4;
+}
+
+.pendingTable tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* Table Filters */
+.tableFilters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  padding: 16px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.searchContainer {
+  flex: 1;
+  min-width: 250px;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 10px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus {
+  outline: none;
+  border-color: #39916f;
+}
+
+.tableInfo {
+  font-size: 0.95rem;
+  color: #666;
+  margin-bottom: 16px;
+  padding: 0 4px;
+  font-weight: 500;
+}
+
+.pageInfo {
+  color: #999;
+  font-weight: 500;
+}
+
+/* Action Buttons */
+.actionButtons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.editFormBtn {
+  background: linear-gradient(135deg, #39916f 0%, #276749 100%);
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(57, 145, 111, 0.2);
+}
+
+.editFormBtn:hover {
+  background: linear-gradient(135deg, #276749 0%, #1a4d2e 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(57, 145, 111, 0.3);
+}
+
+.dropBtn {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: #fff;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.dropBtn:hover {
+  background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Pagination */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f0f0;
+}
+
+.paginationBtn {
+  padding: 10px 24px;
+  border: 1px solid #dee2e6;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.paginationBtn:hover:not(:disabled) {
+  background: #f8f9fa;
+  border-color: #39916f;
+  color: #39916f;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(57, 145, 111, 0.2);
+}
+
+.paginationBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.paginationInfo {
+  font-size: 0.95rem;
+  color: #666;
+  font-weight: 600;
+  padding: 0 8px;
+}
+
+/* Empty State */
+.emptyState {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: #999;
+  font-size: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed #dee2e6;
+}
+
+/* Drop Confirmation Modal */
+.confirmModal {
+  position: fixed;
+  z-index: 100001;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmModalContent {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  padding: 0;
+  max-width: 480px;
+  width: 90%;
+  position: relative;
+  overflow: hidden;
+}
+
+.confirmModalHeader {
+  background: var(--primary-green, #4c7a67);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 12px 12px 0 0;
+}
+
+.confirmModalTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: white;
+}
+
+.confirmModalBody {
+  padding: 2rem;
+}
+
+.confirmModalMessage {
+  margin: 0;
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.6;
+}
+
+.confirmModalActions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  padding: 0 2rem 2rem 2rem;
+}
+
+.confirmModalCancelBtn {
+  background: #e2e8f0;
+  color: #4a5568;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmModalCancelBtn:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.confirmModalDropBtn {
+  background: #dc3545;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.confirmModalDropBtn:hover:not(:disabled) {
+  background: #c82333;
+}
+
 /* Responsive Design */
 @media (max-width: 1200px) {
   .enrollmentSummaryCards {
@@ -225,6 +499,35 @@
     width: 100%;
     min-width: 0;
     max-width: 100%;
+  }
+
+  .pendingTable {
+    font-size: 0.85rem;
+  }
+
+  .pendingTable th,
+  .pendingTable td {
+    padding: 8px 12px;
+  }
+
+  .actionButtons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .editFormBtn,
+  .dropBtn {
+    width: 100%;
+    font-size: 0.85rem;
+    padding: 6px 12px;
+  }
+
+  .tableFilters {
+    flex-direction: column;
+  }
+
+  .searchContainer {
+    width: 100%;
   }
 }
 

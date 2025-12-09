@@ -1,5 +1,6 @@
 import EnrollmentPeriod from '../models/EnrollmentPeriod.js';
 import Student from '../models/Student.js';
+import Enrollment from '../models/Enrollment.js';
 
 // @desc    Get current active enrollment period
 // @route   GET /api/v1/enrollment-periods/current
@@ -123,6 +124,25 @@ export const createEnrollmentPeriod = async (req, res) => {
     // This ensures students need to enroll again for the new level and school year
     await Student.updateMany({}, { enrollmentStatus: false });
 
+    // Delete enrollment forms for Grade 10 students who are promoted (they graduated)
+    // These students completed Grade 10 and are moving on, so their enrollment forms should be deleted
+    const grade10PromotedStudents = await Student.find({ 
+      gradeLevel: 10, 
+      isPromoted: true 
+    }).select('_id');
+    const grade10PromotedStudentIds = grade10PromotedStudents.map(s => s._id);
+    
+    if (grade10PromotedStudentIds.length > 0) {
+      await Enrollment.deleteMany({ 
+        studentId: { $in: grade10PromotedStudentIds } 
+      });
+    }
+
+    // Set all remaining enrollment documents to 'not enrolled' status
+    // When a new enrollment period begins, it means the school year is over
+    // All students (old and new) need to re-enroll, so all enrollment forms are set to 'not enrolled'
+    await Enrollment.updateMany({}, { status: 'not enrolled' });
+
     await period.populate({
       path: 'createdBy',
       populate: {
@@ -163,6 +183,9 @@ export const updateEnrollmentPeriod = async (req, res) => {
       }
     }
 
+    // Check if period is being activated (changing from inactive to active)
+    const isBeingActivated = isActive === true && period.isActive === false;
+
     // If activating this period, deactivate all others
     if (isActive === true) {
       await EnrollmentPeriod.updateMany(
@@ -193,10 +216,29 @@ export const updateEnrollmentPeriod = async (req, res) => {
       },
     });
 
-    // If period is being activated, reset all students' enrollmentStatus to false
+    // If period is being activated (changing from inactive to active), reset enrollments
     // This ensures students need to enroll again for the new level and school year
-    if (isActive === true) {
+    // When an enrollment period is activated, it means the school year is over
+    if (isBeingActivated) {
       await Student.updateMany({}, { enrollmentStatus: false });
+      
+      // Delete enrollment forms for Grade 10 students who are promoted (they graduated)
+      // These students completed Grade 10 and are moving on, so their enrollment forms should be deleted
+      const grade10PromotedStudents = await Student.find({ 
+        gradeLevel: 10, 
+        isPromoted: true 
+      }).select('_id');
+      const grade10PromotedStudentIds = grade10PromotedStudents.map(s => s._id);
+      
+      if (grade10PromotedStudentIds.length > 0) {
+        await Enrollment.deleteMany({ 
+          studentId: { $in: grade10PromotedStudentIds } 
+        });
+      }
+      
+      // Set all remaining enrollment documents to 'not enrolled' status
+      // All students (old and new) need to re-enroll, so all enrollment forms are set to 'not enrolled'
+      await Enrollment.updateMany({}, { status: 'not enrolled' });
     }
 
     res.json({
