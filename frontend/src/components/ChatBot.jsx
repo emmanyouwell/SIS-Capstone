@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from './ChatBot.module.css';
+import api from '../utils/api';
+import chatbotMapping from '../data/chatbotMapping.json';
 
 /**
  * ChatBot Component
@@ -9,37 +11,53 @@ import styles from './ChatBot.module.css';
 function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState(null);
   const [response, setResponse] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [questions, setQuestions] = useState([]);
 
-  // Placeholder for pre-defined questions - will be replaced with actual questions
-  const predefinedQuestions = [
-    'How do I enroll?',
-    'What are the enrollment requirements?',
-    'How do I view my grades?',
-    'How do I access my schedule?',
-    'How do I contact my teacher?',
-    'What is the enrollment period?',
-  ];
+  // Load questions from chatbotMapping.json on component mount
+  useEffect(() => {
+    if (chatbotMapping && Array.isArray(chatbotMapping)) {
+      setQuestions(chatbotMapping);
+    }
+  }, []);
 
   /**
-   * Handles question selection and fetches response
-   * @param {string} question - The selected question
+   * Handles question selection and fetches response from backend
+   * @param {Object} questionEntry - The question entry from chatbotMapping with id and question
    */
-  const handleQuestionClick = async (question) => {
+  const handleQuestionClick = async (questionEntry) => {
+    const { id, question } = questionEntry;
     setSelectedQuestion(question);
+    setSelectedQuestionId(id);
     setResponse(null);
+    setError(null);
     setIsLoading(true);
 
-    // TODO: Replace with actual API call to fetch response from database
-    // Simulating API call delay
-    setTimeout(() => {
-      setResponse({
-        question,
-        answer: `This is a placeholder response for: "${question}". The actual response will be fetched from the database based on the selected question.`,
+    try {
+      const response = await api.post('/chatbot/answer', {
+        questionId: id,
       });
+
+      if (response.data.success) {
+        setResponse({
+          question,
+          answer: response.data.message,
+        });
+      } else {
+        setError(response.data.message || 'Failed to get response from chatbot.');
+      }
+    } catch (err) {
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        'An error occurred while fetching the response. Please try again.';
+      setError(errorMessage);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   /**
@@ -47,7 +65,9 @@ function ChatBot() {
    */
   const handleBackToQuestions = () => {
     setSelectedQuestion(null);
+    setSelectedQuestionId(null);
     setResponse(null);
+    setError(null);
   };
 
   /**
@@ -58,7 +78,9 @@ function ChatBot() {
     // Reset chat state when closing
     setTimeout(() => {
       setSelectedQuestion(null);
+      setSelectedQuestionId(null);
       setResponse(null);
+      setError(null);
     }, 300); // Wait for animation to complete
   };
 
@@ -144,15 +166,21 @@ function ChatBot() {
                   <p>Select a question to get started:</p>
                 </div>
                 <div className={styles.questionsList}>
-                  {predefinedQuestions.map((question, index) => (
-                    <button
-                      key={index}
-                      className={styles.questionButton}
-                      onClick={() => handleQuestionClick(question)}
-                    >
-                      {question}
-                    </button>
-                  ))}
+                  {questions.length > 0 ? (
+                    questions.map((questionEntry) => (
+                      <button
+                        key={questionEntry.id}
+                        className={styles.questionButton}
+                        onClick={() => handleQuestionClick(questionEntry)}
+                      >
+                        {questionEntry.question}
+                      </button>
+                    ))
+                  ) : (
+                    <p style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+                      Loading questions...
+                    </p>
+                  )}
                 </div>
               </div>
             ) : (
@@ -205,6 +233,8 @@ function ChatBot() {
                           <span></span>
                           <span></span>
                         </div>
+                      ) : error ? (
+                        <p style={{ color: '#d32f2f' }}>{error}</p>
                       ) : response ? (
                         <p>{response.answer}</p>
                       ) : null}

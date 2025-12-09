@@ -1,0 +1,377 @@
+[
+  {
+    "id": "view-grades",
+    "question": "Where can I view my grades?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can view your grades by navigating to the 'Grades' section from the sidebar menu. Your grades are displayed by subject with quarterly breakdowns (Q1, Q2, Q3, Q4) and include your final grade and remarks. Note: You must be enrolled to view grades. If you see a message asking you to complete enrollment, please do so first.",
+      "teacher": "Hello {{name}}! You can view and manage grades for your students by navigating to the 'Grades' section from the sidebar menu. You can select a section and subject, then view or update grades for each student by quarter. Use the 'view' button next to each student's name to input or update their grades.",
+      "admin": "Hello {{name}}! You can view and manage all student grades by navigating to the 'Grades' section from the sidebar menu. You can filter by grade level and manage grades for all students across all subjects and sections.",
+      "default": "You can view grades by navigating to the Grades section from your sidebar menu. The exact location depends on your role: Students can view their own grades, Teachers can view and update grades for their classes, and Admins can view and manage all grades."
+    },
+    "source": {
+      "backend": [
+        "gradeController.js - getGrades()",
+        "Grade model - studentId, grades array (q1, q2, q3, q4), finalGrade, remarks",
+        "GET /api/v1/grades",
+        "Student.enrollmentStatus field (required for students to view grades)"
+      ],
+      "frontend": [
+        "/student/grades route",
+        "StudentGrades.jsx component",
+        "/teacher/grades route",
+        "TeacherGrades.jsx component",
+        "/admin/grades route",
+        "AdminGrades.jsx and AdminGradeView.jsx components"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Verify enrollmentStatus is true",
+      "For Students: Filter grades by studentId",
+      "For Teachers: Filter grades by subjects they teach",
+      "For Admins: Show all grades with optional grade level filter",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder from user.firstName and user.lastName",
+      "Return personalized response with route information"
+    ]
+  },
+  {
+    "id": "enrollment-status",
+    "question": "Am I successfully enrolled?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Your current enrollment status is: {{enrollmentStatus}}. {{enrollmentDetails}} You can check your enrollment status and submit enrollment forms by navigating to the 'Enrollment' section from the sidebar menu.",
+      "teacher": "Hello {{name}}! Enrollment status checking is specific to students. As a teacher, you can view enrollment information for your students through the enrollment management pages or by checking student records in your classes.",
+      "admin": "Hello {{name}}! You can check enrollment status for any student by navigating to the 'Enrollment' section from the sidebar menu. You'll see pending enrollments, enrolled students, and can manage enrollment approvals.",
+      "default": "Students can view their enrollment status in their enrollment page, and admins can manage enrollments through the admin panel."
+    },
+    "source": {
+      "backend": [
+        "Student model - enrollmentStatus field (Boolean)",
+        "Enrollment model - status field (pending, enrolled, declined, not enrolled)",
+        "enrollmentController.js - getEnrollments()",
+        "GET /api/v1/enrollments",
+        "Student model - isPromoted field (required for self-enrollment)"
+      ],
+      "frontend": [
+        "/student/enrollment route",
+        "StudentEnrollment.jsx component",
+        "/admin/enrollment route",
+        "AdminEnrollment.jsx, AdminEnrollmentPending.jsx, AdminEnrollmentEnrolled.jsx components"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Query Student model by userId",
+      "Retrieve enrollmentStatus from Student.enrollmentStatus (Boolean: true/false)",
+      "If enrolled (true): Retrieve gradeLevel from Student.gradeLevel or Student.sectionId.gradeLevel, and sectionName from Student.sectionId.sectionName",
+      "If not enrolled (false): Check latest Enrollment record status (pending, enrolled, declined, not enrolled)",
+      "Compute enrollmentDetails: If enrolled, use 'You are successfully enrolled for Grade {{gradeLevel}} in section {{section}}. You can access all student features including grades, schedule, and materials.' If not enrolled, use 'You are not currently enrolled. Please complete the enrollment process by navigating to /student/enrollment and submitting the enrollment form. Make sure an enrollment period is active and you meet the promotion requirements (isPromoted: true).'",
+      "Select appropriate template based on role",
+      "Inject {{name}}, {{enrollmentStatus}} (as 'Enrolled' or 'Not Enrolled'), {{gradeLevel}}, {{section}}, and computed {{enrollmentDetails}} placeholders",
+      "Return personalized response with enrollment status and next steps"
+    ]
+  },
+  {
+    "id": "submit-enrollment",
+    "question": "How do I submit my enrollment form?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! To submit your enrollment form: 1) Navigate to the 'Enrollment' section from the sidebar, 2) Make sure an enrollment period is currently active, 3) Verify you are eligible to enroll (only students who have been promoted can self-enroll), 4) Fill out all required fields in the enrollment form including personal information, parent/guardian details, and returning learner information if applicable, 5) Review your information and click 'Submit Enrollment Form'. After submission, your enrollment will be pending until an admin approves it. You'll receive notifications about the status change.",
+      "teacher": "Hello {{name}}! Enrollment form submission is a student-specific feature. As a teacher, you cannot submit enrollment forms for students. Students must submit their own enrollment forms through the Enrollment section. However, you can view enrollment-related information through the admin panel if you have access.",
+      "admin": "Hello {{name}}! Students submit their own enrollment forms through the Enrollment section. As an admin, you manage the enrollment process by: 1) Setting enrollment periods, 2) Reviewing pending enrollments, 3) Approving or declining enrollments. You can also manually create enrollments through the admin interface if needed.",
+      "default": "Students submit enrollment forms through the Enrollment section. The form requires an active enrollment period and the student must be eligible to enroll. Admins review and approve enrollments through the admin panel."
+    },
+    "source": {
+      "backend": [
+        "enrollmentController.js - createEnrollment()",
+        "EnrollmentPeriod model - startDate, endDate, isActive",
+        "POST /api/v1/enrollments",
+        "Student model - isPromoted field (required for self-enrollment)",
+        "Enrollment model - all enrollment form fields"
+      ],
+      "frontend": [
+        "/student/enrollment route",
+        "StudentEnrollment.jsx component",
+        "BasicEnrollmentInfo.jsx and ReturningLearners.jsx components",
+        "/admin/enrollment routes",
+        "AdminEnrollmentPending.jsx component"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Check if enrollment period is active",
+      "For Students: Verify isPromoted status",
+      "For Students: Validate enrollment form data",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return step-by-step instructions with route information"
+    ]
+  },
+  {
+    "id": "view-schedule",
+    "question": "Where can I view my class schedule?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can view your class schedule by navigating to the 'Schedule' section from the sidebar menu. Your schedule displays your weekly class timetable with subjects, time slots, days of the week, and teacher names. Note: You must be enrolled to view your schedule. The schedule is based on your assigned section ({{section}}).",
+      "teacher": "Hello {{name}}! You can view schedules for classes you teach by navigating to the 'Classes' section from the sidebar menu. You'll see schedules for all sections where you teach subjects, including time slots and days. Your teaching load is automatically calculated based on your assigned schedules.",
+      "admin": "Hello {{name}}! You can view and manage all class schedules by navigating to the 'Schedule' section from the sidebar menu. You can create, update, and delete schedules for any section. Schedules are organized by section and include subject assignments, time slots, days, and teacher assignments.",
+      "default": "Class schedules can be viewed through the Schedule section in the sidebar. Students see their personal schedule, teachers see schedules for their classes, and admins can manage all schedules."
+    },
+    "source": {
+      "backend": [
+        "scheduleController.js - getSchedules()",
+        "Schedule model - sectionId, schedule array (subjectId, day, startTime, endTime)",
+        "GET /api/v1/schedules",
+        "Student model - sectionId field (used to filter student schedules)",
+        "Subject model - teacherId field (used to filter teacher schedules)"
+      ],
+      "frontend": [
+        "/student/schedule route",
+        "StudentSchedule.jsx component",
+        "/teacher/classes route",
+        "TeacherClasses.jsx component",
+        "/admin/schedule route",
+        "AdminSchedule.jsx component"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Verify enrollmentStatus is true",
+      "For Students: Get sectionId from Student model",
+      "For Students: Filter schedules by sectionId",
+      "For Teachers: Get teacherId from Teacher model",
+      "For Teachers: Find subjects where teacherId matches",
+      "For Teachers: Filter schedules by those subjects",
+      "Select appropriate template based on role",
+      "Inject {{name}} and {{section}} placeholders",
+      "Return personalized response with route information"
+    ]
+  },
+  {
+    "id": "reset-password",
+    "question": "How do I reset my password?",
+    "dynamic": false,
+    "response": "Password reset functionality is not currently implemented in the system. To reset your password, please contact the school administration or your system administrator. They can update your password through the admin account management interface. For security reasons, password changes should be handled by authorized personnel. If you have access to the admin panel, you can reset passwords for users through the Accounts section by editing the user account.",
+    "source": {
+      "backend": [
+        "authController.js - login() (password comparison only)",
+        "User model - password field (hashed with bcrypt)",
+        "userController.js - updateUser() (password updates possible but no dedicated reset endpoint)",
+        "Note: No password reset endpoint exists (POST /api/v1/auth/reset-password not implemented)"
+      ],
+      "frontend": [
+        "No dedicated password reset page exists",
+        "Admin can update passwords via /admin/accounts routes",
+        "AdminAccountEdit.jsx, AdminAccountStudEdit.jsx, AdminAccountAdminEdit.jsx components"
+      ]
+    },
+    "process": [
+      "Password reset feature is not implemented",
+      "Users must contact admin for password reset",
+      "Admins can manually update passwords through account management",
+      "Recommendation: Implement password reset endpoint with email verification"
+    ]
+  },
+  {
+    "id": "send-messages",
+    "question": "How do I message my teacher / students?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can send messages to your teachers by navigating to the 'Messages' section from the sidebar menu. Click 'Compose Message' or 'New Message' to create a new message. You can send messages to individual teachers or view messages sent to you. Messages support subject lines and message text. You'll receive notifications when teachers reply to your messages.",
+      "teacher": "Hello {{name}}! You can send messages to students by navigating to the 'Message' section from the sidebar menu. You can compose messages to individual students, all students in your classes, or all students in the system. Messages can include subject lines and detailed content. Students will receive notifications when you send them messages.",
+      "admin": "Hello {{name}}! You can send messages to students, teachers, or all users by navigating to the 'Messages' section from the sidebar menu. You can compose messages with specific recipients (by role or individual), subject lines, and message content. All users will receive notifications when you send messages. You can also view all message threads and manage message history.",
+      "default": "Messages can be sent through the Messages section in the sidebar. Students can message teachers, teachers can message students, and admins can message anyone. The system supports individual and group messaging by role."
+    },
+    "source": {
+      "backend": [
+        "messageController.js - createMessage(), getMessages()",
+        "Message model - senderId, receiverId, receiverRole, subject, messageText, status, dateSent",
+        "POST /api/v1/messages",
+        "GET /api/v1/messages",
+        "Notification model - creates notifications when messages are sent"
+      ],
+      "frontend": [
+        "/student/messages route",
+        "StudentMessages.jsx and StudentMessageView.jsx components",
+        "/teacher/message route",
+        "TeacherMessage.jsx and TeacherMessageView.jsx components",
+        "/admin/messages route",
+        "AdminMessages.jsx and AdminMessageView.jsx components"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and messaging capabilities",
+      "For real-time: Query Message model filtered by senderId or receiverId"
+    ]
+  },
+  {
+    "id": "update-profile",
+    "question": "How do I update my personal information?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can update your personal information by navigating to the 'Profile' section from the sidebar menu. Click the 'Edit Personal Information' button to modify your details including: full name, email, contact number, date of birth, address, and emergency contact (guardian) information. You can also update your profile photo by clicking 'Change Photo'. After making changes, click 'Save Changes' to update your information. Note: Some information like LRN and grade level are managed through enrollment and cannot be changed here.",
+      "teacher": "Hello {{name}}! You can update your personal information by navigating to the 'Profile' section from the sidebar menu. Click the 'Edit Personal Information' button to modify your details including: full name, email, contact number, date of birth, address, and emergency contact information. You can also update your profile photo. Teaching-related information like Employee ID, Department, and Position is managed by administrators and cannot be changed here.",
+      "admin": "Hello {{name}}! You can update your personal information by navigating to the 'Profile' section from the sidebar menu. Click the 'Edit Personal Information' button to modify your details including: full name, email, contact number, date of birth, and address. You can also update your profile photo. Administrative information like Employee ID, Department, Position, and Assigned Office can be updated through the admin account management interface.",
+      "default": "Personal information can be updated through the Profile section in the sidebar. Click 'Edit Personal Information' to modify your details. Profile photos can also be updated through the same interface."
+    },
+    "source": {
+      "backend": [
+        "userController.js - updateUser()",
+        "User model - firstName, lastName, middleName, email, contactNumber, address, dateOfBirth, profileImage",
+        "PATCH /api/v1/users/:id",
+        "uploadController.js - POST /api/v1/uploads/image (for profile photos)",
+        "Student model - guardianName, guardianContact (for students)",
+        "Teacher model - emergencyContactName, emergencyContactNumber (for teachers)"
+      ],
+      "frontend": [
+        "/student/profile route",
+        "StudentProfile.jsx component",
+        "/teacher/profile route",
+        "TeacherProfile.jsx component",
+        "/admin/profile route",
+        "AdminProfile.jsx component"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and editable fields",
+      "For real-time: Query User model by userId to show current information"
+    ]
+  },
+  {
+    "id": "materials-access",
+    "question": "Where can I download or upload learning/subject materials?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can download learning materials by: 1) Navigating to 'Subjects' from the sidebar, 2) Clicking on a subject to view its materials, 3) Accessing the materials page for that subject. Here you'll see all materials uploaded by your teachers including PDFs, documents, links, and YouTube videos. Click on any material card to open or download it. Note: You can only view materials for subjects in your enrolled grade level. You cannot upload materials as a student.",
+      "teacher": "Hello {{name}}! You can upload learning materials for your subjects by: 1) Navigating to your subject management page, 2) Accessing the materials section for each subject you teach. You can upload files (PDFs, documents), add links, or include YouTube video URLs. Materials are automatically associated with the subject and grade level you're teaching. Students enrolled in those subjects will be able to view and download the materials you upload. You can also update or delete materials you've previously uploaded.",
+      "admin": "Hello {{name}}! You can manage all learning materials through the subject management interface. Navigate to the Subjects section, select a grade level and subject, then access the materials section. As an admin, you can upload, update, or delete materials for any subject. Materials can include files (PDFs, documents), links, or YouTube videos. All materials are organized by subject and grade level, and are accessible to students enrolled in those subjects.",
+      "default": "Students can download materials through the Subjects section. Teachers and admins can upload materials through their subject management interfaces. Materials support files, links, and YouTube videos."
+    },
+    "source": {
+      "backend": [
+        "materialsController.js - getMaterials(), createMaterial(), updateMaterial(), deleteMaterial()",
+        "Materials model - subjectId, title, description, file (url), uploadedById, dateUploaded",
+        "GET /api/v1/materials",
+        "POST /api/v1/materials",
+        "PATCH /api/v1/materials/:id",
+        "DELETE /api/v1/materials/:id",
+        "Subject model - gradeLevel, teacherId (used to filter accessible materials)"
+      ],
+      "frontend": [
+        "/student/subjects/:subjectId/materials route",
+        "StudentSubjectMaterials.jsx component",
+        "/admin/subjects routes",
+        "AdminSubjectEdit.jsx component (materials section)",
+        "Teacher subject management pages"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Verify enrollmentStatus is true",
+      "For Students: Get gradeLevel from Student model",
+      "For Students: Filter materials by subjects in their grade level",
+      "For Teachers: Get teacherId from Teacher model",
+      "For Teachers: Find subjects where teacherId matches",
+      "For Teachers: Filter materials by those subjects",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and access permissions"
+    ]
+  },
+  {
+    "id": "announcements",
+    "question": "How do I post or view class announcements?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! You can view class announcements by navigating to the 'Notifications' section from the sidebar menu. Announcements are posted by teachers and administrators and are filtered based on audience (All, Students, or specific groups). You'll see announcements with titles, content, posting dates, and the name of the person who posted them. You cannot post announcements as a student - only teachers and administrators can create announcements.",
+      "teacher": "Hello {{name}}! You can post and view announcements by navigating to your announcements interface (if available) or through the admin panel if you have access. To post an announcement: 1) Access the announcements management page, 2) Click 'Add Announcement' or 'Post Announcement', 3) Enter a title, select the audience (All, Students, Teachers, or specific groups), 4) Write your announcement content, 5) Click 'Post' to publish. You can also view, edit, or delete announcements you've created. Students and other teachers will see your announcements in their notifications.",
+      "admin": "Hello {{name}}! You can post and manage announcements by navigating to the 'Announcements' section from the sidebar menu. Click 'Add Announcement' to create a new announcement. You can set the title, select the audience (All, Students, Teachers, or Admin), write the content, and post it. You can also view, edit, or delete any announcement. Announcements are visible to users based on the audience setting, and users receive notifications when new announcements are posted.",
+      "default": "Students can view announcements through the Notifications section. Teachers and admins can post announcements through their respective announcement management interfaces. Announcements support audience filtering (All, Students, Teachers, Admin)."
+    },
+    "source": {
+      "backend": [
+        "announcementController.js - getAnnouncements(), createAnnouncement(), updateAnnouncement(), deleteAnnouncement()",
+        "Announcement model - title, content, audience (All, Students, Teachers, Admin), postedBy, datePosted",
+        "GET /api/v1/announcements",
+        "POST /api/v1/announcements",
+        "PATCH /api/v1/announcements/:id",
+        "DELETE /api/v1/announcements/:id",
+        "Notification model - creates notifications when announcements are posted"
+      ],
+      "frontend": [
+        "/student/notifications route",
+        "StudentNotifications.jsx component",
+        "/admin/announcements route",
+        "AdminAnnouncements.jsx component",
+        "Teacher announcement interfaces (if available)"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Filter announcements by audience (All or Students)",
+      "For Teachers: Show announcements they can post (if interface exists) or view",
+      "For Admins: Show full announcement management interface",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and posting capabilities"
+    ]
+  },
+  {
+    "id": "update-grades",
+    "question": "How do I update or post grades?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Students cannot update or post grades. Grades are managed by your teachers and administrators. You can view your grades in the Grades section, but you do not have permission to modify them. If you notice an error in your grades, please contact your teacher or the school administration through the Messages section.",
+      "teacher": "Hello {{name}}! You can update and post grades for your students by: 1) Navigating to the 'Grades' section from the sidebar menu, 2) Selecting a section and subject you teach, 3) Choosing the grading period (Q1, Q2, Q3, or Q4), 4) Clicking the 'view' button next to a student's name, 5) Entering the grade (60-100) in the input field, 6) Optionally adding a comment, 7) Clicking 'Submit' and confirming. You can only update grades for subjects you are assigned to teach. The system automatically calculates final grades based on all quarterly grades.",
+      "admin": "Hello {{name}}! You can update and post grades for all students by: 1) Navigating to the 'Grades' section from the sidebar menu, 2) Selecting a grade level, 3) Viewing all students and their grades, 4) Clicking on a student to edit their grades, 5) Entering grades for each subject and quarter, 6) Saving changes. As an admin, you have full access to update grades for any student, subject, and grading period. You can also bulk update grades and manage grade records. Note: You may need to enter an admin password for security when updating grades.",
+      "default": "Only teachers and administrators can update grades. Students can only view their grades. Teachers can update grades for their assigned subjects, while admins can update grades for all students."
+    },
+    "source": {
+      "backend": [
+        "gradeController.js - createGrade(), updateGrade()",
+        "Grade model - studentId, grades array (subjectId, q1, q2, q3, q4), finalGrade, remarks, comment",
+        "POST /api/v1/grades",
+        "PATCH /api/v1/grades/:id",
+        "Subject model - teacherId (used to verify teacher authorization)",
+        "gradeUtils.js - getGradeDescriptor(), isGradeComplete(), shouldPromoteStudent()"
+      ],
+      "frontend": [
+        "/teacher/grades route",
+        "TeacherGrades.jsx component (with grade input modal)",
+        "/admin/grades routes",
+        "AdminGradeView.jsx component (with password protection for grade updates)",
+        "StudentGrades.jsx (read-only view)"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Return message that they cannot update grades",
+      "For Teachers: Verify teacherId matches subject.teacherId",
+      "For Teachers: Allow grade updates only for assigned subjects",
+      "For Admins: Allow grade updates for all students (may require password verification)",
+      "Validate grade values (60-100 range)",
+      "Calculate finalGrade automatically via Grade model pre-save hook",
+      "Update Student.isPromoted based on finalGrade",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and update procedures"
+    ]
+  }
+]

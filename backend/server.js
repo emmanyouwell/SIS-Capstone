@@ -21,6 +21,7 @@ import materialsRoutes from './src/routes/materialsRoutes.js';
 import studentRoutes from './src/routes/studentRoutes.js';
 import teacherRoutes from './src/routes/teacherRoutes.js';
 import adminRoutes from './src/routes/adminRoutes.js';
+import chatbotRoutes from './src/routes/chatbotRoutes.js';
 
 // Load env vars
 dotenv.config();
@@ -58,6 +59,7 @@ app.use('/api/v1/materials', materialsRoutes);
 app.use('/api/v1/students', studentRoutes);
 app.use('/api/v1/teachers', teacherRoutes);
 app.use('/api/v1/admins', adminRoutes);
+app.use('/api/v1/chatbot', chatbotRoutes);
 
 // 404 handler
 app.use((req, res) => {
