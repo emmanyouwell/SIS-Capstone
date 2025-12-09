@@ -125,28 +125,6 @@
   background-color: #d4e8dd;
 }
 
-.backButton {
-  position: fixed;
-  bottom: 2.5rem;
-  right: 2.5rem;
-  width: 54px;
-  height: 54px;
-  background: #4c7a67;
-  color: #fff;
-  border: none;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
-  cursor: pointer;
-  z-index: 100;
-  transition: background 0.2s;
-}
-
-.backButton:hover {
-  background: #276749;
-}
 
 @media (max-width: 900px) {
   .mainContent {

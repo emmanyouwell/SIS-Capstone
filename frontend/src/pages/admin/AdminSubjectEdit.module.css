@@ -177,29 +177,6 @@
   background: #357a5b;
 }
 
-.backBtn {
-  position: fixed;
-  bottom: 32px;
-  right: 32px;
-  width: 56px;
-  height: 56px;
-  background: #4c7a67;
-  color: #fff;
-  border: none;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(44, 62, 80, 0.13);
-  z-index: 9999;
-  cursor: pointer;
-  transition: background 0.2s, box-shadow 0.2s;
-}
-
-.backBtn:hover {
-  background: #357a5b;
-  box-shadow: 0 8px 24px rgba(44, 62, 80, 0.18);
-}
 
 /* Material Modal Styles */
 .materialModalOverlay {
@@ -731,12 +708,6 @@
     padding: 1.5rem;
   }
 
-  .backBtn {
-    bottom: 20px;
-    right: 20px;
-    width: 48px;
-    height: 48px;
-  }
 
   .successMessage,
   .errorMessage {

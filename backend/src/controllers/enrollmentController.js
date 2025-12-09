@@ -194,9 +194,13 @@ export const createEnrollment = async (req, res) => {
       return res.status(404).json({ message: 'Student record not found' });
     }
 
-    // During enrollment period, returning and promoted students can enroll through portal
-    // Returning and retained students are advised to go to school, but we allow enrollment
-    // The UI will show appropriate guidance based on student status
+    // Only students who passed (isPromoted: true) can submit their own enrollment form
+    // Students who failed need to contact administration
+    if (!student.isPromoted) {
+      return res.status(403).json({
+        message: 'You are not eligible to enroll online. Please contact the administration for assistance.',
+      });
+    }
 
     // Auto-fill from student data
     const enrollmentData = autoFillFromStudent(student, req.body);

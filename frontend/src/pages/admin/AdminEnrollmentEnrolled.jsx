@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminEnrollmentEnrolled.module.css';
 import { fetchAllEnrollments, updateEnrollment, clearError } from '../../store/slices/enrollmentSlice';
@@ -9,7 +8,6 @@ import MessageModal from '../../components/MessageModal';
 const ITEMS_PER_PAGE = 15;
 
 function AdminEnrollmentEnrolled() {
-  const navigate = useNavigate();
   const dispatch = useDispatch();
   const chartRef = useRef(null);
   const [showGradeModal, setShowGradeModal] = useState(false);
@@ -138,10 +136,6 @@ function AdminEnrollmentEnrolled() {
   const handleGradeClick = (grade) => {
     setSelectedGrade(grade);
     setShowGradeModal(true);
-  };
-
-  const handleBack = () => {
-    navigate('/admin/enrollment');
   };
 
   // Get unique sections from enrolled students
@@ -316,15 +310,6 @@ function AdminEnrollmentEnrolled() {
             Dismiss
           </button>
         </div>
-        <button
-          className={styles.backFabBtn}
-          onClick={handleBack}
-          title="Back"
-        >
-          <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-            <path d="M15 18l-6-6 6-6"/>
-          </svg>
-        </button>
       </div>
     );
   }
@@ -550,16 +535,6 @@ function AdminEnrollmentEnrolled() {
           </div>
         </div>
       )}
-
-      <button
-        className={styles.backFabBtn}
-        onClick={handleBack}
-        title="Back"
-      >
-        <svg width="32" height="32" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
-      </button>
 
       {/* Grade Details Modal */}
       {showGradeModal && selectedGradeData && (

@@ -119,12 +119,9 @@ export const createEnrollmentPeriod = async (req, res) => {
       createdBy: admin._id,
     });
 
-    // Reset all students' enrollmentStatus to false when period starts
-    // Only reset if the period has already started
-    const now = new Date();
-    if (start <= now) {
-      await Student.updateMany({}, { enrollmentStatus: false });
-    }
+    // Reset all students' enrollmentStatus to false when new enrollment period is set
+    // This ensures students need to enroll again for the new level and school year
+    await Student.updateMany({}, { enrollmentStatus: false });
 
     await period.populate({
       path: 'createdBy',
@@ -196,13 +193,10 @@ export const updateEnrollmentPeriod = async (req, res) => {
       },
     });
 
-    // If period is being activated and has started, reset enrollmentStatus
+    // If period is being activated, reset all students' enrollmentStatus to false
+    // This ensures students need to enroll again for the new level and school year
     if (isActive === true) {
-      const now = new Date();
-      const periodStart = updatedPeriod.startDate;
-      if (periodStart <= now) {
-        await Student.updateMany({}, { enrollmentStatus: false });
-      }
+      await Student.updateMany({}, { enrollmentStatus: false });
     }
 
     res.json({

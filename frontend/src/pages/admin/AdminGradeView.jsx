@@ -799,10 +799,6 @@ Administration`;
                         : 'PENDING'}
                   </span>
                 </div>
-                <div>
-                  <button className={styles.retainBtn}>Retain</button>
-                  <button className={styles.promoteBtn}>Promote</button>
-                </div>
               </div>
             </div>
           </div>
@@ -923,25 +919,6 @@ Administration`;
           </div>
         )
       }
-
-      <button
-        className={styles.backBtn}
-        onClick={() => navigate('/admin/grades')}
-        title="Back"
-      >
-        <svg
-          width="32"
-          height="32"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          viewBox="0 0 24 24"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
     </div >
   );
 }

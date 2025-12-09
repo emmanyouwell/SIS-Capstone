@@ -285,11 +285,7 @@ function AdminAccountStudView() {
         </div>
       )}
 
-      <button className={styles.fabBtn} title="Back" onClick={handleBack}>
-        <svg width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
+    
     </div>
   );
 }

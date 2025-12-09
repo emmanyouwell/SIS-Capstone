@@ -52,12 +52,14 @@ import TeacherMessageView from './pages/teacher/TeacherMessageView';
 import TeacherProfile from './pages/teacher/TeacherProfile';
 import StudentHelp from './pages/student/StudentHelp';
 import TeacherHelp from './pages/teacher/TeacherHelp';
+import ChatBot from './components/ChatBot';
 import './App.css';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
     <Router>
+      <ChatBot />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/admin/login" element={<AdminLogin />} />

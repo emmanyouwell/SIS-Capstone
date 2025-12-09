@@ -381,35 +381,6 @@
   font-size: 1.2rem;
 }
 
-.retainBtn,
-.promoteBtn {
-  border: none;
-  border-radius: 16px;
-  padding: 0.5rem 1.5rem;
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-right: 0.7rem;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.retainBtn {
-  background: #d32f2f;
-  color: #fff;
-}
-
-.retainBtn:hover {
-  background: #b71c1c;
-}
-
-.promoteBtn {
-  background: #43a047;
-  color: #fff;
-}
-
-.promoteBtn:hover {
-  background: #2e7d32;
-}
 
 /* Password Modal */
 .passwordModalOverlay {
@@ -657,31 +628,6 @@
   background: #276749;
 }
 
-/* Back Button */
-.backBtn {
-  position: fixed;
-  bottom: 2.5rem;
-  right: 2.5rem;
-  width: 54px;
-  height: 54px;
-  background: #4c7a67;
-  color: #fff;
-  border: none;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
-  cursor: pointer;
-  z-index: 100;
-  transition: background 0.2s;
-  text-decoration: none;
-}
-
-.backBtn:hover {
-  background: #276749;
-}
 
 /* Responsive Design */
 @media (max-width: 768px) {

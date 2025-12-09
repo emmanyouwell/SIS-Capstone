@@ -670,11 +670,6 @@ function AdminSubjectEdit() {
         </div>
       )}
 
-      <button className={styles.backBtn} title="Back" onClick={handleBack}>
-        <svg width="32" height="32" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
     </div>
   );
 }

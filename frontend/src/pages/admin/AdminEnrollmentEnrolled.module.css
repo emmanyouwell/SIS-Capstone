@@ -288,26 +288,6 @@
   color: #184d27;
 }
 
-.backFabBtn {
-  position: fixed;
-  right: 32px;
-  bottom: 32px;
-  display: flex;
-  z-index: 99999;
-  background: #4c7a67;
-  width: 56px;
-  height: 56px;
-  border-radius: 16px;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.backFabBtn:hover {
-  background: #39916f;
-}
 
 /* Modal Styles */
 .gradeModal {

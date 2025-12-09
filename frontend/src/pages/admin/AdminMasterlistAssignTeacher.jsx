@@ -428,20 +428,6 @@ function AdminMasterlistAssignTeacher() {
         <div className={`${styles.alertBox} ${styles[alertType]}`}>{alertMessage}</div>
       )}
 
-      <button className={styles.backButton} onClick={() => navigate('/admin/masterlist')}>
-        <svg
-          width="32"
-          height="32"
-          fill="none"
-          stroke="#fff"
-          strokeWidth="3"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          viewBox="0 0 24 24"
-        >
-          <path d="M15 18l-6-6 6-6" />
-        </svg>
-      </button>
     </div>
   );
 }
