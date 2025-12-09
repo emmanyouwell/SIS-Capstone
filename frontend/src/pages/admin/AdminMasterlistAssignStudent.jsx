@@ -58,7 +58,11 @@ function AdminMasterlistAssignStudent() {
     setCurrentPage(1);
   }, [currentGrade, activeTab, genderFilter, searchTerm, selectedSection]);
 
-  const currentMasterlist = gradeMasterlists.find((m) => m.section === selectedSection) || null;
+  const currentMasterlist = gradeMasterlists.find((m) => {
+    // Handle both old format (section as string) and new format (section as object)
+    const sectionName = typeof m.section === 'string' ? m.section : m.section?.sectionName;
+    return sectionName === selectedSection;
+  }) || null;
   const enrolledIds = new Set(
     (currentMasterlist?.students || []).map((s) => (typeof s === 'object' ? s._id : s))
   );
@@ -70,7 +74,8 @@ function AdminMasterlistAssignStudent() {
         typeof s === 'object' ? s._id : s
       );
       if (masterlistStudentIds.includes(userId)) {
-        return masterlist.section;
+        // Handle both old format (section as string) and new format (section as object)
+        return typeof masterlist.section === 'string' ? masterlist.section : masterlist.section?.sectionName;
       }
     }
     return null;
@@ -96,6 +101,7 @@ function AdminMasterlistAssignStudent() {
       
       // Determine assigned section: check masterlists first, then sectionId
       let assignedSection = findAssignedSectionFromMasterlist(user._id);
+      
       if (!assignedSection && student.sectionId) {
         assignedSection = getSectionNameFromId(student.sectionId);
       }
@@ -182,10 +188,25 @@ function AdminMasterlistAssignStudent() {
     if (!masterlistToUpdate) {
       try {
         setSaving(true);
+        // Find the section ID from the sections list
+        const sectionObj = sections.find(
+          (s) => s.gradeLevel === currentGrade && s.sectionName === selectedSection
+        );
+        
+        if (!sectionObj) {
+          setMessageModalContent({
+            type: 'error',
+            message: `Section "${selectedSection}" not found for grade ${currentGrade}.`,
+          });
+          setShowMessageModal(true);
+          setSaving(false);
+          return;
+        }
+
         const newMasterlist = await dispatch(
           createMasterlist({
             grade: currentGrade,
-            section: selectedSection,
+            sectionId: sectionObj._id,
             schoolYear,
             students: Array.from(checkedStudents),
             adviser: null,

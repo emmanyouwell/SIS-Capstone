@@ -1,6 +1,7 @@
 import Enrollment from '../models/Enrollment.js';
 import Student from '../models/Student.js';
 import User from '../models/User.js';
+import EnrollmentPeriod from '../models/EnrollmentPeriod.js';
 
 /**
  * Auto-fill enrollment data from student information
@@ -173,11 +174,29 @@ export const getEnrollment = async (req, res) => {
 // @access  Private (Student)
 export const createEnrollment = async (req, res) => {
   try {
+    // Check if enrollment period is active
+    const now = new Date();
+    const activePeriod = await EnrollmentPeriod.findOne({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    if (!activePeriod) {
+      return res.status(403).json({
+        message: 'Enrollment period is closed. Contact your administration for help.',
+      });
+    }
+
     // Students can only create their own enrollment
     const student = await Student.findOne({ userId: req.user.id });
     if (!student) {
       return res.status(404).json({ message: 'Student record not found' });
     }
+
+    // During enrollment period, returning and promoted students can enroll through portal
+    // Returning and retained students are advised to go to school, but we allow enrollment
+    // The UI will show appropriate guidance based on student status
 
     // Auto-fill from student data
     const enrollmentData = autoFillFromStudent(student, req.body);

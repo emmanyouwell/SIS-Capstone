@@ -47,7 +47,11 @@ function AdminMasterlistGradeView() {
   }, [sectionsList, selectedSection]);
 
   const currentSectionName = selectedSection || sectionsList[0] || '';
-  const currentMasterlist = gradeMasterlists.find((m) => m.section === currentSectionName) || null;
+  const currentMasterlist = gradeMasterlists.find((m) => {
+    // Handle both old format (section as string) and new format (section as object)
+    const sectionName = typeof m.section === 'string' ? m.section : m.section?.sectionName;
+    return sectionName === currentSectionName;
+  }) || null;
 
   // Get enrolled student IDs from masterlist
   const enrolledIds = new Set(

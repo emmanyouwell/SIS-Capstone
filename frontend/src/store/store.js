@@ -12,6 +12,7 @@ import gradeReducer from './slices/gradeSlice';
 import masterlistReducer from './slices/masterlistSlice';
 import sectionReducer from './slices/sectionSlice';
 import enrollmentReducer from './slices/enrollmentSlice';
+import enrollmentPeriodReducer from './slices/enrollmentPeriodSlice';
 import messageReducer from './slices/messageSlice';
 import notificationReducer from './slices/notificationSlice';
 
@@ -30,6 +31,7 @@ export const store = configureStore({
     masterlists: masterlistReducer,
     section: sectionReducer,
     enrollments: enrollmentReducer,
+    enrollmentPeriod: enrollmentPeriodReducer,
     messages: messageReducer,
     notifications: notificationReducer,
   },

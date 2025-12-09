@@ -57,9 +57,12 @@ function AdminSchedule() {
   // Get masterlist for current section
   const currentMasterlist = useMemo(() => {
     if (!currentSection) return null;
-    return masterlists.find(
-      (m) => m.grade === currentGrade && m.section === currentSection.sectionName
-    );
+    return masterlists.find((m) => {
+      if (m.grade !== currentGrade) return false;
+      // Handle both old format (section as string) and new format (section as object)
+      const sectionName = typeof m.section === 'string' ? m.section : m.section?.sectionName;
+      return sectionName === currentSection.sectionName;
+    });
   }, [masterlists, currentGrade, currentSection]);
 
   // Transform schedule array to UI structure (grouped by time and day)

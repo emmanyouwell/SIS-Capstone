@@ -9,7 +9,8 @@ const masterlistSchema = new mongoose.Schema(
       max: 10,
     },
     section: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Section',
       required: true,
     },
     students: [

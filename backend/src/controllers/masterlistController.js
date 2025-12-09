@@ -33,17 +33,36 @@ const enrichStudentsWithLRN = async (students) => {
 // @access  Private
 export const getMasterlists = async (req, res) => {
   try {
-    const { grade, section, schoolYear } = req.query;
+    const { grade, section, sectionId, schoolYear } = req.query;
     const filter = {};
+    const Section = (await import('../models/Section.js')).default;
 
     if (grade) filter.grade = parseInt(grade);
-    if (section) filter.section = section;
     if (schoolYear) filter.schoolYear = schoolYear;
+    
+    // Handle section filtering: support both sectionId and section name (for backward compatibility)
+    if (sectionId) {
+      filter.section = sectionId;
+    } else if (section) {
+      // If section name is provided, find the section ID
+      const sectionDoc = await Section.findOne({ sectionName: section });
+      if (sectionDoc) {
+        filter.section = sectionDoc._id;
+      } else {
+        // If section not found, return empty result
+        return res.json({
+          success: true,
+          count: 0,
+          data: [],
+        });
+      }
+    }
 
     // Teachers can now view all masterlists for all sections
     // (Previously filtered to only show advisory or subject teacher masterlists)
 
     const masterlists = await Masterlist.find(filter)
+      .populate('section', 'sectionName gradeLevel capacity status')
       .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
@@ -87,6 +106,7 @@ export const getMasterlists = async (req, res) => {
 export const getMasterlist = async (req, res) => {
   try {
     const masterlist = await Masterlist.findById(req.params.id)
+      .populate('section', 'sectionName gradeLevel capacity status')
       .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
@@ -143,25 +163,49 @@ export const createMasterlist = async (req, res) => {
       }
     }
 
-    const masterlist = await Masterlist.create(req.body);
-    
-    // Update Student documents with sectionId
-    if (req.body.students && req.body.students.length > 0 && req.body.section && req.body.grade) {
-      // Find the Section document by sectionName and gradeLevel
+    // Handle section: accept sectionId directly, or convert section name to sectionId (for backward compatibility)
+    let sectionId = req.body.sectionId || req.body.section;
+    if (!sectionId) {
+      return res.status(400).json({ 
+        message: 'Section ID is required' 
+      });
+    }
+
+    // If section is provided as a string (section name), convert it to sectionId
+    if (typeof sectionId === 'string' && !sectionId.match(/^[0-9a-fA-F]{24}$/)) {
+      // It's a section name, not an ObjectId - find the section
       const section = await Section.findOne({
-        sectionName: req.body.section,
+        sectionName: sectionId,
         gradeLevel: req.body.grade,
       });
       
-      if (section) {
-        // Update all Student documents where userId is in the students array
-        await Student.updateMany(
-          { userId: { $in: req.body.students } },
-          { $set: { sectionId: section._id } }
-        );
+      if (!section) {
+        return res.status(400).json({ 
+          message: `Section "${sectionId}" not found for grade ${req.body.grade}` 
+        });
       }
+      
+      sectionId = section._id;
+    }
+
+    // Create masterlist with sectionId
+    const masterlistData = {
+      ...req.body,
+      section: sectionId,
+    };
+    delete masterlistData.sectionId; // Remove sectionId from body if it was there
+
+    const masterlist = await Masterlist.create(masterlistData);
+    
+    // Update Student documents with sectionId
+    if (req.body.students && req.body.students.length > 0) {
+      await Student.updateMany(
+        { userId: { $in: req.body.students } },
+        { $set: { sectionId: sectionId } }
+      );
     }
     
+    await masterlist.populate('section', 'sectionName gradeLevel capacity status');
     await masterlist.populate('students', 'firstName lastName middleName extensionName sex');
     await masterlist.populate({
       path: 'adviser',
@@ -231,10 +275,36 @@ export const updateMasterlist = async (req, res) => {
     const addedStudentIds = newStudentIds.filter(id => !existingStudentIds.includes(id));
     const removedStudentIds = existingStudentIds.filter(id => !newStudentIds.includes(id));
 
-    const masterlist = await Masterlist.findByIdAndUpdate(req.params.id, req.body, {
+    // Handle section update: accept sectionId directly, or convert section name to sectionId
+    let updateData = { ...req.body };
+    if (req.body.sectionId || (req.body.section && typeof req.body.section === 'string' && !req.body.section.match(/^[0-9a-fA-F]{24}$/))) {
+      let sectionId = req.body.sectionId || req.body.section;
+      
+      // If section is provided as a string (section name), convert it to sectionId
+      if (typeof sectionId === 'string' && !sectionId.match(/^[0-9a-fA-F]{24}$/)) {
+        const section = await Section.findOne({
+          sectionName: sectionId,
+          gradeLevel: req.body.grade || existingMasterlist.grade,
+        });
+        
+        if (!section) {
+          return res.status(400).json({ 
+            message: `Section "${sectionId}" not found` 
+          });
+        }
+        
+        sectionId = section._id;
+      }
+      
+      updateData.section = sectionId;
+      delete updateData.sectionId;
+    }
+
+    const masterlist = await Masterlist.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     })
+      .populate('section', 'sectionName gradeLevel capacity status')
       .populate('students', 'firstName lastName middleName extensionName sex')
       .populate({
         path: 'adviser',
@@ -252,30 +322,25 @@ export const updateMasterlist = async (req, res) => {
         }
       });
 
+    // Get the section ID from the masterlist (populated or not)
+    const sectionId = masterlist.section?._id || masterlist.section;
+
     // Update Student documents: set sectionId for added students, clear for removed
     if (addedStudentIds.length > 0 || removedStudentIds.length > 0) {
-      // Find the Section document by sectionName and gradeLevel
-      const section = await Section.findOne({
-        sectionName: existingMasterlist.section,
-        gradeLevel: existingMasterlist.grade,
-      });
+      // Update added students with sectionId
+      if (addedStudentIds.length > 0 && sectionId) {
+        await Student.updateMany(
+          { userId: { $in: addedStudentIds } },
+          { $set: { sectionId: sectionId } }
+        );
+      }
       
-      if (section) {
-        // Update added students with sectionId
-        if (addedStudentIds.length > 0) {
-          await Student.updateMany(
-            { userId: { $in: addedStudentIds } },
-            { $set: { sectionId: section._id } }
-          );
-        }
-        
-        // Clear sectionId for removed students
-        if (removedStudentIds.length > 0) {
-          await Student.updateMany(
-            { userId: { $in: removedStudentIds } },
-            { $set: { sectionId: null } }
-          );
-        }
+      // Clear sectionId for removed students
+      if (removedStudentIds.length > 0) {
+        await Student.updateMany(
+          { userId: { $in: removedStudentIds } },
+          { $set: { sectionId: null } }
+        );
       }
     }
 

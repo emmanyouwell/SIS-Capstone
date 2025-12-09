@@ -80,7 +80,9 @@ function TeacherMasterlist() {
 
   // Format section display name
   const getSectionDisplayName = (masterlist) => {
-    return `Grade ${masterlist.grade} - ${masterlist.section}`;
+    // Handle both old format (section as string) and new format (section as object)
+    const sectionName = typeof masterlist.section === 'string' ? masterlist.section : masterlist.section?.sectionName;
+    return `Grade ${masterlist.grade} - ${sectionName || 'N/A'}`;
   };
 
   const handleSectionChange = (e) => {
@@ -220,7 +222,15 @@ function TeacherMasterlist() {
                       <td>{formatStudentName(student)}</td>
                       <td>{student.sex || 'N/A'}</td>
                       <td>{student.grade || currentMasterlist?.grade || 'N/A'}</td>
-                      <td>{student.section || currentMasterlist?.section || 'N/A'}</td>
+                      <td>
+                        {(() => {
+                          // Handle both old format (section as string) and new format (section as object)
+                          const sectionName = typeof currentMasterlist?.section === 'string' 
+                            ? currentMasterlist.section 
+                            : currentMasterlist?.section?.sectionName;
+                          return student.section || sectionName || 'N/A';
+                        })()}
+                      </td>
                     </tr>
                   ))
                 )}

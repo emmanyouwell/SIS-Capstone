@@ -34,6 +34,36 @@
   margin-right: 0.75rem;
 }
 
+/* Enrollment closed box */
+.enrollmentClosedBox {
+  background: #fef2f2;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.07);
+  padding: 2.5rem 2.2rem;
+  text-align: center;
+  border: 2px solid #fca5a5;
+  margin-bottom: 2rem;
+}
+
+.enrollmentClosedIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.enrollmentClosedTitle {
+  color: #dc2626;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.enrollmentClosedMessage {
+  color: #991b1b;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
 /* Enrollment status box */
 .enrollmentStatusBox {
   background: #f4fbf7;

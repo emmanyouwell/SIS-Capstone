@@ -5,6 +5,7 @@ import styles from './AdminEnrollment.module.css';
 import { fetchAllEnrollments, clearError } from '../../store/slices/enrollmentSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import AdminEnrollmentForm from '../../components/enrollment/AdminEnrollmentForm';
+import EnrollmentPeriodManager from '../../components/enrollment/EnrollmentPeriodManager';
 
 function AdminEnrollment() {
   const navigate = useNavigate();
@@ -154,6 +155,9 @@ function AdminEnrollment() {
               )}
             </div>
           </div>
+
+          {/* Enrollment Period Management */}
+          <EnrollmentPeriodManager />
         </>
       )}
 

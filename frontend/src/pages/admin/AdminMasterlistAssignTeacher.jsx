@@ -35,9 +35,12 @@ function AdminMasterlistAssignTeacher() {
     .map((s) => s.sectionName)
     .sort();
 
-  const currentMasterlist = masterlists.find(
-    (m) => m.grade === currentGrade && m.section === selectedSection
-  );
+  const currentMasterlist = masterlists.find((m) => {
+    if (m.grade !== currentGrade) return false;
+    // Handle both old format (section as string) and new format (section as object)
+    const sectionName = typeof m.section === 'string' ? m.section : m.section?.sectionName;
+    return sectionName === selectedSection;
+  });
   
   // Get subjects for current grade level from database
   // Merge with subjects from masterlist.subjectTeachers to ensure all subjects appear
@@ -223,11 +226,22 @@ function AdminMasterlistAssignTeacher() {
       const schoolYear = `${currentYear}-${nextYear}`;
 
       if (!currentMasterlist) {
+        // Find the section ID from the sections list
+        const sectionObj = sections.find(
+          (s) => s.gradeLevel === currentGrade && s.sectionName === selectedSection
+        );
+        
+        if (!sectionObj) {
+          showAlert(`Section "${selectedSection}" not found for grade ${currentGrade}.`, 'error');
+          setSaving(false);
+          return;
+        }
+
         // Create new masterlist when adviser or subject teachers are assigned
         const newMasterlist = await dispatch(
           createMasterlist({
             grade: currentGrade,
-            section: selectedSection,
+            sectionId: sectionObj._id,
             adviser: hasAdviser ? adviserId : null,
             subjectTeachers: subjectTeachersArray,
             schoolYear,

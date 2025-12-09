@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createEnrollment, fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 import { getMe } from '../../store/slices/authSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 import BasicEnrollmentInfo from '../../components/enrollment/BasicEnrollmentInfo';
 import ReturningLearners from '../../components/enrollment/ReturningLearners';
 import styles from './StudentEnrollment.module.css';
@@ -11,6 +12,9 @@ function StudentEnrollment() {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { enrollments, loading: enrollmentsLoading } = useSelector((state) => state.enrollments);
+  const { currentPeriod, isPeriodActive, loading: periodLoading } = useSelector(
+    (state) => state.enrollmentPeriod
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
@@ -73,12 +77,13 @@ function StudentEnrollment() {
 
   const [formData, setFormData] = useState(getInitialFormData);
 
-  // Fetch user data and enrollments on mount
+  // Fetch user data, enrollments, and enrollment period on mount
   useEffect(() => {
     if (!user?.roleData) {
       dispatch(getMe());
     }
     dispatch(fetchAllEnrollments());
+    dispatch(fetchCurrentEnrollmentPeriod());
   }, [dispatch, user?.roleData]);
 
   // Auto-fill form data when user data and enrollments are available
@@ -329,10 +334,28 @@ function StudentEnrollment() {
   const gradeLevel = parseInt(formData.gradeLevelToEnroll);
   const isGrade8Plus = gradeLevel >= 8;
 
+  // Check if enrollment period is closed
+  const isEnrollmentClosed = !periodLoading && !isPeriodActive;
+
   return (
     <>
       <div className={styles.mainContent}>
         <h1>Enrollment</h1>
+
+        {/* Enrollment Period Closed Message */}
+        {isEnrollmentClosed && (
+          <div className={styles.enrollmentClosedBox}>
+            <div className={styles.enrollmentClosedIcon}>🔒</div>
+            <div className={styles.enrollmentClosedTitle}>Enrollment Period is Closed</div>
+            <p className={styles.enrollmentClosedMessage}>
+              Enrollment period is closed. Contact your administration for help.
+            </p>
+          </div>
+        )}
+
+        {/* Only show enrollment content if period is active */}
+        {!isEnrollmentClosed && (
+          <>
 
         {/* Student Information */}
         <div className={`${styles.enrollmentInfo} ${styles.fadeIn}`}>
@@ -444,10 +467,12 @@ function StudentEnrollment() {
             </div>
           </div>
         )}
+          </>
+        )}
       </div>
 
-      {/* Enrollment Modal - Only shown when isPromoted === true */}
-      {isModalOpen && isPromoted && (
+      {/* Enrollment Modal - Only shown when isPromoted === true and period is active */}
+      {isModalOpen && isPromoted && !isEnrollmentClosed && (
         <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && handleCloseModal()}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={handleCloseModal} aria-label="Close modal">

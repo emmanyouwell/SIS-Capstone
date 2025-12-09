@@ -5,6 +5,7 @@ import styles from './AdminDashboard.module.css';
 import { fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
 import { fetchUnreadMessageCount } from '../../store/slices/messageSlice';
+import { fetchAnnouncements } from '../../store/slices/announcementSlice';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -16,11 +17,15 @@ function AdminDashboard() {
   );
   const { users, loading: usersLoading } = useSelector((state) => state.users);
   const { unreadCount: unreadMessageCount } = useSelector((state) => state.messages);
+  const { announcements, loading: announcementsLoading } = useSelector(
+    (state) => state.announcements
+  );
 
   useEffect(() => {
     dispatch(fetchAllEnrollments());
     dispatch(fetchAllUsers({ role: 'Student' }));
     dispatch(fetchUnreadMessageCount());
+    dispatch(fetchAnnouncements());
   }, [dispatch]);
 
   // Calculate enrollment statistics
@@ -161,7 +166,7 @@ function AdminDashboard() {
     },
   ];
 
-  const loading = enrollmentsLoading || usersLoading;
+  const loading = enrollmentsLoading || usersLoading || announcementsLoading;
 
   return (
     <div className={styles.mainContent}>
@@ -184,7 +189,7 @@ function AdminDashboard() {
                   title="Go to Students"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/admin/accounts/students');
+                    navigate('/admin/enrollment/enrolled');
                   }}
                 >
                   &gt;
@@ -210,17 +215,17 @@ function AdminDashboard() {
               </div>
               <div className={`${styles.statCard} ${styles.blue}`}>
                 <div className={styles.statContent}>
-                  <div className={styles.statLabel}>Enrolled</div>
-                  <div className={styles.statNumber}>{enrollmentStats.enrolled}</div>
+                  <div className={styles.statLabel}>Announcements</div>
+                  <div className={styles.statNumber}>{announcements?.length || 0}</div>
                 </div>
-                <div className={styles.statIcon}>✅</div>
+                <div className={styles.statIcon}>📢</div>
                 <a
-                  href="#enrolled"
+                  href="#announcements"
                   className={styles.statChevron}
-                  title="Go to Enrolled"
+                  title="Go to Announcements"
                   onClick={(e) => {
                     e.preventDefault();
-                    navigate('/admin/enrollment/enrolled');
+                    navigate('/admin/announcements');
                   }}
                 >
                   &gt;
