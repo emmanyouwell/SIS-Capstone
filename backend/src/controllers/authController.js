@@ -101,7 +101,7 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   try {
-    const { studentId, email, password } = req.body;
+    const { studentId, email, employeeId, password } = req.body;
     let user = null;
 
     if (!password) {
@@ -114,9 +114,21 @@ export const login = async (req, res) => {
       if (student && student.userId) {
         user = await User.findById(student.userId._id).select('+password');
       }
-    } else {
-      // Find user by email
+    } else if (employeeId) {
+      // Find teacher or admin by employeeId, then get user
+      const teacher = await Teacher.findOne({ employeeId }).populate('userId');
+      const admin = await Admin.findOne({ employeeId }).populate('userId');
+      
+      if (teacher && teacher.userId) {
+        user = await User.findById(teacher.userId._id).select('+password');
+      } else if (admin && admin.userId) {
+        user = await User.findById(admin.userId._id).select('+password');
+      }
+    } else if (email) {
+      // Find user by email (fallback for backward compatibility)
       user = await User.findOne({ email }).select('+password');
+    } else {
+      return res.status(400).json({ message: 'Please provide studentId, employeeId, or email' });
     }
 
     if (!user) {

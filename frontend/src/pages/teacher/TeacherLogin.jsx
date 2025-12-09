@@ -6,7 +6,7 @@ import styles from './TeacherLogin.module.css';
 
 function TeacherLogin() {
 
-  const [email, setEmail] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -23,7 +23,7 @@ function TeacherLogin() {
     setShowProgress(true);
 
     try {
-      const result = await dispatch(login({ email, password }));
+      const result = await dispatch(login({ employeeId, password }));
       if (login.fulfilled.match(result)) {
         // Check if user is Admin
         if (result.payload.user.role === 'Teacher') {
@@ -77,18 +77,18 @@ function TeacherLogin() {
                   <input
                     type="text"
                     className="form-control"
-                    id="teacher-id"
-                    placeholder="Enter EID"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="teacher-employee-id"
+                    placeholder="Enter Employee ID"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
                     required
                   />
-                  <label htmlFor="teacher-id">
+                  <label htmlFor="teacher-employee-id">
                     <i className="fas fa-id-card me-2"></i>
-                    Email Address
+                    Employee ID
                   </label>
                   <div className="invalid-feedback">
-                    Please enter your email address.
+                    Please enter your Employee ID.
                   </div>
                 </div>
                 <div className="form-floating mb-3">

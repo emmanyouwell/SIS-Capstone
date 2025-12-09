@@ -5,7 +5,7 @@ import { login } from '../../store/slices/authSlice';
 import styles from './AdminLogin.module.css';
 
 function AdminLogin() {
-  const [email, setEmail] = useState('');
+  const [employeeId, setEmployeeId] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -21,7 +21,7 @@ function AdminLogin() {
     setShowProgress(true);
 
     try {
-      const result = await dispatch(login({ email, password }));
+      const result = await dispatch(login({ employeeId, password }));
       if (login.fulfilled.match(result)) {
         // Check if user is Admin
         if (result.payload.user.role === 'Admin') {
@@ -73,20 +73,20 @@ function AdminLogin() {
               <form onSubmit={handleSubmit} className={`${styles.loginForm} needs-validation`} noValidate>
                 <div className="form-floating mb-3">
                   <input
-                    type="email"
+                    type="text"
                     className="form-control"
-                    id="admin-email"
-                    placeholder="Enter email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="admin-employee-id"
+                    placeholder="Enter Employee ID"
+                    value={employeeId}
+                    onChange={(e) => setEmployeeId(e.target.value)}
                     required
                   />
-                  <label htmlFor="admin-email">
-                    <i className="fas fa-envelope me-2"></i>
-                    Email Address
+                  <label htmlFor="admin-employee-id">
+                    <i className="fas fa-id-card me-2"></i>
+                    Employee ID
                   </label>
                   <div className="invalid-feedback">
-                    Please enter your email address.
+                    Please enter your Employee ID.
                   </div>
                 </div>
                 <div className="form-floating mb-3">
