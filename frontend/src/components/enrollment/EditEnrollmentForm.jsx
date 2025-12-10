@@ -3,12 +3,14 @@ import { useDispatch, useSelector } from 'react-redux';
 import BasicEnrollmentInfo from './BasicEnrollmentInfo';
 import ReturningLearners from './ReturningLearners';
 import { updateEnrollment } from '../../store/slices/enrollmentSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 import styles from './AdminEnrollmentForm.module.css';
 import MessageModal from '../MessageModal';
 
 function EditEnrollmentForm({ enrollment, onClose, onSuccess }) {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.enrollments);
+  const { currentPeriod } = useSelector((state) => state.enrollmentPeriod);
 
   // Initialize form data from enrollment
   const getInitialFormData = () => {
@@ -59,6 +61,21 @@ function EditEnrollmentForm({ enrollment, onClose, onSuccess }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
+
+  // Fetch enrollment period on mount
+  useEffect(() => {
+    dispatch(fetchCurrentEnrollmentPeriod());
+  }, [dispatch]);
+
+  // Update school year from active enrollment period
+  useEffect(() => {
+    if (currentPeriod && currentPeriod.schoolYear) {
+      setFormData((prev) => ({
+        ...prev,
+        schoolYear: currentPeriod.schoolYear,
+      }));
+    }
+  }, [currentPeriod]);
 
   // Update form data when enrollment changes
   useEffect(() => {
@@ -287,6 +304,7 @@ function EditEnrollmentForm({ enrollment, onClose, onSuccess }) {
             handleInputChange={handleInputChange}
             handleCheckboxChange={handleCheckboxChange}
             errors={errors}
+            schoolYearReadOnly={true}
           />
 
           {/* Personal Information - Display snapshot (read-only or editable) */}

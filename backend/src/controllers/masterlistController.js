@@ -36,9 +36,22 @@ export const getMasterlists = async (req, res) => {
     const { grade, section, sectionId, schoolYear } = req.query;
     const filter = {};
     const Section = (await import('../models/Section.js')).default;
+    const EnrollmentPeriod = (await import('../models/EnrollmentPeriod.js')).default;
 
     if (grade) filter.grade = parseInt(grade);
-    if (schoolYear) filter.schoolYear = schoolYear;
+    
+    // If schoolYear is not provided, use the latest enrollment period's school year
+    if (schoolYear) {
+      filter.schoolYear = schoolYear;
+    } else {
+      // Get the latest enrollment period (sorted by createdAt descending)
+      const latestPeriod = await EnrollmentPeriod.findOne()
+        .sort({ createdAt: -1 });
+      
+      if (latestPeriod && latestPeriod.schoolYear) {
+        filter.schoolYear = latestPeriod.schoolYear;
+      }
+    }
     
     // Handle section filtering: support both sectionId and section name (for backward compatibility)
     if (sectionId) {
@@ -188,10 +201,29 @@ export const createMasterlist = async (req, res) => {
       sectionId = section._id;
     }
 
-    // Create masterlist with sectionId
+    // Get current active enrollment period to get schoolYear
+    const EnrollmentPeriod = (await import('../models/EnrollmentPeriod.js')).default;
+    const now = new Date();
+    const activePeriod = await EnrollmentPeriod.findOne({
+      isActive: true,
+      startDate: { $lte: now },
+      endDate: { $gte: now },
+    });
+
+    // Use enrollment period's schoolYear if available, otherwise use provided schoolYear
+    const schoolYear = activePeriod?.schoolYear || req.body.schoolYear;
+    
+    if (!schoolYear) {
+      return res.status(400).json({ 
+        message: 'School year is required. Please ensure an enrollment period is active.' 
+      });
+    }
+
+    // Create masterlist with sectionId and schoolYear from enrollment period
     const masterlistData = {
       ...req.body,
       section: sectionId,
+      schoolYear: schoolYear, // Use enrollment period's schoolYear
     };
     delete masterlistData.sectionId; // Remove sectionId from body if it was there
 

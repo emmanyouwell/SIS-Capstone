@@ -34,7 +34,11 @@ export const createEnrollment = createAsyncThunk(
       const response = await api.post('/enrollments', enrollmentData);
       // Refresh user data to get updated enrollment status
       dispatch(getMe());
-      return response.data.data;
+      // Return both enrollment data and isUpdate flag
+      return {
+        enrollment: response.data.data,
+        isUpdate: response.data.isUpdate || false,
+      };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to create enrollment');
     }
@@ -139,7 +143,20 @@ const enrollmentSlice = createSlice({
       })
       .addCase(createEnrollment.fulfilled, (state, action) => {
         state.loading = false;
-        state.enrollments.push(action.payload);
+        const { enrollment, isUpdate } = action.payload;
+        if (isUpdate) {
+          // Update existing enrollment in the array
+          const index = state.enrollments.findIndex((e) => e._id === enrollment._id);
+          if (index !== -1) {
+            state.enrollments[index] = enrollment;
+          } else {
+            // If not found, add it (shouldn't happen, but handle gracefully)
+            state.enrollments.push(enrollment);
+          }
+        } else {
+          // Add new enrollment
+          state.enrollments.push(enrollment);
+        }
       })
       .addCase(createEnrollment.rejected, (state, action) => {
         state.loading = false;

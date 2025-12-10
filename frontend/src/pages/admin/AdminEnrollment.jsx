@@ -5,6 +5,7 @@ import styles from './AdminEnrollment.module.css';
 import { fetchAllEnrollments, clearError, updateEnrollment, deleteEnrollment, fetchEnrollmentById, clearSelectedEnrollment } from '../../store/slices/enrollmentSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { updateUser } from '../../store/slices/userSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 import AdminEnrollmentForm from '../../components/enrollment/AdminEnrollmentForm';
 import EnrollmentPeriodManager from '../../components/enrollment/EnrollmentPeriodManager';
 import EditEnrollmentForm from '../../components/enrollment/EditEnrollmentForm';
@@ -17,6 +18,7 @@ function AdminEnrollment() {
   const dispatch = useDispatch();
   const { enrollments, loading, error, selectedEnrollment } = useSelector((state) => state.enrollments);
   const { students } = useSelector((state) => state.students);
+  const { isPeriodActive, loading: periodLoading } = useSelector((state) => state.enrollmentPeriod);
   const [showEnrollmentForm, setShowEnrollmentForm] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [showEditEnrollmentForm, setShowEditEnrollmentForm] = useState(false);
@@ -31,6 +33,7 @@ function AdminEnrollment() {
   useEffect(() => {
     dispatch(fetchAllEnrollments());
     dispatch(fetchAllStudents());
+    dispatch(fetchCurrentEnrollmentPeriod());
   }, [dispatch]);
 
   // Calculate counts from real data
@@ -100,6 +103,14 @@ function AdminEnrollment() {
   };
 
   const handleCreateEnrollment = (studentId = null) => {
+    if (!isPeriodActive) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Cannot create enrollment form. No active enrollment period. Please create an enrollment period first.',
+      });
+      setShowMessageModal(true);
+      return;
+    }
     setSelectedStudentId(studentId);
     setShowEnrollmentForm(true);
   };
@@ -245,6 +256,8 @@ function AdminEnrollment() {
                 <button
                   className={styles.newEnrollmentBtn}
                   onClick={() => handleCreateEnrollment()}
+                  disabled={!isPeriodActive || periodLoading}
+                  title={!isPeriodActive ? 'An active enrollment period is required to create enrollment forms' : ''}
                 >
                   + New Enrollment Form
                 </button>
@@ -266,6 +279,8 @@ function AdminEnrollment() {
                         <button
                           className={styles.createEnrollmentBtn}
                           onClick={() => handleCreateEnrollment(student._id)}
+                          disabled={!isPeriodActive || periodLoading}
+                          title={!isPeriodActive ? 'An active enrollment period is required to create enrollment forms' : ''}
                         >
                           Create Enrollment Form
                         </button>

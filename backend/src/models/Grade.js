@@ -8,6 +8,10 @@ const gradeSchema = new mongoose.Schema(
       ref: 'Student',
       required: true,
     },
+    schoolYear: {
+      type: String,
+      required: true,
+    },
     grades: [
       {
         subjectId: {
@@ -51,6 +55,10 @@ const gradeSchema = new mongoose.Schema(
 // Indexes for better query performance
 gradeSchema.index({ studentId: 1 });
 gradeSchema.index({ dateRecorded: -1 });
+gradeSchema.index({ schoolYear: 1 });
+
+// Compound unique index to prevent duplicate grades per student per school year
+gradeSchema.index({ studentId: 1, schoolYear: 1 }, { unique: true });
 
 // Calculate final grade before saving based on all subject quarters
 gradeSchema.pre('save', async function () {

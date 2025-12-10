@@ -5,6 +5,7 @@ import styles from './AdminMasterlistAssignStudent.module.css';
 import { fetchMasterlists, updateMasterlist, createMasterlist, clearError } from '../../store/slices/masterlistSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 import MessageModal from '../../components/MessageModal';
 
 // Pagination constants
@@ -31,12 +32,14 @@ function AdminMasterlistAssignStudent() {
   );
   const { students, loading: studentsLoading } = useSelector((state) => state.students);
   const sections = useSelector((state) => state.section.data);
+  const { currentPeriod } = useSelector((state) => state.enrollmentPeriod);
 
-  // Fetch masterlists, students, and sections for current grade
+  // Fetch masterlists, students, sections, and enrollment period for current grade
   useEffect(() => {
     dispatch(fetchMasterlists({ grade: currentGrade }));
     dispatch(fetchAllStudents({ gradeLevel: currentGrade }));
     dispatch(getAllSections({ gradeLevel: currentGrade }));
+    dispatch(fetchCurrentEnrollmentPeriod());
   }, [currentGrade, dispatch]);
 
   const gradeMasterlists = masterlists.filter((m) => m.grade === currentGrade);
@@ -179,10 +182,16 @@ function AdminMasterlistAssignStudent() {
     // Find or create masterlist for this section
     let masterlistToUpdate = currentMasterlist;
     
-    // Get current school year
-    const currentYear = new Date().getFullYear();
-    const nextYear = currentYear + 1;
-    const schoolYear = `${currentYear}-${nextYear}`;
+    // Get school year from enrollment period, fallback to calculated value if not available
+    let schoolYear;
+    if (currentPeriod?.schoolYear) {
+      schoolYear = currentPeriod.schoolYear;
+    } else {
+      // Fallback: calculate from current date
+      const currentYear = new Date().getFullYear();
+      const nextYear = currentYear + 1;
+      schoolYear = `${currentYear}-${nextYear}`;
+    }
 
     // If no masterlist exists, create one
     if (!masterlistToUpdate) {

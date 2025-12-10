@@ -188,4 +188,7 @@ enrollmentSchema.index({ status: 1 });
 enrollmentSchema.index({ schoolYear: 1 });
 enrollmentSchema.index({ dateSubmitted: -1 });
 
+// Compound unique index to prevent duplicate enrollments per student per school year and grade level
+enrollmentSchema.index({ studentId: 1, schoolYear: 1, gradeLevelToEnroll: 1 }, { unique: true });
+
 export default mongoose.model('Enrollment', enrollmentSchema);

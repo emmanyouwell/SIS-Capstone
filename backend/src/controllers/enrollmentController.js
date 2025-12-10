@@ -316,7 +316,69 @@ export const createEnrollment = async (req, res) => {
       });
     }
 
-    const enrollment = await Enrollment.create(enrollmentData);
+    // Find existing enrollment for this student (by studentId only)
+    // Get the most recent enrollment for the student
+    const existingEnrollment = await Enrollment.findOne({
+      studentId: student._id,
+    }).sort({ dateSubmitted: -1 });
+
+    let enrollment;
+    let isUpdate = false;
+
+    if (existingEnrollment) {
+      // Check if there's already an enrollment with the new schoolYear and gradeLevelToEnroll
+      // (to handle unique index constraint)
+      const conflictingEnrollment = await Enrollment.findOne({
+        studentId: student._id,
+        schoolYear: enrollmentData.schoolYear,
+        gradeLevelToEnroll: enrollmentData.gradeLevelToEnroll || enrollmentData.gradeToEnroll,
+        _id: { $ne: existingEnrollment._id }, // Exclude the enrollment we're about to update
+      });
+
+      if (conflictingEnrollment) {
+        // If there's a conflict, delete the old enrollment and update the conflicting one
+        // Students with isPromoted === true can update enrollments unless status is "enrolled"
+        if (conflictingEnrollment.status === 'enrolled') {
+          return res.status(400).json({
+            message: 'Cannot update enrollment that has already been enrolled. Please contact the administration for assistance.',
+          });
+        }
+        
+        // Delete the old enrollment
+        await existingEnrollment.deleteOne();
+        
+        // Update the conflicting enrollment with new data
+        // Change status from "not enrolled" to "pending" when student updates
+        enrollmentData.status = conflictingEnrollment.status === 'not enrolled' ? 'pending' : conflictingEnrollment.status;
+        enrollment = await Enrollment.findByIdAndUpdate(
+          conflictingEnrollment._id,
+          enrollmentData,
+          { new: true, runValidators: true }
+        );
+        isUpdate = true;
+      } else {
+        // No conflict - update the existing enrollment
+        // Students with isPromoted === true can update enrollments unless status is "enrolled"
+        if (existingEnrollment.status === 'enrolled') {
+          return res.status(400).json({
+            message: 'Cannot update enrollment that has already been enrolled. Please contact the administration for assistance.',
+          });
+        }
+
+        // Update existing enrollment with new data (for next school year)
+        // Change status from "not enrolled" to "pending" when student updates
+        enrollmentData.status = existingEnrollment.status === 'not enrolled' ? 'pending' : existingEnrollment.status;
+        enrollment = await Enrollment.findByIdAndUpdate(
+          existingEnrollment._id,
+          enrollmentData,
+          { new: true, runValidators: true }
+        );
+        isUpdate = true;
+      }
+    } else {
+      // Create new enrollment
+      enrollment = await Enrollment.create(enrollmentData);
+    }
     
     // Update student's LRN if provided in enrollment form (even if student was created without LRN)
     const studentUpdate = {
@@ -326,7 +388,7 @@ export const createEnrollment = async (req, res) => {
       studentUpdate.lrn = enrollmentData.lrn.trim();
     }
     
-    // Automatically update student's enrollmentStatus and LRN when enrollment is created
+    // Automatically update student's enrollmentStatus and LRN when enrollment is created/updated
     await Student.findByIdAndUpdate(student._id, studentUpdate);
 
     await enrollment.populate({
@@ -337,9 +399,10 @@ export const createEnrollment = async (req, res) => {
       },
     });
 
-    res.status(201).json({
+    res.status(isUpdate ? 200 : 201).json({
       success: true,
       data: enrollment,
+      isUpdate,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -391,7 +454,69 @@ export const adminCreateEnrollment = async (req, res) => {
       });
     }
 
-    const enrollment = await Enrollment.create(enrollmentData);
+    // Find existing enrollment for this student (by studentId only)
+    // Get the most recent enrollment for the student
+    // This allows admin to update enrollment forms for students with isPromoted === false
+    const existingEnrollment = await Enrollment.findOne({
+      studentId: student._id,
+    }).sort({ dateSubmitted: -1 });
+
+    let enrollment;
+    let isUpdate = false;
+
+    if (existingEnrollment) {
+      // Check if there's already an enrollment with the new schoolYear and gradeLevelToEnroll
+      // (to handle unique index constraint)
+      const conflictingEnrollment = await Enrollment.findOne({
+        studentId: student._id,
+        schoolYear: enrollmentData.schoolYear,
+        gradeLevelToEnroll: enrollmentData.gradeLevelToEnroll || enrollmentData.gradeToEnroll,
+        _id: { $ne: existingEnrollment._id }, // Exclude the enrollment we're about to update
+      });
+
+      if (conflictingEnrollment) {
+        // If there's a conflict, delete the old enrollment and update the conflicting one
+        // Admin can update enrollments unless status is "enrolled"
+        if (conflictingEnrollment.status === 'enrolled') {
+          return res.status(400).json({
+            message: 'Cannot update enrollment that has already been enrolled.',
+          });
+        }
+        
+        // Delete the old enrollment
+        await existingEnrollment.deleteOne();
+        
+        // Update the conflicting enrollment with new data
+        enrollmentData.status = conflictingEnrollment.status; // Preserve status
+        enrollment = await Enrollment.findByIdAndUpdate(
+          conflictingEnrollment._id,
+          enrollmentData,
+          { new: true, runValidators: true }
+        );
+        isUpdate = true;
+      } else {
+        // No conflict - update the existing enrollment
+        // Admin can update enrollments unless status is "enrolled"
+        if (existingEnrollment.status === 'enrolled') {
+          return res.status(400).json({
+            message: 'Cannot update enrollment that has already been enrolled.',
+          });
+        }
+
+        // Update existing enrollment with new data
+        // Preserve the original status and only update the form data
+        enrollmentData.status = existingEnrollment.status; // Preserve status
+        enrollment = await Enrollment.findByIdAndUpdate(
+          existingEnrollment._id,
+          enrollmentData,
+          { new: true, runValidators: true }
+        );
+        isUpdate = true;
+      }
+    } else {
+      // Create new enrollment
+      enrollment = await Enrollment.create(enrollmentData);
+    }
     
     // Update student's LRN if provided in enrollment form (even if student was created without LRN)
     const studentUpdate = {
@@ -412,9 +537,10 @@ export const adminCreateEnrollment = async (req, res) => {
       },
     });
 
-    res.status(201).json({
+    res.status(isUpdate ? 200 : 201).json({
       success: true,
       data: enrollment,
+      isUpdate,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

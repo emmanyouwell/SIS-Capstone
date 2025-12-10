@@ -1,6 +1,6 @@
 import styles from './BasicEnrollmentInfo.module.css';
 
-function BasicEnrollmentInfo({ formData, handleInputChange, handleCheckboxChange, errors = {} }) {
+function BasicEnrollmentInfo({ formData, handleInputChange, handleCheckboxChange, errors = {}, schoolYearReadOnly = false }) {
   return (
     <div className={styles.section}>
       <div className={styles.formContent}>
@@ -14,6 +14,12 @@ function BasicEnrollmentInfo({ formData, handleInputChange, handleCheckboxChange
             placeholder="e.g., 2024-2025"
             className={errors.schoolYear ? styles.inputError : ''}
             required
+            readOnly={schoolYearReadOnly}
+            style={schoolYearReadOnly ? { 
+              backgroundColor: '#f3f4f6', 
+              cursor: 'not-allowed',
+              color: '#6b7280'
+            } : {}}
           />
           {errors.schoolYear && (
             <span className={styles.errorText}>{errors.schoolYear}</span>

@@ -5,7 +5,6 @@ import {
   fetchAllEnrollmentPeriods,
   createEnrollmentPeriod,
   updateEnrollmentPeriod,
-  deleteEnrollmentPeriod,
   clearError,
 } from '../../store/slices/enrollmentPeriodSlice';
 import MessageModal from '../MessageModal';
@@ -19,7 +18,6 @@ function EnrollmentPeriodManager() {
 
   const [showForm, setShowForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
@@ -175,30 +173,30 @@ function EnrollmentPeriodManager() {
     }
   };
 
-  const handleDeletePeriod = async () => {
+  const handleSetInactive = async (period) => {
     try {
-      const result = await dispatch(deleteEnrollmentPeriod(selectedPeriod._id));
-      if (deleteEnrollmentPeriod.fulfilled.match(result)) {
+      const result = await dispatch(
+        updateEnrollmentPeriod({ id: period._id, data: { isActive: false } })
+      );
+      if (updateEnrollmentPeriod.fulfilled.match(result)) {
         setMessageModalContent({
           type: 'success',
-          message: 'Enrollment period deleted successfully!',
+          message: 'Enrollment period set to inactive successfully!',
         });
         setShowMessageModal(true);
-        setShowDeleteConfirm(false);
-        setSelectedPeriod(null);
         dispatch(fetchCurrentEnrollmentPeriod());
         dispatch(fetchAllEnrollmentPeriods());
       } else {
         setMessageModalContent({
           type: 'error',
-          message: result.payload || 'Failed to delete enrollment period.',
+          message: result.payload || 'Failed to set enrollment period as inactive.',
         });
         setShowMessageModal(true);
       }
     } catch (error) {
       setMessageModalContent({
         type: 'error',
-        message: 'Failed to delete enrollment period. Please try again.',
+        message: 'Failed to set enrollment period as inactive. Please try again.',
       });
       setShowMessageModal(true);
     }
@@ -310,15 +308,14 @@ function EnrollmentPeriodManager() {
                   >
                     Edit
                   </button>
-                  <button
-                    className={styles.deleteBtn}
-                    onClick={() => {
-                      setSelectedPeriod(period);
-                      setShowDeleteConfirm(true);
-                    }}
-                  >
-                    Delete
-                  </button>
+                  {period.isActive && (
+                    <button
+                      className={styles.deleteBtn}
+                      onClick={() => handleSetInactive(period)}
+                    >
+                      Set Inactive
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -468,38 +465,6 @@ function EnrollmentPeriodManager() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && selectedPeriod && (
-        <div className={styles.modalOverlay} onClick={() => setShowDeleteConfirm(false)}>
-          <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Delete Enrollment Period</h3>
-            <p>
-              Are you sure you want to delete the enrollment period from{' '}
-              {formatDate(selectedPeriod.startDate)} to {formatDate(selectedPeriod.endDate)}?
-            </p>
-            <div className={styles.formActions}>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteConfirm(false);
-                  setSelectedPeriod(null);
-                }}
-                className={styles.cancelBtn}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeletePeriod}
-                className={styles.deleteBtn}
-                disabled={loading}
-              >
-                {loading ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <MessageModal
         show={showMessageModal}

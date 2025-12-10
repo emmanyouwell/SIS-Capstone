@@ -155,6 +155,35 @@ export const createGrade = async (req, res) => {
       });
     }
 
+    // Get schoolYear from student's enrollment record (not from active enrollment period)
+    // Enrollment periods are temporary, but enrollment records persist throughout the school year
+    const Enrollment = (await import('../models/Enrollment.js')).default;
+    const studentEnrollment = await Enrollment.findOne({
+      studentId: req.body.studentId,
+      status: 'enrolled', // Get the accepted enrollment
+    }).sort({ dateSubmitted: -1 }); // Get most recent enrollment
+
+    if (!studentEnrollment || !studentEnrollment.schoolYear) {
+      return res.status(400).json({ 
+        message: 'Student enrollment record not found or missing school year. Cannot create grade record.' 
+      });
+    }
+
+    const schoolYear = studentEnrollment.schoolYear;
+
+    // Check for existing grade for this student and school year
+    const existingGrade = await Grade.findOne({
+      studentId: req.body.studentId,
+      schoolYear: schoolYear,
+    });
+
+    if (existingGrade) {
+      return res.status(400).json({
+        message: `Grade record already exists for this student for school year ${schoolYear}. Please update the existing record instead.`,
+      });
+    }
+
+    req.body.schoolYear = schoolYear;
     req.body.dateRecorded = new Date();
 
     const grade = await Grade.create(req.body);

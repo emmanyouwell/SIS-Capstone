@@ -86,6 +86,16 @@ function StudentEnrollment() {
     dispatch(fetchCurrentEnrollmentPeriod());
   }, [dispatch, user?.roleData]);
 
+  // Auto-fill school year from active enrollment period
+  useEffect(() => {
+    if (currentPeriod && currentPeriod.schoolYear) {
+      setFormData((prev) => ({
+        ...prev,
+        schoolYear: currentPeriod.schoolYear,
+      }));
+    }
+  }, [currentPeriod]);
+
   // Auto-fill form data when user data and enrollments are available
   useEffect(() => {
     if (user && student) {
@@ -95,7 +105,8 @@ function StudentEnrollment() {
       setFormData((prev) => ({
         ...prev,
         // Basic enrollment info
-        schoolYear: latestEnrollmentData.schoolYear || prev.schoolYear || '',
+        // School year is set from active enrollment period, don't override
+        schoolYear: prev.schoolYear || latestEnrollmentData.schoolYear || '',
         gradeLevelToEnroll: latestEnrollmentData.gradeLevelToEnroll 
           ? String(latestEnrollmentData.gradeLevelToEnroll) 
           : (currentGradeLevel ? String(currentGradeLevel + 1) : ''),
@@ -280,9 +291,12 @@ function StudentEnrollment() {
       const result = await dispatch(createEnrollment(enrollmentData));
 
       if (createEnrollment.fulfilled.match(result)) {
+        const isUpdate = result.payload?.isUpdate || false;
         setMessageModalContent({
           type: 'success',
-          message: 'Enrollment form submitted successfully!',
+          message: isUpdate 
+            ? 'Enrollment form updated successfully!'
+            : 'Enrollment form submitted successfully!',
         });
         setShowMessageModal(true);
         setIsModalOpen(false);
@@ -510,6 +524,7 @@ function StudentEnrollment() {
                 handleInputChange={handleInputChange}
                 handleCheckboxChange={handleCheckboxChange}
                 errors={errors}
+                schoolYearReadOnly={true}
               />
 
               {/* Personal Information Section */}

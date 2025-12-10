@@ -7,6 +7,7 @@ import { fetchAllUsers } from '../../store/slices/userSlice';
 import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { getAllSections, updateSection } from '../../store/slices/sectionSlice';
 import { fetchAllTeachers } from '../../store/slices/teacherSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 
 function AdminMasterlistAssignTeacher() {
   const navigate = useNavigate();
@@ -28,6 +29,7 @@ function AdminMasterlistAssignTeacher() {
     (state) => state.subjects
   );
   const sections = useSelector((state) => state.section.data);
+  const { currentPeriod } = useSelector((state) => state.enrollmentPeriod);
 
   // Derive sections from API data
   const gradeSections = sections
@@ -85,13 +87,14 @@ function AdminMasterlistAssignTeacher() {
       id: t._id, // Teacher ID, not User ID
       name: `${t.userId?.firstName || ''} ${t.userId?.lastName || ''}`.trim() || 'Unknown Teacher'
     }));
-  // Fetch masterlists, teachers, subjects, and sections for current grade
+  // Fetch masterlists, teachers, subjects, sections, and enrollment period for current grade
   useEffect(() => {
     dispatch(fetchMasterlists({ grade: currentGrade }));
     dispatch(fetchAllUsers({ role: 'Teacher', status: 'Active' }));
     dispatch(fetchAllTeachers());
     dispatch(fetchAllSubjects({ gradeLevel: currentGrade }));
     dispatch(getAllSections({ gradeLevel: currentGrade }));
+    dispatch(fetchCurrentEnrollmentPeriod());
   }, [currentGrade, dispatch]);
 
   // Initialize selected section
@@ -220,10 +223,16 @@ function AdminMasterlistAssignTeacher() {
         dispatch(getAllSections({ gradeLevel: currentGrade }));
       }
 
-      // Get current school year (default to current year format)
-      const currentYear = new Date().getFullYear();
-      const nextYear = currentYear + 1;
-      const schoolYear = `${currentYear}-${nextYear}`;
+      // Get school year from enrollment period, fallback to calculated value if not available
+      let schoolYear;
+      if (currentPeriod?.schoolYear) {
+        schoolYear = currentPeriod.schoolYear;
+      } else {
+        // Fallback: calculate from current date
+        const currentYear = new Date().getFullYear();
+        const nextYear = currentYear + 1;
+        schoolYear = `${currentYear}-${nextYear}`;
+      }
 
       if (!currentMasterlist) {
         // Find the section ID from the sections list

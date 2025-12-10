@@ -107,6 +107,10 @@ export const createEnrollmentPeriod = async (req, res) => {
       return res.status(403).json({ message: 'Admin record not found' });
     }
 
+    // Get old active period's schoolYear before deactivating
+    const oldActivePeriod = await EnrollmentPeriod.findOne({ isActive: true });
+    const oldSchoolYear = oldActivePeriod?.schoolYear;
+
     // Deactivate all other active periods
     await EnrollmentPeriod.updateMany({ isActive: true }, { isActive: false });
 
@@ -135,6 +139,15 @@ export const createEnrollmentPeriod = async (req, res) => {
     if (grade10PromotedStudentIds.length > 0) {
       await Enrollment.deleteMany({ 
         studentId: { $in: grade10PromotedStudentIds } 
+      });
+    }
+
+    // Delete old enrollment forms for the previous school year (except Grade 10 promoted who already had theirs deleted)
+    // This prevents duplicate enrollment forms when students enroll for the new school year
+    if (oldSchoolYear && oldSchoolYear !== schoolYear) {
+      await Enrollment.deleteMany({ 
+        schoolYear: oldSchoolYear,
+        studentId: { $nin: grade10PromotedStudentIds }
       });
     }
 

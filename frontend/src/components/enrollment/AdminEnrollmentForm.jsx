@@ -4,6 +4,7 @@ import BasicEnrollmentInfo from './BasicEnrollmentInfo';
 import ReturningLearners from './ReturningLearners';
 import { adminCreateEnrollment } from '../../store/slices/enrollmentSlice';
 import { fetchStudentById } from '../../store/slices/studentSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 import styles from './AdminEnrollmentForm.module.css';
 import MessageModal from '../MessageModal';
 
@@ -11,6 +12,7 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
   const dispatch = useDispatch();
   const { loading } = useSelector((state) => state.enrollments);
   const { selectedStudent } = useSelector((state) => state.students);
+  const { isPeriodActive, loading: periodLoading, currentPeriod } = useSelector((state) => state.enrollmentPeriod);
 
   // Initial form data structure
   const getInitialFormData = (currentStudentId = null) => ({
@@ -59,6 +61,11 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
+  // Fetch enrollment period on mount
+  useEffect(() => {
+    dispatch(fetchCurrentEnrollmentPeriod());
+  }, [dispatch]);
+
   // Reset form when studentId changes
   useEffect(() => {
     setFormData(getInitialFormData(studentId));
@@ -70,6 +77,16 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
       dispatch(fetchStudentById(studentId));
     }
   }, [studentId, dispatch]);
+
+  // Auto-fill school year from active enrollment period
+  useEffect(() => {
+    if (currentPeriod && currentPeriod.schoolYear) {
+      setFormData((prev) => ({
+        ...prev,
+        schoolYear: currentPeriod.schoolYear,
+      }));
+    }
+  }, [currentPeriod]);
 
   // Auto-fill from student data
   useEffect(() => {
@@ -175,6 +192,16 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Check if enrollment period is active
+    if (!isPeriodActive) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Cannot create enrollment form. No active enrollment period. Please create an enrollment period first.',
+      });
+      setShowMessageModal(true);
+      return;
+    }
 
     if (!formData.studentId) {
       setMessageModalContent({
@@ -297,6 +324,21 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
             </div>
           )}
         </div>
+        {!periodLoading && !isPeriodActive && (
+          <div style={{ 
+            padding: '1rem', 
+            margin: '1rem', 
+            background: '#fef3c7', 
+            border: '1px solid #f59e0b', 
+            borderRadius: '6px',
+            color: '#92400e'
+          }}>
+            <strong>⚠️ No Active Enrollment Period</strong>
+            <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem' }}>
+              An active enrollment period is required to create enrollment forms. Please create an enrollment period first.
+            </p>
+          </div>
+        )}
         <form className={styles.form} onSubmit={handleSubmit}>
           {/* Basic Enrollment Info - Always shown */}
           <BasicEnrollmentInfo
@@ -304,6 +346,7 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
             handleInputChange={handleInputChange}
             handleCheckboxChange={handleCheckboxChange}
             errors={errors}
+            schoolYearReadOnly={true}
           />
 
           {/* Personal Information - Always shown (snapshot) */}
@@ -584,7 +627,7 @@ function AdminEnrollmentForm({ studentId, onClose, onSuccess }) {
             <button
               type="submit"
               className={styles.btnSubmit}
-              disabled={isSubmitting || loading}
+              disabled={isSubmitting || loading || !isPeriodActive || periodLoading}
             >
               {isSubmitting || loading ? 'Creating...' : 'Create Enrollment Form'}
             </button>
