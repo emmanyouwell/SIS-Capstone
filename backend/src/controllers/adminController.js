@@ -109,3 +109,32 @@ export const deleteAdmin = async (req, res) => {
   }
 };
 
+// @desc    Deactivate admin (set user status to Inactive)
+// @route   PATCH /api/v1/admins/:id/deactivate
+// @access  Private (Admin)
+export const deactivateAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id).populate('userId');
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    if (!admin.userId) {
+      return res.status(404).json({ message: 'Associated user not found' });
+    }
+
+    // Set user status to Inactive
+    admin.userId.status = 'Inactive';
+    await admin.userId.save();
+
+    res.json({
+      success: true,
+      message: 'Admin deactivated successfully',
+      data: admin,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+

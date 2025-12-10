@@ -6,6 +6,7 @@ import { fetchMasterlists } from '../../store/slices/masterlistSlice';
 import { fetchGrades, updateGrade, createGrade } from '../../store/slices/gradeSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPeriodSlice';
 
 function TeacherGrades() {
   const dispatch = useDispatch();
@@ -14,6 +15,7 @@ function TeacherGrades() {
   const { grades, loading: gradesLoading } = useSelector((state) => state.grades);
   const { students: allStudents } = useSelector((state) => state.students);
   const { data: allSections, loading: sectionsLoading } = useSelector((state) => state.section);
+  const { currentPeriod } = useSelector((state) => state.enrollmentPeriod);
 
   const [selectedSectionId, setSelectedSectionId] = useState(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState(null);
@@ -33,13 +35,23 @@ function TeacherGrades() {
   const [fadeClass, setFadeClass] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Fetch subjects, masterlists, students, and sections on mount
+  // Fetch subjects, masterlists, students, sections, and enrollment period on mount
   useEffect(() => {
     dispatch(fetchAllSubjects());
-    dispatch(fetchMasterlists());
     dispatch(fetchAllStudents());
     dispatch(getAllSections());
+    dispatch(fetchCurrentEnrollmentPeriod());
   }, [dispatch]);
+
+  // Fetch masterlists with current school year
+  useEffect(() => {
+    if (currentPeriod?.schoolYear) {
+      dispatch(fetchMasterlists({ schoolYear: currentPeriod.schoolYear }));
+    } else {
+      // Fallback: fetch without school year filter (backend will use latest enrollment period)
+      dispatch(fetchMasterlists());
+    }
+  }, [dispatch, currentPeriod?.schoolYear]);
 
   // Fetch grades when subjects or masterlists change
   useEffect(() => {
@@ -48,31 +60,42 @@ function TeacherGrades() {
     }
   }, [dispatch, subjects.length]);
 
-  // Get grade levels from subjects the teacher teaches
+  // Get grade levels from subjects the teacher teaches (for filtering subjects only)
   const teacherGradeLevels = useMemo(() => {
     const gradeLevels = new Set();
     subjects.forEach((subject) => {
-      if (subject.gradeLevel) {
-        gradeLevels.add(subject.gradeLevel);
+      if (subject.gradeLevel !== null && subject.gradeLevel !== undefined) {
+        // Ensure gradeLevel is a number for consistent comparison
+        const gradeLevel = Number(subject.gradeLevel);
+        if (!isNaN(gradeLevel)) {
+          gradeLevels.add(gradeLevel);
+        }
       }
     });
-    return Array.from(gradeLevels).sort();
+    return Array.from(gradeLevels).sort((a, b) => a - b);
   }, [subjects]);
 
-  // Get sections from database for grade levels where teacher has subjects
+  // Get all sections from database (show all sections for all grades 7-10)
+  // This allows teachers to see all sections, even if they don't have subjects for that grade yet
   const sections = useMemo(() => {
+    if (!allSections || allSections.length === 0) return [];
+    
     return allSections
-      .filter((section) => teacherGradeLevels.includes(section.gradeLevel))
+      .filter((section) => {
+        // Only show sections for grades 7-10
+        const sectionGrade = Number(section.gradeLevel);
+        return !isNaN(sectionGrade) && sectionGrade >= 7 && sectionGrade <= 10;
+      })
       .map((section) => ({
         _id: section._id,
         sectionName: section.sectionName,
-        gradeLevel: section.gradeLevel,
+        gradeLevel: Number(section.gradeLevel),
       }))
       .sort((a, b) => {
         if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
         return a.sectionName.localeCompare(b.sectionName);
       });
-  }, [allSections, teacherGradeLevels]);
+  }, [allSections]);
 
   // Get subjects for selected section (filter by grade level of the section)
   const sectionSubjects = useMemo(() => {
@@ -100,9 +123,12 @@ function TeacherGrades() {
       return sectionId === selectedIdStr;
     });
     if (!section) return null;
-    return masterlists.find(
-      (ml) => ml.grade === section.gradeLevel && ml.section === section.sectionName
-    );
+    
+    // Match masterlist by section ID (ml.section is populated as an object with _id)
+    return masterlists.find((ml) => {
+      const mlSectionId = ml.section?._id?.toString() || ml.section?.toString();
+      return ml.grade === section.gradeLevel && mlSectionId === selectedIdStr;
+    });
   }, [masterlists, sections, selectedSectionId]);
 
   // Create mapping from User ID to Student ID using grades and students

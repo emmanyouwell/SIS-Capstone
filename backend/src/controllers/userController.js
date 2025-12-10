@@ -1,4 +1,7 @@
 import User from '../models/User.js';
+import Enrollment from '../models/Enrollment.js';
+import Grade from '../models/Grade.js';
+import Student from '../models/Student.js';
 
 // @desc    Get all users
 // @route   GET /api/v1/users
@@ -119,6 +122,47 @@ export const deleteUser = async (req, res) => {
     res.json({
       success: true,
       message: 'User deleted',
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Deactivate user (set status to Inactive and cascade to related records)
+// @route   PATCH /api/v1/users/:id/deactivate
+// @access  Private (Admin)
+export const deactivateUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Set user status to Inactive
+    user.status = 'Inactive';
+    await user.save();
+
+    // Cascade deactivation to related records
+    // For students: deactivate enrollment forms
+    if (user.role === 'Student') {
+      const student = await Student.findOne({ userId: user._id });
+      if (student) {
+        // Update enrollment statuses to 'not enrolled' for pending/enrolled enrollments
+        await Enrollment.updateMany(
+          { 
+            studentId: student._id,
+            status: { $in: ['pending', 'enrolled'] }
+          },
+          { $set: { status: 'not enrolled' } }
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'User deactivated successfully',
+      data: user,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

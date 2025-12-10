@@ -67,9 +67,9 @@ export const removeScheduleEntry = createAsyncThunk(
 
 export const setFullSchedule = createAsyncThunk(
   'schedules/setFull',
-  async ({ sectionId, schedule }, { rejectWithValue }) => {
+  async ({ sectionId, schedule, schoolYear }, { rejectWithValue }) => {
     try {
-      const response = await api.patch(`/schedules/${sectionId}/set`, { schedule });
+      const response = await api.patch(`/schedules/${sectionId}/set`, { schedule, schoolYear });
       return response.data.data; // Backend returns { success: true, data: schedule }
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Failed to set schedule');

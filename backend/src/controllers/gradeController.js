@@ -4,6 +4,7 @@ import Subject from '../models/Subject.js';
 import Teacher from '../models/Teacher.js';
 import Message from '../models/Message.js';
 import User from '../models/User.js';
+import Enrollment from '../models/Enrollment.js';
 import { getGradeDescriptor, isGradeComplete, shouldPromoteStudent } from '../utils/gradeUtils.js';
 
 // @desc    Get all grades
@@ -65,6 +66,7 @@ export const getGrades = async (req, res) => {
       }
     }
 
+    // Fetch all matching grades first
     const grades = await Grade.find(filter)
       .populate({
         path: 'studentId',
@@ -76,10 +78,45 @@ export const getGrades = async (req, res) => {
       .populate('grades.subjectId', 'subjectName gradeLevel')
       .sort({ dateRecorded: -1 });
 
+    // Filter by current school year: get school year from each student's enrollment record
+    // Get unique student IDs from the grades
+    const gradeStudentIds = [...new Set(
+      grades.map(g => {
+        const studentId = g.studentId._id?.toString() || g.studentId.toString();
+        return studentId;
+      })
+    )];
+
+    // Get current school year for each student from their most recent enrollment
+    const enrollments = await Enrollment.find({
+      studentId: { $in: gradeStudentIds },
+      status: 'enrolled',
+    })
+      .select('studentId schoolYear')
+      .sort({ dateSubmitted: -1 });
+
+    // Create a map of studentId -> current school year (most recent enrollment)
+    const studentSchoolYearMap = new Map();
+    enrollments.forEach((enrollment) => {
+      const sid = enrollment.studentId.toString();
+      // Only keep the most recent enrollment for each student
+      if (!studentSchoolYearMap.has(sid)) {
+        studentSchoolYearMap.set(sid, enrollment.schoolYear);
+      }
+    });
+
+    // Filter grades to only include those matching the student's current school year
+    const filteredGrades = grades.filter((grade) => {
+      const studentId = grade.studentId._id?.toString() || grade.studentId.toString();
+      const currentSchoolYear = studentSchoolYearMap.get(studentId);
+      // Only include grades that match the student's current school year
+      return currentSchoolYear && grade.schoolYear === currentSchoolYear;
+    });
+
     res.json({
       success: true,
-      count: grades.length,
-      data: grades,
+      count: filteredGrades.length,
+      data: filteredGrades,
     });
   } catch (error) {
     console.error('Error fetching grades:', error);

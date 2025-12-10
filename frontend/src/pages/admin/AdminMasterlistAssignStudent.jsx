@@ -122,6 +122,7 @@ function AdminMasterlistAssignStudent() {
         enrollmentStatus: isEnrolled, // Use enrolledStatus field
         assignedSection: assignedSection, // Section name if assigned, null otherwise
         hasAssignedSection: hasAssignedSection, // Boolean for quick checks
+        userStatus: user.status || 'Active', // User status (Active/Inactive)
       };
     });
 
@@ -739,12 +740,19 @@ function AdminMasterlistAssignStudent() {
                     (activeTab === 'Enrolled' && isEnrolled) ||
                     (activeTab === 'Not Enrolled' && !isEnrolled);
                   
+                  const isInactive = student.userStatus === 'Inactive';
+                  
                   // Determine row class based on enrollment and assignment status
                   let rowClass = styles.notEnrolledRow;
                   if (isEnrolled && hasAssignedSection) {
                     rowClass = styles.assignedRow;
                   } else if (isEnrolled && !hasAssignedSection) {
                     rowClass = styles.enrolledUnassignedRow;
+                  }
+                  
+                  // Add inactive styling if user is inactive
+                  if (isInactive) {
+                    rowClass = `${rowClass} ${styles.inactiveRow || ''}`;
                   }
                   
                   // Determine status badge class and text
@@ -764,6 +772,11 @@ function AdminMasterlistAssignStudent() {
                       className={`${rowClass} ${
                         checkedStudents.has(student._id) ? styles.selectedRow : ''
                       }`}
+                      style={isInactive ? {
+                        opacity: 0.6,
+                        backgroundColor: '#f5f5f5',
+                        textDecoration: 'line-through'
+                      } : {}}
                     >
                       <td>
                         <input
@@ -771,16 +784,45 @@ function AdminMasterlistAssignStudent() {
                           className={styles.checkbox}
                           checked={checkedStudents.has(student._id)}
                           onChange={() => handleCheckboxChange(student._id, isEnrolled)}
-                          disabled={!canSelect}
+                          disabled={!canSelect || isInactive}
                         />
                       </td>
-                      <td className={styles.studentName}>{formatStudentName(student)}</td>
+                      <td className={styles.studentName}>
+                        {formatStudentName(student)}
+                        {isInactive && (
+                          <span style={{
+                            marginLeft: '8px',
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            backgroundColor: '#e74c3c',
+                            color: '#fff',
+                            textDecoration: 'none'
+                          }}>
+                            INACTIVE
+                          </span>
+                        )}
+                      </td>
                       <td>{student.learnerReferenceNo || 'N/A'}</td>
                       <td>{formatGender(student)}</td>
                       <td>
                         <span className={`${styles.statusBadge} ${statusBadgeClass}`}>
                           {statusText}
                         </span>
+                        {isInactive && (
+                          <span style={{
+                            marginLeft: '8px',
+                            padding: '2px 6px',
+                            borderRadius: '3px',
+                            fontSize: '10px',
+                            fontWeight: '600',
+                            backgroundColor: '#95a5a6',
+                            color: '#fff'
+                          }}>
+                            Account Inactive
+                          </span>
+                        )}
                       </td>
                       <td>{student.assignedSection || '—'}</td>
                     </tr>

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
-import { fetchAllAdmins, updateAdmin, deleteAdmin } from '../../store/slices/adminSlice';
+import { fetchAllAdmins, updateAdmin, deleteAdmin, deactivateAdmin } from '../../store/slices/adminSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 
@@ -37,8 +37,8 @@ function AdminAccountAdminEdit() {
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingAdmin, setEditingAdmin] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [adminToDelete, setAdminToDelete] = useState(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [adminToDeactivate, setAdminToDeactivate] = useState(null);
 
   // Fetch admins
   useEffect(() => {
@@ -129,9 +129,9 @@ function AdminAccountAdminEdit() {
         });
         setShowAddModal(true);
         break;
-      case 'delete':
-        setAdminToDelete(account);
-        setShowDeleteModal(true);
+      case 'deactivate':
+        setAdminToDeactivate(account);
+        setShowDeactivateModal(true);
         break;
       default:
         break;
@@ -271,36 +271,31 @@ function AdminAccountAdminEdit() {
     });
   };
 
-  const handleConfirmDelete = async () => {
-    if (!adminToDelete) return;
+  const handleConfirmDeactivate = async () => {
+    if (!adminToDeactivate) return;
 
     try {
-      // Delete admin record first, then user
-      const adminResult = await dispatch(deleteAdmin(adminToDelete._id));
-      if (deleteAdmin.fulfilled.match(adminResult)) {
-        // Also delete the associated user
-        if (adminToDelete.admin?.userId?._id) {
-          await dispatch(deleteUser(adminToDelete.admin.userId._id));
-        }
-        setSuccessMessage('Admin deleted successfully!');
-        setShowDeleteModal(false);
-        setAdminToDelete(null);
+      const result = await dispatch(deactivateAdmin(adminToDeactivate._id));
+      if (deactivateAdmin.fulfilled.match(result)) {
+        setSuccessMessage('Admin deactivated successfully!');
+        setShowDeactivateModal(false);
+        setAdminToDeactivate(null);
         dispatch(fetchAllAdmins());
       } else {
-        setFormError(adminResult.payload || 'Failed to delete admin');
-        setShowDeleteModal(false);
-        setAdminToDelete(null);
+        setFormError(result.payload || 'Failed to deactivate admin');
+        setShowDeactivateModal(false);
+        setAdminToDeactivate(null);
       }
     } catch (err) {
       setFormError('An unexpected error occurred');
-      setShowDeleteModal(false);
-      setAdminToDelete(null);
+      setShowDeactivateModal(false);
+      setAdminToDeactivate(null);
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false);
-    setAdminToDelete(null);
+  const handleCancelDeactivate = () => {
+    setShowDeactivateModal(false);
+    setAdminToDeactivate(null);
   };
 
   const title = 'Admin Table';
@@ -416,9 +411,10 @@ function AdminAccountAdminEdit() {
                         <button
                           type="button"
                           className={`${styles.dropdownItem} ${styles.delete}`}
-                          onClick={() => handleDropdownAction('delete', account)}
+                          onClick={() => handleDropdownAction('deactivate', account)}
+                          disabled={account.admin?.userId?.status === 'Inactive'}
                         >
-                          Delete
+                          {account.admin?.userId?.status === 'Inactive' ? 'Already Inactive' : 'Set as Inactive'}
                         </button>
                       </div>
                     )}
@@ -664,22 +660,22 @@ function AdminAccountAdminEdit() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && userToDelete && (
-        <div className={styles.modal} onClick={handleCancelDelete}>
+      {/* Deactivate Confirmation Modal */}
+      {showDeactivateModal && adminToDeactivate && (
+        <div className={styles.modal} onClick={handleCancelDeactivate}>
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Confirm Delete</h3>
+            <h3>Confirm Deactivation</h3>
             <p>
-              Are you sure you want to delete <strong>{adminToDelete?.name}</strong>?
+              Are you sure you want to set <strong>{adminToDeactivate?.name}</strong> as inactive?
             </p>
             <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              This action cannot be undone.
+              This will deactivate the admin account. The account can be reactivated later.
             </p>
             <div className={styles.modalButtons}>
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={handleCancelDelete}
+                onClick={handleCancelDeactivate}
                 disabled={loading}
               >
                 Cancel
@@ -687,10 +683,10 @@ function AdminAccountAdminEdit() {
               <button
                 type="button"
                 className={styles.btnDanger}
-                onClick={handleConfirmDelete}
+                onClick={handleConfirmDeactivate}
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete'}
+                {loading ? 'Deactivating...' : 'Set as Inactive'}
               </button>
             </div>
           </div>

@@ -38,11 +38,14 @@ const scheduleSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Section',
       required: true,
-      unique: true,
     },
     schedule: {
       type: [scheduleEntrySchema],
       default: [],
+    },
+    schoolYear: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }
@@ -52,6 +55,9 @@ const scheduleSchema = new mongoose.Schema(
 scheduleSchema.index({ sectionId: 1 });
 scheduleSchema.index({ 'schedule.subjectId': 1 });
 scheduleSchema.index({ 'schedule.day': 1 });
+scheduleSchema.index({ schoolYear: 1 });
+// Compound unique index: one schedule per section per school year
+scheduleSchema.index({ sectionId: 1, schoolYear: 1 }, { unique: true });
 
 export default mongoose.model('Schedule', scheduleSchema);
 

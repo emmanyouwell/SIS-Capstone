@@ -175,7 +175,7 @@ function AdminEnrollment() {
 
       setMessageModalContent({
         type: 'success',
-        message: 'Student has been dropped. Enrollment form deleted and account set to inactive.',
+        message: 'Student has been dropped. Enrollment form deleted, enrollment status set to false, and account set to inactive.',
       });
       setShowMessageModal(true);
       setShowDropConfirmModal(false);

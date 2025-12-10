@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountEdit.module.css';
-import { fetchAllTeachers, updateTeacher, deleteTeacher } from '../../store/slices/teacherSlice';
-import { fetchAllAdmins, updateAdmin, deleteAdmin } from '../../store/slices/adminSlice';
+import { fetchAllTeachers, updateTeacher, deleteTeacher, deactivateTeacher } from '../../store/slices/teacherSlice';
+import { fetchAllAdmins, updateAdmin, deleteAdmin, deactivateAdmin } from '../../store/slices/adminSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
@@ -45,9 +45,9 @@ function AdminAccountEdit() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingAccount, setEditingAccount] = useState(null); // Can be teacher or admin
   const [editingAccountType, setEditingAccountType] = useState(null); // 'Teacher' or 'Admin'
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState(null);
-  const [accountToDeleteType, setAccountToDeleteType] = useState(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [accountToDeactivate, setAccountToDeactivate] = useState(null);
+  const [accountToDeactivateType, setAccountToDeactivateType] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingAccount, setViewingAccount] = useState(null);
 
@@ -178,10 +178,10 @@ function AdminAccountEdit() {
         });
         setShowAddModal(true);
         break;
-      case 'delete':
-        setAccountToDelete(account);
-        setAccountToDeleteType(account.accountType);
-        setShowDeleteModal(true);
+      case 'deactivate':
+        setAccountToDeactivate(account);
+        setAccountToDeactivateType(account.accountType);
+        setShowDeactivateModal(true);
         break;
       default:
         break;
@@ -368,61 +368,51 @@ function AdminAccountEdit() {
     });
   };
 
-  const handleConfirmDelete = async () => {
-    if (!accountToDelete) return;
+  const handleConfirmDeactivate = async () => {
+    if (!accountToDeactivate) return;
 
     try {
-      if (accountToDeleteType === 'Teacher') {
-        // Delete teacher record first, then user
-        const teacherResult = await dispatch(deleteTeacher(accountToDelete._id));
-        if (deleteTeacher.fulfilled.match(teacherResult)) {
-          // Also delete the associated user
-          if (accountToDelete.account?.userId?._id) {
-            await dispatch(deleteUser(accountToDelete.account.userId._id));
-          }
-          setSuccessMessage('Teacher deleted successfully!');
-          setShowDeleteModal(false);
-          setAccountToDelete(null);
-          setAccountToDeleteType(null);
+      if (accountToDeactivateType === 'Teacher') {
+        const result = await dispatch(deactivateTeacher(accountToDeactivate._id));
+        if (deactivateTeacher.fulfilled.match(result)) {
+          setSuccessMessage('Teacher deactivated successfully!');
+          setShowDeactivateModal(false);
+          setAccountToDeactivate(null);
+          setAccountToDeactivateType(null);
           dispatch(fetchAllTeachers());
         } else {
-          setFormError(teacherResult.payload || 'Failed to delete teacher');
-          setShowDeleteModal(false);
-          setAccountToDelete(null);
-          setAccountToDeleteType(null);
+          setFormError(result.payload || 'Failed to deactivate teacher');
+          setShowDeactivateModal(false);
+          setAccountToDeactivate(null);
+          setAccountToDeactivateType(null);
         }
-      } else if (accountToDeleteType === 'Admin') {
-        // Delete admin record first, then user
-        const adminResult = await dispatch(deleteAdmin(accountToDelete._id));
-        if (deleteAdmin.fulfilled.match(adminResult)) {
-          // Also delete the associated user
-          if (accountToDelete.account?.userId?._id) {
-            await dispatch(deleteUser(accountToDelete.account.userId._id));
-          }
-          setSuccessMessage('Admin deleted successfully!');
-          setShowDeleteModal(false);
-          setAccountToDelete(null);
-          setAccountToDeleteType(null);
+      } else if (accountToDeactivateType === 'Admin') {
+        const result = await dispatch(deactivateAdmin(accountToDeactivate._id));
+        if (deactivateAdmin.fulfilled.match(result)) {
+          setSuccessMessage('Admin deactivated successfully!');
+          setShowDeactivateModal(false);
+          setAccountToDeactivate(null);
+          setAccountToDeactivateType(null);
           dispatch(fetchAllAdmins());
         } else {
-          setFormError(adminResult.payload || 'Failed to delete admin');
-          setShowDeleteModal(false);
-          setAccountToDelete(null);
-          setAccountToDeleteType(null);
+          setFormError(result.payload || 'Failed to deactivate admin');
+          setShowDeactivateModal(false);
+          setAccountToDeactivate(null);
+          setAccountToDeactivateType(null);
         }
       }
     } catch (err) {
       setFormError('An unexpected error occurred');
-      setShowDeleteModal(false);
-      setAccountToDelete(null);
-      setAccountToDeleteType(null);
+      setShowDeactivateModal(false);
+      setAccountToDeactivate(null);
+      setAccountToDeactivateType(null);
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false);
-    setAccountToDelete(null);
-    setAccountToDeleteType(null);
+  const handleCancelDeactivate = () => {
+    setShowDeactivateModal(false);
+    setAccountToDeactivate(null);
+    setAccountToDeactivateType(null);
   };
 
   const title = 'Faculty Table (Teachers & Admins)';
@@ -538,9 +528,10 @@ function AdminAccountEdit() {
                         <button
                           type="button"
                           className={`${styles.dropdownItem} ${styles.delete}`}
-                          onClick={() => handleDropdownAction('delete', account)}
+                          onClick={() => handleDropdownAction('deactivate', account)}
+                          disabled={account.account?.userId?.status === 'Inactive'}
                         >
-                          Delete
+                          {account.account?.userId?.status === 'Inactive' ? 'Already Inactive' : 'Set as Inactive'}
                         </button>
                       </div>
                     )}
@@ -1030,22 +1021,22 @@ function AdminAccountEdit() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {showDeleteModal && accountToDelete && (
-        <div className={styles.modal} onClick={handleCancelDelete}>
+      {/* Deactivate Confirmation Modal */}
+      {showDeactivateModal && accountToDeactivate && (
+        <div className={styles.modal} onClick={handleCancelDeactivate}>
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Confirm Delete</h3>
+            <h3>Confirm Deactivation</h3>
             <p>
-              Are you sure you want to delete <strong>{accountToDelete?.name}</strong> ({accountToDeleteType})?
+              Are you sure you want to set <strong>{accountToDeactivate?.name}</strong> ({accountToDeactivateType}) as inactive?
             </p>
             <p style={{ color: '#666', fontSize: '0.9rem', marginTop: '0.5rem' }}>
-              This action cannot be undone.
+              This will deactivate the account. The account can be reactivated later.
             </p>
             <div className={styles.modalButtons}>
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={handleCancelDelete}
+                onClick={handleCancelDeactivate}
                 disabled={loading}
               >
                 Cancel
@@ -1053,10 +1044,10 @@ function AdminAccountEdit() {
               <button
                 type="button"
                 className={styles.btnDanger}
-                onClick={handleConfirmDelete}
+                onClick={handleConfirmDeactivate}
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete'}
+                {loading ? 'Deactivating...' : 'Set as Inactive'}
               </button>
             </div>
           </div>

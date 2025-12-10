@@ -62,6 +62,18 @@ export const deleteStudent = createAsyncThunk(
   }
 );
 
+export const deactivateStudent = createAsyncThunk(
+  'students/deactivate',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/students/${id}/deactivate`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to deactivate student');
+    }
+  }
+);
+
 const initialState = {
   students: [],
   selectedStudent: null,
@@ -157,6 +169,25 @@ const studentSlice = createSlice({
         }
       })
       .addCase(deleteStudent.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Deactivate student
+      .addCase(deactivateStudent.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deactivateStudent.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.students.findIndex((s) => s._id === action.payload._id);
+        if (index !== -1) {
+          state.students[index] = action.payload;
+        }
+        if (state.selectedStudent && state.selectedStudent._id === action.payload._id) {
+          state.selectedStudent = action.payload;
+        }
+      })
+      .addCase(deactivateStudent.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

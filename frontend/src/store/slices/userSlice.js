@@ -38,6 +38,18 @@ export const deleteUser = createAsyncThunk(
   }
 );
 
+export const deactivateUser = createAsyncThunk(
+  'users/deactivate',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/users/${id}/deactivate`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to deactivate user');
+    }
+  }
+);
+
 const initialState = {
   users: [],
   loading: false,
@@ -93,6 +105,22 @@ const userSlice = createSlice({
         state.users = state.users.filter((user) => user._id !== action.payload);
       })
       .addCase(deleteUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Deactivate user
+      .addCase(deactivateUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deactivateUser.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.users.findIndex((user) => user._id === action.payload._id);
+        if (index !== -1) {
+          state.users[index] = action.payload;
+        }
+      })
+      .addCase(deactivateUser.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

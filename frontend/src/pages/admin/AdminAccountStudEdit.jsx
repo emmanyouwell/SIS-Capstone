@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountStudEdit.module.css';
-import { fetchAllStudents, updateStudent, deleteStudent } from '../../store/slices/studentSlice';
+import { fetchAllStudents, updateStudent, deleteStudent, deactivateStudent } from '../../store/slices/studentSlice';
 import { fetchAllUsers, updateUser, deleteUser } from '../../store/slices/userSlice';
 import { register } from '../../store/slices/authSlice';
 
@@ -34,8 +34,8 @@ function AdminAccountStudEdit() {
   });
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [editingStudent, setEditingStudent] = useState(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [studentToDelete, setStudentToDelete] = useState(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+  const [studentToDeactivate, setStudentToDeactivate] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingStudent, setViewingStudent] = useState(null);
 
@@ -168,9 +168,9 @@ function AdminAccountStudEdit() {
       case 'edit':
         openEditForAccount(account);
         break;
-      case 'delete':
-        setStudentToDelete(account);
-        setShowDeleteModal(true);
+      case 'deactivate':
+        setStudentToDeactivate(account);
+        setShowDeactivateModal(true);
         break;
       default:
         break;
@@ -293,36 +293,31 @@ function AdminAccountStudEdit() {
     resetForm();
   };
 
-  const handleConfirmDelete = async () => {
-    if (!studentToDelete) return;
+  const handleConfirmDeactivate = async () => {
+    if (!studentToDeactivate) return;
 
     try {
-      // Delete student record first, then user
-      const studentResult = await dispatch(deleteStudent(studentToDelete._id));
-      if (deleteStudent.fulfilled.match(studentResult)) {
-        // Also delete the associated user
-        if (studentToDelete.student?.userId?._id) {
-          await dispatch(deleteUser(studentToDelete.student.userId._id));
-        }
-        setSuccessMessage('Student deleted successfully!');
-        setShowDeleteModal(false);
-        setStudentToDelete(null);
+      const result = await dispatch(deactivateStudent(studentToDeactivate._id));
+      if (deactivateStudent.fulfilled.match(result)) {
+        setSuccessMessage('Student deactivated successfully!');
+        setShowDeactivateModal(false);
+        setStudentToDeactivate(null);
         dispatch(fetchAllStudents());
       } else {
-        setFormError(studentResult.payload || 'Failed to delete student');
-        setShowDeleteModal(false);
-        setStudentToDelete(null);
+        setFormError(result.payload || 'Failed to deactivate student');
+        setShowDeactivateModal(false);
+        setStudentToDeactivate(null);
       }
     } catch (err) {
       setFormError('An unexpected error occurred');
-      setShowDeleteModal(false);
-      setStudentToDelete(null);
+      setShowDeactivateModal(false);
+      setStudentToDeactivate(null);
     }
   };
 
-  const handleCancelDelete = () => {
-    setShowDeleteModal(false);
-    setStudentToDelete(null);
+  const handleCancelDeactivate = () => {
+    setShowDeactivateModal(false);
+    setStudentToDeactivate(null);
   };
 
   return (
@@ -483,7 +478,18 @@ function AdminAccountStudEdit() {
                   <td>{account.lrn || '—'}</td>
                   <td>{account.grade ?? '—'}</td>
                   <td>{account.totalLogins}</td>
-                  <td>{account.status === 'Active' ? 'Enrolled' : account.status}</td>
+                  <td>
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '500',
+                      backgroundColor: account.status === 'Active' ? '#d1f2eb' : '#fadbd8',
+                      color: account.status === 'Active' ? '#27ae60' : '#e74c3c'
+                    }}>
+                      {account.status || 'Active'}
+                    </span>
+                  </td>
                   <td>
                     <div className={styles.actionCell} data-dropdown>
                       <button
@@ -528,9 +534,10 @@ function AdminAccountStudEdit() {
                           <button
                             type="button"
                             className={`${styles.dropdownItem} ${styles.delete}`}
-                            onClick={() => handleDropdownAction('delete', account)}
+                            onClick={() => handleDropdownAction('deactivate', account)}
+                            disabled={account.status === 'Inactive'}
                           >
-                            Delete
+                            {account.status === 'Inactive' ? 'Already Inactive' : 'Set as Inactive'}
                           </button>
                         </div>
                       )}
@@ -878,12 +885,12 @@ function AdminAccountStudEdit() {
         </div>
       )}
 
-      {showDeleteModal && studentToDelete && (
-        <div className={styles.modal} onClick={handleCancelDelete}>
+      {showDeactivateModal && studentToDeactivate && (
+        <div className={styles.modal} onClick={handleCancelDeactivate}>
           <div className={styles.deleteModalContent} onClick={(e) => e.stopPropagation()}>
-            <h3>Confirm Delete</h3>
+            <h3>Confirm Deactivation</h3>
             <p>
-              Are you sure you want to delete <strong>{studentToDelete?.name}</strong>?
+              Are you sure you want to set <strong>{studentToDeactivate?.name}</strong> as inactive?
             </p>
             <p
               style={{
@@ -892,13 +899,13 @@ function AdminAccountStudEdit() {
                 marginTop: '0.5rem',
               }}
             >
-              This action cannot be undone.
+              This will deactivate the student account and related enrollment forms. The account can be reactivated later.
             </p>
             <div className={styles.modalButtons}>
               <button
                 type="button"
                 className={styles.btnSecondary}
-                onClick={handleCancelDelete}
+                onClick={handleCancelDeactivate}
                 disabled={loading}
               >
                 Cancel
@@ -906,10 +913,10 @@ function AdminAccountStudEdit() {
               <button
                 type="button"
                 className={styles.btnDanger}
-                onClick={handleConfirmDelete}
+                onClick={handleConfirmDeactivate}
                 disabled={loading}
               >
-                {loading ? 'Deleting...' : 'Delete'}
+                {loading ? 'Deactivating...' : 'Set as Inactive'}
               </button>
             </div>
           </div>

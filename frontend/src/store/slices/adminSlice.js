@@ -62,6 +62,18 @@ export const deleteAdmin = createAsyncThunk(
   }
 );
 
+export const deactivateAdmin = createAsyncThunk(
+  'admins/deactivate',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/admins/${id}/deactivate`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to deactivate admin');
+    }
+  }
+);
+
 const initialState = {
   admins: [],
   selectedAdmin: null,
@@ -157,6 +169,25 @@ const adminSlice = createSlice({
         }
       })
       .addCase(deleteAdmin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Deactivate admin
+      .addCase(deactivateAdmin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deactivateAdmin.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.admins.findIndex((a) => a._id === action.payload._id);
+        if (index !== -1) {
+          state.admins[index] = action.payload;
+        }
+        if (state.selectedAdmin && state.selectedAdmin._id === action.payload._id) {
+          state.selectedAdmin = action.payload;
+        }
+      })
+      .addCase(deactivateAdmin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

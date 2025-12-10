@@ -10,6 +10,7 @@ import { fetchAllSubjects } from '../../store/slices/subjectSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
 import { fetchMasterlists } from '../../store/slices/masterlistSlice';
+import { fetchAllEnrollmentPeriods } from '../../store/slices/enrollmentPeriodSlice';
 import MessageModal from '../../components/MessageModal';
 
 function AdminSchedule() {
@@ -23,6 +24,7 @@ function AdminSchedule() {
   const { students } = useSelector((state) => state.students);
   const { data: sections } = useSelector((state) => state.section);
   const { masterlists } = useSelector((state) => state.masterlists);
+  const { periods: enrollmentPeriods } = useSelector((state) => state.enrollmentPeriod);
 
   const times = [
     '7:00-8:00 AM',
@@ -148,6 +150,11 @@ function AdminSchedule() {
       dispatch(fetchMasterlists({ grade: currentGrade }));
     }
   }, [dispatch, currentGrade]);
+
+  // Fetch enrollment periods on mount to get latest school year
+  useEffect(() => {
+    dispatch(fetchAllEnrollmentPeriods());
+  }, [dispatch]);
 
   // Fetch schedule when section changes
   useEffect(() => {
@@ -319,8 +326,18 @@ function AdminSchedule() {
         });
       });
 
-      // Save the entire schedule array
-      const result = await dispatch(setFullSchedule({ sectionId: currentSectionId, schedule: scheduleArray }));
+      // Get the latest enrollment period's school year
+      const latestEnrollmentPeriod = enrollmentPeriods && enrollmentPeriods.length > 0
+        ? enrollmentPeriods[0] // Already sorted by createdAt: -1 from backend
+        : null;
+      const schoolYear = latestEnrollmentPeriod?.schoolYear || null;
+
+      // Save the entire schedule array with school year
+      const result = await dispatch(setFullSchedule({ 
+        sectionId: currentSectionId, 
+        schedule: scheduleArray,
+        schoolYear: schoolYear,
+      }));
 
       // Check if the action was rejected (e.g., teaching load exceeded)
       if (setFullSchedule.rejected.match(result)) {

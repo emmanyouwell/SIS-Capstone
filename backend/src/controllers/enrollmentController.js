@@ -655,7 +655,17 @@ export const deleteEnrollment = async (req, res) => {
       }
     }
 
+    // Get student ID before deleting enrollment
+    const studentId = enrollment.studentId;
+
     await enrollment.deleteOne();
+
+    // Set student's enrollmentStatus to false when enrollment is dropped/deleted
+    if (studentId) {
+      await Student.findByIdAndUpdate(studentId, {
+        enrollmentStatus: false,
+      });
+    }
 
     res.json({
       success: true,

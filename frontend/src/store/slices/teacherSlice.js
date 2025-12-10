@@ -62,6 +62,18 @@ export const deleteTeacher = createAsyncThunk(
   }
 );
 
+export const deactivateTeacher = createAsyncThunk(
+  'teachers/deactivate',
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await api.patch(`/teachers/${id}/deactivate`);
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to deactivate teacher');
+    }
+  }
+);
+
 const initialState = {
   teachers: [],
   selectedTeacher: null,
@@ -157,6 +169,25 @@ const teacherSlice = createSlice({
         }
       })
       .addCase(deleteTeacher.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Deactivate teacher
+      .addCase(deactivateTeacher.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(deactivateTeacher.fulfilled, (state, action) => {
+        state.loading = false;
+        const index = state.teachers.findIndex((t) => t._id === action.payload._id);
+        if (index !== -1) {
+          state.teachers[index] = action.payload;
+        }
+        if (state.selectedTeacher && state.selectedTeacher._id === action.payload._id) {
+          state.selectedTeacher = action.payload;
+        }
+      })
+      .addCase(deactivateTeacher.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       });

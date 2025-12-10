@@ -2,12 +2,20 @@ import Schedule from '../models/Schedule.js';
 import Student from '../models/Student.js';
 import Teacher from '../models/Teacher.js';
 import Subject from '../models/Subject.js';
+import EnrollmentPeriod from '../models/EnrollmentPeriod.js';
 import { canAssignLoad, updateTeacherLoad, calculateHoursBetween } from '../utils/teachingLoadCalculator.js';
 
 // @desc    Get schedule by section ID (helper function)
 // @access  Private
-const getScheduleBySectionId = async (sectionId) => {
-  let schedule = await Schedule.findOne({ sectionId })
+const getScheduleBySectionId = async (sectionId, schoolYear = null) => {
+  const filter = { sectionId };
+  
+  // Filter by school year if provided
+  if (schoolYear) {
+    filter.schoolYear = schoolYear;
+  }
+  
+  let schedule = await Schedule.findOne(filter)
     .populate('sectionId', 'sectionName gradeLevel')
     .populate({
       path: 'schedule.subjectId',
@@ -38,6 +46,14 @@ export const getSchedules = async (req, res) => {
   try {
     const { sectionId, subjectId, day } = req.query;
     let filter = {};
+
+    // Get the latest enrollment period's school year
+    const latestEnrollmentPeriod = await EnrollmentPeriod.findOne()
+      .sort({ createdAt: -1 });
+    
+    if (latestEnrollmentPeriod?.schoolYear) {
+      filter.schoolYear = latestEnrollmentPeriod.schoolYear;
+    }
 
     if (sectionId) filter.sectionId = sectionId;
 
@@ -174,16 +190,29 @@ export const getSchedules = async (req, res) => {
 // @access  Private (Admin)
 export const createSchedule = async (req, res) => {
   try {
-    const { sectionId, schedule = [] } = req.body;
+    const { sectionId, schedule = [], schoolYear } = req.body;
 
     if (!sectionId) {
       return res.status(400).json({ message: 'sectionId is required' });
     }
 
-    // Check if schedule already exists for this section
-    const existingSchedule = await Schedule.findOne({ sectionId });
+    // Get school year from request body or latest enrollment period
+    let scheduleSchoolYear = schoolYear;
+    if (!scheduleSchoolYear) {
+      const latestEnrollmentPeriod = await EnrollmentPeriod.findOne()
+        .sort({ createdAt: -1 });
+      scheduleSchoolYear = latestEnrollmentPeriod?.schoolYear;
+    }
+
+    // Check if schedule already exists for this section and school year
+    const existingSchedule = await Schedule.findOne({ 
+      sectionId,
+      schoolYear: scheduleSchoolYear,
+    });
     if (existingSchedule) {
-      return res.status(400).json({ message: 'Schedule already exists for this section' });
+      return res.status(400).json({ 
+        message: `Schedule already exists for this section and school year (${scheduleSchoolYear || 'N/A'})` 
+      });
     }
 
     // Validate teaching load before creating schedule
@@ -215,6 +244,7 @@ export const createSchedule = async (req, res) => {
     const scheduleDoc = await Schedule.create({
       sectionId,
       schedule,
+      schoolYear: scheduleSchoolYear,
     });
 
     await scheduleDoc.populate('sectionId', 'sectionName gradeLevel');
@@ -263,6 +293,14 @@ export const addScheduleEntry = async (req, res) => {
     const { sectionId } = req.params;
     const entry = req.body;
 
+    // Get school year from latest enrollment period if not provided
+    let scheduleSchoolYear = req.body.schoolYear;
+    if (!scheduleSchoolYear) {
+      const latestEnrollmentPeriod = await EnrollmentPeriod.findOne()
+        .sort({ createdAt: -1 });
+      scheduleSchoolYear = latestEnrollmentPeriod?.schoolYear;
+    }
+
     if (!entry.subjectId || !entry.day || !entry.startTime || !entry.endTime) {
       return res.status(400).json({ 
         message: 'subjectId, day, startTime, and endTime are required' 
@@ -296,8 +334,13 @@ export const addScheduleEntry = async (req, res) => {
       scheduleDoc = await Schedule.create({
         sectionId,
         schedule: [entry],
+        schoolYear: scheduleSchoolYear,
       });
     } else {
+      // Update school year if not set
+      if (!scheduleDoc.schoolYear && scheduleSchoolYear) {
+        scheduleDoc.schoolYear = scheduleSchoolYear;
+      }
       // Add entry to existing schedule
       scheduleDoc.schedule.push(entry);
       await scheduleDoc.save();
@@ -493,7 +536,15 @@ export const removeScheduleEntry = async (req, res) => {
 export const setFullSchedule = async (req, res) => {
   try {
     const { sectionId } = req.params;
-    const { schedule } = req.body;
+    const { schedule, schoolYear } = req.body;
+
+    // Get school year from request body or latest enrollment period
+    let scheduleSchoolYear = schoolYear;
+    if (!scheduleSchoolYear) {
+      const latestEnrollmentPeriod = await EnrollmentPeriod.findOne()
+        .sort({ createdAt: -1 });
+      scheduleSchoolYear = latestEnrollmentPeriod?.schoolYear;
+    }
 
     if (!Array.isArray(schedule)) {
       return res.status(400).json({ message: 'schedule must be an array' });
@@ -533,8 +584,13 @@ export const setFullSchedule = async (req, res) => {
       scheduleDoc = await Schedule.create({
         sectionId,
         schedule,
+        schoolYear: scheduleSchoolYear,
       });
     } else {
+      // Update school year if provided or not set
+      if (scheduleSchoolYear) {
+        scheduleDoc.schoolYear = scheduleSchoolYear;
+      }
       // Replace entire schedule array
       scheduleDoc.schedule = schedule;
       await scheduleDoc.save();
@@ -603,6 +659,11 @@ export const getSchedule = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Get the latest enrollment period's school year for filtering
+    const latestEnrollmentPeriod = await EnrollmentPeriod.findOne()
+      .sort({ createdAt: -1 });
+    const schoolYearFilter = latestEnrollmentPeriod?.schoolYear;
+
     // First, try to find by document ID
     let schedule = await Schedule.findById(id)
       .populate('sectionId', 'sectionName gradeLevel')
@@ -619,7 +680,13 @@ export const getSchedule = async (req, res) => {
 
     // If not found by document ID, try by sectionId
     if (!schedule) {
-      schedule = await getScheduleBySectionId(id);
+      schedule = await getScheduleBySectionId(id, schoolYearFilter);
+    } else if (schoolYearFilter && schedule.schoolYear !== schoolYearFilter) {
+      // If found by ID but school year doesn't match, return empty structure
+      schedule = {
+        sectionId: schedule.sectionId,
+        schedule: [],
+      };
     }
 
     // getScheduleBySectionId always returns an object (even if empty), so we always have a result

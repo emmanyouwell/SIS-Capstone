@@ -78,6 +78,7 @@ function AdminMasterlistGradeView() {
         sex: user.sex || '',
         isEnrolled,
         sectionId: student.sectionId,
+        userStatus: user.status || 'Active', // User status (Active/Inactive)
       };
     })
     .filter((student) => student.isEnrolled) // Filter out not enrolled students
@@ -200,14 +201,55 @@ function AdminMasterlistGradeView() {
                       </td>
                     </tr>
                   ) : (
-                    currentStudents.map((student) => (
-                      <tr key={student._id || student.learnerReferenceNo}>
-                        <td>{student.learnerReferenceNo || ''}</td>
-                        <td>{formatStudentName(student)}</td>
-                        <td>{formatGender(student)}</td>
-                        <td>{student.isEnrolled ? 'Enrolled' : 'Not Enrolled'}</td>
-                      </tr>
-                    ))
+                    currentStudents.map((student) => {
+                      const isInactive = student.userStatus === 'Inactive';
+                      return (
+                        <tr 
+                          key={student._id || student.learnerReferenceNo}
+                          style={isInactive ? {
+                            opacity: 0.6,
+                            backgroundColor: '#f5f5f5',
+                            textDecoration: 'line-through'
+                          } : {}}
+                        >
+                          <td>{student.learnerReferenceNo || ''}</td>
+                          <td>
+                            {formatStudentName(student)}
+                            {isInactive && (
+                              <span style={{
+                                marginLeft: '8px',
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                backgroundColor: '#e74c3c',
+                                color: '#fff',
+                                textDecoration: 'none'
+                              }}>
+                                INACTIVE
+                              </span>
+                            )}
+                          </td>
+                          <td>{formatGender(student)}</td>
+                          <td>
+                            {student.isEnrolled ? 'Enrolled' : 'Not Enrolled'}
+                            {isInactive && (
+                              <span style={{
+                                marginLeft: '8px',
+                                padding: '2px 6px',
+                                borderRadius: '3px',
+                                fontSize: '10px',
+                                fontWeight: '600',
+                                backgroundColor: '#95a5a6',
+                                color: '#fff'
+                              }}>
+                                Account Inactive
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>

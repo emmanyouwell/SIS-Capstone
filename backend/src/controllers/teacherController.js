@@ -131,3 +131,32 @@ export const deleteTeacher = async (req, res) => {
   }
 };
 
+// @desc    Deactivate teacher (set user status to Inactive)
+// @route   PATCH /api/v1/teachers/:id/deactivate
+// @access  Private (Admin)
+export const deactivateTeacher = async (req, res) => {
+  try {
+    const teacher = await Teacher.findById(req.params.id).populate('userId');
+
+    if (!teacher) {
+      return res.status(404).json({ message: 'Teacher not found' });
+    }
+
+    if (!teacher.userId) {
+      return res.status(404).json({ message: 'Associated user not found' });
+    }
+
+    // Set user status to Inactive
+    teacher.userId.status = 'Inactive';
+    await teacher.userId.save();
+
+    res.json({
+      success: true,
+      message: 'Teacher deactivated successfully',
+      data: teacher,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
