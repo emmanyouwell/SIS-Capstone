@@ -7,8 +7,10 @@ import {
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
+  fetchAnnouncementStats,
   clearError,
 } from '../../store/slices/announcementSlice';
+import api from '../../utils/api';
 import ConfirmationModal from '../../components/ConfirmationModal';
 import MessageModal from '../../components/MessageModal';
 
@@ -32,7 +34,7 @@ const unreadIcon = (
 
 function AdminAnnouncements() {
   const dispatch = useDispatch();
-  const { announcements, loading, error } = useSelector((state) => state.announcements);
+  const { announcements, loading, error, stats } = useSelector((state) => state.announcements);
   const { user } = useSelector((state) => state.auth);
 
   const [showAddModal, setShowAddModal] = useState(false);
@@ -43,15 +45,97 @@ function AdminAnnouncements() {
     title: '',
     audience: 'All',
     content: '',
+    image: null,
+    imageUrl: null,
+    imagePublicId: null,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     dispatch(fetchAnnouncements());
+    dispatch(fetchAnnouncementStats());
   }, [dispatch]);
+
+  const handleImageUpload = async (file) => {
+    if (!file) return null;
+    
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const response = await api.post('/uploads/image', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return {
+        url: response.data.url,
+        publicId: response.data.public_id,
+      };
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please select an image file',
+      });
+      setShowMessageModal(true);
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Image size must be less than 10MB',
+      });
+      setShowMessageModal(true);
+      return;
+    }
+
+    try {
+      const result = await handleImageUpload(file);
+      setFormData({
+        ...formData,
+        image: file,
+        imageUrl: result.url,
+        imagePublicId: result.publicId,
+      });
+    } catch (err) {
+      setMessageModalContent({
+        type: 'error',
+        message: err.message || 'Failed to upload image',
+      });
+      setShowMessageModal(true);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({
+      ...formData,
+      image: null,
+      imageUrl: null,
+      imagePublicId: null,
+    });
+  };
 
   const handleAddAnnouncement = async (e) => {
     e.preventDefault();
@@ -61,10 +145,13 @@ function AdminAnnouncements() {
           title: formData.title,
           content: formData.content,
           audience: formData.audience,
+          image: formData.imageUrl,
+          imagePublicId: formData.imagePublicId,
         })
       ).unwrap();
-      setFormData({ title: '', audience: 'All', content: '' });
+      setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
       setShowAddModal(false);
+      dispatch(fetchAnnouncementStats());
     } catch (err) {
       setMessageModalContent({
         type: 'error',
@@ -85,6 +172,9 @@ function AdminAnnouncements() {
       title: announcement.title,
       audience: announcement.audience,
       content: announcement.content,
+      image: null,
+      imageUrl: announcement.image || null,
+      imagePublicId: announcement.imagePublicId || null,
     });
     setShowViewEditModal(true);
   };
@@ -100,6 +190,7 @@ function AdminAnnouncements() {
       await dispatch(deleteAnnouncement(deleteTargetId)).unwrap();
       setShowConfirmModal(false);
       setDeleteTargetId(null);
+      dispatch(fetchAnnouncementStats());
     } catch (err) {
       setShowConfirmModal(false);
       setMessageModalContent({
@@ -122,12 +213,15 @@ function AdminAnnouncements() {
             title: formData.title,
             content: formData.content,
             audience: formData.audience,
+            image: formData.imageUrl,
+            imagePublicId: formData.imagePublicId,
           },
         })
       ).unwrap();
       setEditingAnnouncement(null);
       setShowViewEditModal(false);
-      setFormData({ title: '', audience: 'All', content: '' });
+      setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+      dispatch(fetchAnnouncementStats());
     } catch (err) {
       setMessageModalContent({
         type: 'error',
@@ -151,6 +245,11 @@ function AdminAnnouncements() {
     return 'Admin';
   };
 
+  const handleImageClick = (imageUrl) => {
+    setSelectedImage(imageUrl);
+    setShowImageModal(true);
+  };
+
   return (
     <>
       <div className={styles.mainContent}>
@@ -159,9 +258,9 @@ function AdminAnnouncements() {
             <h2>Announcements</h2>
           </div>
           <div className={styles.infoCards}>
-            <InfoCard icon={calendarIcon} title="Events" number="0" subtext="Upcoming" />
-            <InfoCard icon={viewedIcon} title="Viewed" number="27" subtext="Today" />
-            <InfoCard icon={unreadIcon} title="Unread" number="6" subtext="Messages" />
+            <InfoCard icon={calendarIcon} title="Events" number={stats.upcoming || 0} subtext="Upcoming" />
+            <InfoCard icon={viewedIcon} title="Viewed" number={stats.today || 0} subtext="Today" />
+            <InfoCard icon={unreadIcon} title="Total" number={stats.total || 0} subtext="Announcements" />
           </div>
           <button
             className={styles.addAnnouncementBtn}
@@ -226,6 +325,16 @@ function AdminAnnouncements() {
                     <span className={styles.announcementSender}>{getPosterName(announcement.postedBy)}</span>
                   </div>
                   <div className={styles.announcementMessage}>{announcement.content}</div>
+                  {announcement.image && (
+                    <div className={styles.announcementImage}>
+                      <img 
+                        src={announcement.image} 
+                        alt={announcement.title}
+                        onClick={() => handleImageClick(announcement.image)}
+                        style={{ cursor: 'pointer' }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -276,9 +385,15 @@ function AdminAnnouncements() {
 
       {/* Add Announcement Modal */}
       {showAddModal && (
-        <div className={styles.modal} onClick={() => setShowAddModal(false)}>
+        <div className={styles.modal} onClick={() => {
+          setShowAddModal(false);
+          setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+        }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setShowAddModal(false)}>&times;</button>
+            <button className={styles.modalClose} onClick={() => {
+              setShowAddModal(false);
+              setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+            }}>&times;</button>
             <h3>Add Announcement</h3>
             <form onSubmit={handleAddAnnouncement}>
               <label htmlFor="title">Title</label>
@@ -309,8 +424,47 @@ function AdminAnnouncements() {
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
               ></textarea>
+              <label htmlFor="image">Image (Optional)</label>
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={uploadingImage}
+              />
+              {formData.imageUrl && (
+                <div style={{ marginTop: '1rem', position: 'relative' }}>
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '4px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'rgba(0,0,0,0.7)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {uploadingImage && <p style={{ color: '#666', fontSize: '0.9rem' }}>Uploading image...</p>}
               <div className={styles.modalButtons}>
-                <button type="button" className={styles.btnSecondary} onClick={() => setShowAddModal(false)}>
+                <button type="button" className={styles.btnSecondary} onClick={() => {
+                  setShowAddModal(false);
+                  setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+                }}>
                   Cancel
                 </button>
                 <button type="submit" className={styles.btnPrimary}>Post</button>
@@ -326,12 +480,14 @@ function AdminAnnouncements() {
           setShowViewEditModal(false);
           setViewingAnnouncement(null);
           setEditingAnnouncement(null);
+          setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
         }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={() => {
               setShowViewEditModal(false);
               setViewingAnnouncement(null);
               setEditingAnnouncement(null);
+              setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
             }}>&times;</button>
             <h3>{editingAnnouncement ? 'Edit Announcement' : 'Announcement Details'}</h3>
             {editingAnnouncement ? (
@@ -371,10 +527,47 @@ function AdminAnnouncements() {
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   required
                 ></textarea>
+                <label htmlFor="edit-image">Image (Optional)</label>
+                <input
+                  type="file"
+                  id="edit-image"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={uploadingImage}
+                />
+                {formData.imageUrl && (
+                  <div style={{ marginTop: '1rem', position: 'relative' }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '4px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.5rem',
+                        background: 'rgba(0,0,0,0.7)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        cursor: 'pointer',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                {uploadingImage && <p style={{ color: '#666', fontSize: '0.9rem' }}>Uploading image...</p>}
                 <div className={styles.modalButtons}>
                   <button type="button" className={styles.btnSecondary} onClick={() => {
                     setShowViewEditModal(false);
                     setEditingAnnouncement(null);
+                    setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
                   }}>Cancel</button>
                   <button type="submit" className={styles.btnPrimary}>Save</button>
                 </div>
@@ -396,6 +589,19 @@ function AdminAnnouncements() {
                 <div className={styles.viewRow}>
                   <span className={styles.viewLabel}>Content:</span> <span>{viewingAnnouncement.content}</span>
                 </div>
+                {viewingAnnouncement.image && (
+                  <div className={styles.viewRow}>
+                    <span className={styles.viewLabel}>Image:</span>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <img
+                        src={viewingAnnouncement.image}
+                        alt={viewingAnnouncement.title}
+                        onClick={() => handleImageClick(viewingAnnouncement.image)}
+                        style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '4px', cursor: 'pointer' }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
@@ -420,6 +626,34 @@ function AdminAnnouncements() {
         message={messageModalContent.message}
         onClose={() => setShowMessageModal(false)}
       />
+      
+      {/* Image Lightbox Modal */}
+      {showImageModal && selectedImage && (
+        <div 
+          className={styles.imageModal} 
+          onClick={() => {
+            setShowImageModal(false);
+            setSelectedImage(null);
+          }}
+        >
+          <button 
+            className={styles.imageModalClose}
+            onClick={() => {
+              setShowImageModal(false);
+              setSelectedImage(null);
+            }}
+          >
+            ×
+          </button>
+          <div className={styles.imageModalContent} onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={selectedImage} 
+              alt="Full size" 
+              className={styles.imageModalImg}
+            />
+          </div>
+        </div>
+      )}
     </>);
 }
 

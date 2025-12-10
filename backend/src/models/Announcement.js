@@ -25,6 +25,14 @@ const announcementSchema = new mongoose.Schema(
       type: Date,
       default: Date.now,
     },
+    image: {
+      type: String,
+      default: null,
+    },
+    imagePublicId: {
+      type: String,
+      default: null,
+    },
   },
   {
     timestamps: true,

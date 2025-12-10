@@ -62,9 +62,26 @@ export const deleteAnnouncement = createAsyncThunk(
   }
 );
 
+export const fetchAnnouncementStats = createAsyncThunk(
+  'announcements/fetchStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/announcements/stats');
+      return response.data.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch announcement stats');
+    }
+  }
+);
+
 const initialState = {
   announcements: [],
   currentAnnouncement: null,
+  stats: {
+    total: 0,
+    today: 0,
+    upcoming: 0,
+  },
   loading: false,
   error: null,
 };
@@ -116,6 +133,10 @@ const announcementSlice = createSlice({
       // Delete
       .addCase(deleteAnnouncement.fulfilled, (state, action) => {
         state.announcements = state.announcements.filter((a) => a._id !== action.payload);
+      })
+      // Fetch stats
+      .addCase(fetchAnnouncementStats.fulfilled, (state, action) => {
+        state.stats = action.payload;
       });
   },
 });

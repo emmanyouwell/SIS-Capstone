@@ -5,6 +5,7 @@ import {
   createAnnouncement,
   updateAnnouncement,
   deleteAnnouncement,
+  getAnnouncementStats,
 } from '../controllers/announcementController.js';
 import { authMiddleware } from '../middleware/authMiddleware.js';
 import { roleMiddleware } from '../middleware/authMiddleware.js';
@@ -12,6 +13,8 @@ import { roleMiddleware } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
 router.use(authMiddleware);
+
+router.get('/stats', roleMiddleware('Admin'), getAnnouncementStats);
 
 router
   .route('/')

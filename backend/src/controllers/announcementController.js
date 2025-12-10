@@ -1,4 +1,5 @@
 import Announcement from '../models/Announcement.js';
+import { deleteFromCloudinary } from '../services/cloudinaryService.js';
 
 // @desc    Get all announcements
 // @route   GET /api/v1/announcements
@@ -91,6 +92,16 @@ export const updateAnnouncement = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to update this announcement' });
     }
 
+    // If updating image, delete old image from Cloudinary
+    if (req.body.image && req.body.image !== announcement.image && announcement.imagePublicId) {
+      try {
+        await deleteFromCloudinary(announcement.imagePublicId);
+      } catch (error) {
+        console.error('Error deleting old image from Cloudinary:', error);
+        // Continue with update even if image deletion fails
+      }
+    }
+
     announcement = await Announcement.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
       runValidators: true,
@@ -121,11 +132,65 @@ export const deleteAnnouncement = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to delete this announcement' });
     }
 
+    // Delete image from Cloudinary if it exists
+    if (announcement.imagePublicId) {
+      try {
+        await deleteFromCloudinary(announcement.imagePublicId);
+      } catch (error) {
+        console.error('Error deleting image from Cloudinary:', error);
+        // Continue with announcement deletion even if image deletion fails
+      }
+    }
+
     await announcement.deleteOne();
 
     res.json({
       success: true,
       message: 'Announcement deleted',
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get announcement statistics
+// @route   GET /api/v1/announcements/stats
+// @access  Private (Admin)
+export const getAnnouncementStats = async (req, res) => {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    // Total announcements
+    const total = await Announcement.countDocuments();
+
+    // Today's announcements
+    const todayCount = await Announcement.countDocuments({
+      datePosted: {
+        $gte: today,
+        $lt: tomorrow,
+      },
+    });
+
+    // Upcoming events (announcements posted in the next 7 days)
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const upcoming = await Announcement.countDocuments({
+      datePosted: {
+        $gte: tomorrow,
+        $lte: nextWeek,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: {
+        total,
+        today: todayCount,
+        upcoming,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

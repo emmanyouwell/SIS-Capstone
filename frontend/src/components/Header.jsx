@@ -2,7 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import styles from './Header.module.css';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../store/slices/authSlice';
+import { getMe, logout } from '../store/slices/authSlice';
 import { fetchAllNotifications, fetchUnreadCount, updateNotification } from '../store/slices/notificationSlice';
 
 function Header({ userName, userRole }) {
@@ -18,7 +18,7 @@ function Header({ userName, userRole }) {
   useEffect(() => {
     dispatch(fetchAllNotifications());
     dispatch(fetchUnreadCount());
-    
+    dispatch(getMe());
     // Refresh notifications every 30 seconds
     const interval = setInterval(() => {
       dispatch(fetchAllNotifications());
@@ -163,7 +163,7 @@ function Header({ userName, userRole }) {
               <div className={styles.userRole}>{userRole}</div>
             </div>
             <div className={styles.userAvatar}>
-              <img src="https://cdn-icons-png.flaticon.com/128/3135/3135715.png" alt="User Avatar" />
+              <img src={user.profileImage ||"https://cdn-icons-png.flaticon.com/128/3135/3135715.png"} alt="User Avatar" />
             </div>
             <button className={`${styles.logoutBtn} ${styles.btnSmartAnimate}`} onClick={handleLogout}>
               <span>Logout</span>
