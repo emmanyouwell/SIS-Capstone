@@ -6,6 +6,7 @@ import { fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 import { fetchAllUsers } from '../../store/slices/userSlice';
 import { fetchUnreadMessageCount } from '../../store/slices/messageSlice';
 import { fetchAnnouncements } from '../../store/slices/announcementSlice';
+import { fetchAllNotifications } from '../../store/slices/notificationSlice';
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -20,12 +21,16 @@ function AdminDashboard() {
   const { announcements, loading: announcementsLoading } = useSelector(
     (state) => state.announcements
   );
+  const { notifications: allNotifications, loading: notificationsLoading } = useSelector(
+    (state) => state.notifications
+  );
 
   useEffect(() => {
     dispatch(fetchAllEnrollments());
     dispatch(fetchAllUsers({ role: 'Student' }));
     dispatch(fetchUnreadMessageCount());
     dispatch(fetchAnnouncements());
+    dispatch(fetchAllNotifications());
   }, [dispatch]);
 
   // Calculate enrollment statistics
@@ -115,58 +120,57 @@ function AdminDashboard() {
     };
   }, [enrollmentStats]);
 
-  const notifications = [
-    {
-      id: 1,
-      type: 'enrollment',
-      icon: '📝',
-      title: 'Enrollment',
-      message: `${enrollmentStats.pending} Student${enrollmentStats.pending !== 1 ? 's' : ''} submitted their documents for enrollment.`,
-      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-    },
-    {
-      id: 2,
-      type: 'message',
-      icon: '📩',
-      title: 'Message',
-      message: 'Ms. Mariah A. Lordez sent a message.',
-      date: 'June 3',
-    },
-    {
-      id: 3,
-      type: 'message',
-      icon: '📩',
-      title: 'Message',
-      message: 'Mr. Jason K. Yason sent a message.',
-      date: 'June 3',
-    },
-    {
-      id: 4,
-      type: 'subject',
-      icon: '📚',
-      title: 'Subject Materials',
-      message: 'Mr. James B. Ramos posted a file in Science Grade 8 Section 2.',
-      date: 'May 28',
-    },
-    {
-      id: 5,
-      type: 'announcement',
-      icon: '📢',
-      title: 'Announcement',
-      message: 'Ms. Karla D. Sales posted a class announcement.',
-      date: 'May 27',
-    },
-    {
-      id: 6,
-      type: 'announcement',
-      icon: '📢',
-      title: 'Announcement',
-      message: 'Your post has been archived.',
-      date: 'May 25',
-    },
-  ];
+  // Transform database notifications to display format
+  const notifications = useMemo(() => {
+    // Helper function to get icon and title based on notification type
+    const getNotificationMeta = (type) => {
+      const metaMap = {
+        enrollment: { icon: '📝', title: 'Enrollment' },
+        message: { icon: '📩', title: 'Message' },
+        announcement: { icon: '📢', title: 'Announcement' },
+        grade: { icon: '📊', title: 'Grade' },
+        other: { icon: '🔔', title: 'Notification' },
+      };
+      return metaMap[type] || metaMap.other;
+    };
 
-  const loading = enrollmentsLoading || usersLoading || announcementsLoading;
+    // Format date helper
+    const formatDate = (dateString) => {
+      if (!dateString) return '';
+      const date = new Date(dateString);
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+
+      // Check if it's today
+      if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+      }
+      // Check if it's yesterday
+      if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+      }
+      // Otherwise format as "Month Day"
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    };
+
+    return allNotifications
+      .slice(0, 10) // Limit to 10 most recent notifications
+      .map((notif) => {
+        const meta = getNotificationMeta(notif.type || 'other');
+        return {
+          id: notif._id,
+          type: notif.type || 'other',
+          icon: meta.icon,
+          title: meta.title,
+          message: notif.message || 'No message',
+          date: formatDate(notif.dateCreated),
+          status: notif.status,
+        };
+      });
+  }, [allNotifications]);
+
+  const loading = enrollmentsLoading || usersLoading || announcementsLoading || notificationsLoading;
 
   return (
     <div className={styles.mainContent}>
@@ -264,21 +268,33 @@ function AdminDashboard() {
       <div className={styles.dashboardRight}>
         <div className={styles.notificationPanel}>
           <h3 className={styles.notificationPanelTitle}>Notifications</h3>
-          <div className={styles.notificationList}>
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`${styles.notificationCard} ${styles[notification.type]}`}
-              >
-                <span className={styles.notificationIcon}>{notification.icon}</span>
-                <div className={styles.notificationContent}>
-                  <div className={styles.notificationTitle}>{notification.title}</div>
-                  <div className={styles.notificationMessage}>{notification.message}</div>
-                  <div className={styles.notificationDate}>{notification.date}</div>
+          {notificationsLoading ? (
+            <div style={{ padding: '1rem', textAlign: 'center', color: '#4c7a67' }}>
+              Loading notifications...
+            </div>
+          ) : notifications.length === 0 ? (
+            <div style={{ padding: '1rem', textAlign: 'center', color: '#4c7a67' }}>
+              No notifications available
+            </div>
+          ) : (
+            <div className={styles.notificationList}>
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`${styles.notificationCard} ${styles[notification.type] || ''} ${
+                    notification.status === 'unread' ? styles.unread : ''
+                  }`}
+                >
+                  <span className={styles.notificationIcon}>{notification.icon}</span>
+                  <div className={styles.notificationContent}>
+                    <div className={styles.notificationTitle}>{notification.title}</div>
+                    <div className={styles.notificationMessage}>{notification.message}</div>
+                    <div className={styles.notificationDate}>{notification.date}</div>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

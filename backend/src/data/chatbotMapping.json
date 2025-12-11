@@ -373,5 +373,172 @@
       "Inject {{name}} placeholder",
       "Return personalized response with route information and update procedures"
     ]
+  },
+  {
+    "id": "manage-masterlist",
+    "question": "How do I manage the masterlist or class lists?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Masterlist management is an administrative function. As a student, you cannot directly manage class lists. Your class assignment and section are managed by administrators through the enrollment and masterlist system. If you need to change your section or class, please contact the school administration through the Messages section.",
+      "teacher": "Hello {{name}}! You can view masterlists for your classes by navigating to the 'Masterlist' section from the sidebar menu. You'll see the list of students enrolled in each section you teach. You can view student information, but you cannot modify class assignments or sections - that is managed by administrators. If you need to request changes to your class assignments, contact an administrator.",
+      "admin": "Hello {{name}}! You can manage masterlists by navigating to the 'Masterlist' section from the sidebar menu. You can: 1) View and edit class lists by grade level (Grade 7, 8, 9, 10), 2) Create and manage sections for each grade level, 3) Assign teachers to sections as advisers, 4) Assign subject teachers to specific subjects in each section, 5) Assign students to sections. The masterlist shows all enrolled students organized by grade level and section. You can also view detailed student information and manage section assignments.",
+      "default": "Masterlist management allows viewing and organizing students by grade level and section. Admins can create sections, assign teachers and students, while teachers can view their class lists."
+    },
+    "source": {
+      "backend": [
+        "masterlistController.js - getMasterlists(), createMasterlist(), updateMasterlist()",
+        "Masterlist model - sectionId, studentId, subjectId, teacherId",
+        "Section model - sectionName, gradeLevel, adviserId",
+        "GET /api/v1/masterlists",
+        "POST /api/v1/masterlists",
+        "PATCH /api/v1/masterlists/:id"
+      ],
+      "frontend": [
+        "/admin/masterlist route",
+        "AdminMasterlist.jsx, AdminMasterlistGradeView.jsx components",
+        "/admin/masterlist/assign-teacher route",
+        "AdminMasterlistAssignTeacher.jsx component",
+        "/admin/masterlist/assign-student route",
+        "AdminMasterlistAssignStudent.jsx component",
+        "/teacher/masterlist route",
+        "TeacherMasterlist.jsx component"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Return message that they cannot manage masterlists",
+      "For Teachers: Get teacherId from Teacher model",
+      "For Teachers: Filter masterlists by sections where teacher is assigned",
+      "For Admins: Show full masterlist management interface",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and management capabilities"
+    ]
+  },
+  {
+    "id": "manage-accounts",
+    "question": "How do I manage user accounts?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Account management is an administrative function. As a student, you can only manage your own profile information through the Profile section. To create, update, or delete user accounts, you need administrator privileges. If you need to request account changes, please contact the school administration through the Messages section.",
+      "teacher": "Hello {{name}}! Account management is an administrative function. As a teacher, you can only manage your own profile information through the Profile section. To create, update, or delete user accounts (students, teachers, or admins), you need administrator privileges. If you need to request account changes, please contact an administrator.",
+      "admin": "Hello {{name}}! You can manage all user accounts by navigating to the 'Accounts' section from the sidebar menu. You can: 1) View all accounts (Students, Teachers, Admins) with filtering options, 2) Create new accounts for students, teachers, or admins, 3) View detailed account information, 4) Edit account details including personal information, passwords, and role-specific data, 5) Activate or deactivate accounts. For each role type, you have specific edit pages: AdminAccountStudEdit.jsx for students, AdminAccountEdit.jsx for teachers, and AdminAccountAdminEdit.jsx for admins. You can also reset passwords and update profile images.",
+      "default": "Account management is available to administrators only. Admins can create, view, edit, and manage all user accounts in the system."
+    },
+    "source": {
+      "backend": [
+        "userController.js - getUsers(), getUserById(), createUser(), updateUser(), deleteUser()",
+        "User model - all user fields",
+        "Student, Teacher, Admin models - role-specific fields",
+        "GET /api/v1/users",
+        "GET /api/v1/users/:id",
+        "POST /api/v1/users",
+        "PATCH /api/v1/users/:id",
+        "DELETE /api/v1/users/:id"
+      ],
+      "frontend": [
+        "/admin/accounts route",
+        "AdminAccounts.jsx component",
+        "/admin/accounts/student/view route",
+        "AdminAccountStudView.jsx component",
+        "/admin/accounts/student/edit route",
+        "AdminAccountStudEdit.jsx component",
+        "/admin/accounts/teacher/view route",
+        "AdminAccountView.jsx component",
+        "/admin/accounts/teacher/edit route",
+        "AdminAccountEdit.jsx component",
+        "/admin/accounts/admin/view route",
+        "AdminAccountAdminView.jsx component",
+        "/admin/accounts/admin/edit route",
+        "AdminAccountAdminEdit.jsx component"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students/Teachers: Return message that account management requires admin privileges",
+      "For Admins: Show full account management capabilities",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and management capabilities"
+    ]
+  },
+  {
+    "id": "manage-subjects",
+    "question": "How do I manage subjects?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Subject management is an administrative function. As a student, you can view subjects available for your grade level in the Subjects section, but you cannot create or modify subjects. Your subject enrollment is managed through the enrollment process. If you have questions about subjects, contact your teacher or administrator.",
+      "teacher": "Hello {{name}}! Subject management is primarily an administrative function. As a teacher, you can view subjects you are assigned to teach, but creating and modifying subjects is typically done by administrators. You can view your assigned subjects and manage materials for those subjects. If you need to request subject changes or assignments, contact an administrator.",
+      "admin": "Hello {{name}}! You can manage all subjects by navigating to the 'Subject' section from the sidebar menu. You can: 1) View all subjects organized by grade level (Grade 7, 8, 9, 10), 2) Create new subjects with subject name, grade level, and teacher assignment, 3) Edit existing subjects including changing the assigned teacher, 4) Manage learning materials for each subject (upload files, add links, YouTube videos), 5) Delete subjects if needed. Subjects are organized by grade level, and each subject can be assigned to a specific teacher. Students enrolled in that grade level can access the subject and its materials.",
+      "default": "Subject management is available to administrators. Admins can create, edit, and manage all subjects, assign teachers, and manage learning materials."
+    },
+    "source": {
+      "backend": [
+        "subjectController.js - getSubjects(), createSubject(), updateSubject(), deleteSubject()",
+        "Subject model - subjectName, gradeLevel, teacherId",
+        "GET /api/v1/subjects",
+        "POST /api/v1/subjects",
+        "PATCH /api/v1/subjects/:id",
+        "DELETE /api/v1/subjects/:id",
+        "Materials model - linked to subjects via subjectId"
+      ],
+      "frontend": [
+        "/admin/subjects route",
+        "AdminSubjects.jsx component",
+        "/admin/subjects/:grade/view route",
+        "AdminSubjectView.jsx component",
+        "/admin/subjects/:grade/edit route",
+        "AdminSubjectEdit.jsx component",
+        "/admin/subjects/:grade/materials route",
+        "AdminSubjectEdit.jsx component (materials section)"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students: Return message that subject management requires admin privileges",
+      "For Teachers: Show limited view of assigned subjects",
+      "For Admins: Show full subject management capabilities",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and management capabilities"
+    ]
+  },
+  {
+    "id": "manage-enrollment-period",
+    "question": "How do I set up or manage enrollment periods?",
+    "dynamic": true,
+    "template": {
+      "student": "Hello {{name}}! Enrollment period management is an administrative function. As a student, you cannot create or modify enrollment periods. You can only submit enrollment forms during active enrollment periods. If you need information about when enrollment periods are active, check the Enrollment section or contact the school administration.",
+      "teacher": "Hello {{name}}! Enrollment period management is an administrative function. As a teacher, you cannot create or modify enrollment periods. Enrollment periods are set by administrators and determine when students can submit enrollment forms. If you need information about enrollment periods, contact an administrator.",
+      "admin": "Hello {{name}}! You can manage enrollment periods through the Enrollment section. Enrollment periods control when students can submit enrollment forms. To set up an enrollment period: 1) Navigate to the 'Enrollment' section from the sidebar, 2) Access the enrollment period settings (if available in the enrollment management interface), 3) Set the start date and end date for the enrollment period, 4) Activate the enrollment period. Only one enrollment period can be active at a time. When an enrollment period is active, eligible students (those with isPromoted: true) can submit enrollment forms. You can also view enrollment period history and manage multiple periods.",
+      "default": "Enrollment period management is available to administrators only. Admins can create, activate, and manage enrollment periods which control when students can submit enrollment forms."
+    },
+    "source": {
+      "backend": [
+        "enrollmentPeriodController.js - getEnrollmentPeriods(), createEnrollmentPeriod(), updateEnrollmentPeriod()",
+        "EnrollmentPeriod model - startDate, endDate, isActive, schoolYear",
+        "GET /api/v1/enrollment-periods",
+        "POST /api/v1/enrollment-periods",
+        "PATCH /api/v1/enrollment-periods/:id",
+        "Enrollment model - validates against active enrollment period"
+      ],
+      "frontend": [
+        "/admin/enrollment route",
+        "AdminEnrollment.jsx component (may include enrollment period management)",
+        "Enrollment period management interface (if separate component exists)"
+      ]
+    },
+    "process": [
+      "Check authenticated user via JWT token",
+      "Determine role: Student/Teacher/Admin",
+      "For Students/Teachers: Return message that enrollment period management requires admin privileges",
+      "For Admins: Show enrollment period management capabilities",
+      "Select appropriate template based on role",
+      "Inject {{name}} placeholder",
+      "Return personalized response with route information and management procedures"
+    ]
   }
 ]

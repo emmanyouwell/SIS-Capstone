@@ -172,6 +172,15 @@
   transform: translateX(4px);
 }
 
+.notificationCard.unread {
+  background: #f0f7ff;
+  border-left: 3px solid #2196f3;
+}
+
+.notificationCard.unread:hover {
+  background: #e3f2fd;
+}
+
 .notificationIcon {
   font-size: 1.5rem;
   flex-shrink: 0;
