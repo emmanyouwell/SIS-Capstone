@@ -199,6 +199,9 @@ export const updateEnrollmentPeriod = async (req, res) => {
     // Check if period is being activated (changing from inactive to active)
     const isBeingActivated = isActive === true && period.isActive === false;
 
+    // Determine the school year for the period (use request body if provided, otherwise existing)
+    const periodSchoolYear = schoolYear !== undefined ? schoolYear : period.schoolYear;
+
     // If activating this period, deactivate all others
     if (isActive === true) {
       await EnrollmentPeriod.updateMany(
@@ -229,29 +232,82 @@ export const updateEnrollmentPeriod = async (req, res) => {
       },
     });
 
-    // If period is being activated (changing from inactive to active), reset enrollments
-    // This ensures students need to enroll again for the new level and school year
-    // When an enrollment period is activated, it means the school year is over
+    // If period is being activated (changing from inactive to active), handle enrollments
+    // If reactivating a period with the same school year, preserve existing enrollment forms
+    // to prevent duplicates. Only reset enrollments for different school years.
     if (isBeingActivated) {
-      await Student.updateMany({}, { enrollmentStatus: false });
-      
-      // Delete enrollment forms for Grade 10 students who are promoted (they graduated)
-      // These students completed Grade 10 and are moving on, so their enrollment forms should be deleted
-      const grade10PromotedStudents = await Student.find({ 
-        gradeLevel: 10, 
-        isPromoted: true 
-      }).select('_id');
-      const grade10PromotedStudentIds = grade10PromotedStudents.map(s => s._id);
-      
-      if (grade10PromotedStudentIds.length > 0) {
-        await Enrollment.deleteMany({ 
-          studentId: { $in: grade10PromotedStudentIds } 
-        });
+      // Only reset enrollment forms if they have a different school year
+      // This prevents duplicates when reactivating a period for the same school year
+      if (periodSchoolYear) {
+        // Find all enrollment forms to determine which students to reset
+        const allEnrollments = await Enrollment.find({}).select('studentId schoolYear status');
+        
+        // Get students who have enrollments with the same school year (these should be preserved)
+        const studentsWithSameSchoolYear = new Set(
+          allEnrollments
+            .filter(e => e.schoolYear === periodSchoolYear)
+            .map(e => e.studentId.toString())
+        );
+        
+        // Get students who only have enrollments with different school years (these should be reset)
+        const studentsWithOnlyDifferentSchoolYear = new Set(
+          allEnrollments
+            .filter(e => {
+              const studentId = e.studentId.toString();
+              return e.schoolYear !== periodSchoolYear && !studentsWithSameSchoolYear.has(studentId);
+            })
+            .map(e => e.studentId.toString())
+        );
+        
+        // Reset enrollment status only for students with different school year enrollments
+        if (studentsWithOnlyDifferentSchoolYear.size > 0) {
+          await Student.updateMany(
+            { _id: { $in: Array.from(studentsWithOnlyDifferentSchoolYear) } },
+            { enrollmentStatus: false }
+          );
+        }
+        
+        // Delete enrollment forms for Grade 10 students who are promoted (they graduated)
+        // These students completed Grade 10 and are moving on, so their enrollment forms should be deleted
+        const grade10PromotedStudents = await Student.find({ 
+          gradeLevel: 10, 
+          isPromoted: true 
+        }).select('_id');
+        const grade10PromotedStudentIds = grade10PromotedStudents.map(s => s._id);
+        
+        if (grade10PromotedStudentIds.length > 0) {
+          await Enrollment.deleteMany({ 
+            studentId: { $in: grade10PromotedStudentIds } 
+          });
+        }
+        
+        // Set enrollment documents with different school year to 'not enrolled' status
+        // Preserve enrollment forms with the same school year to prevent duplicates
+        await Enrollment.updateMany(
+          { schoolYear: { $ne: periodSchoolYear } },
+          { status: 'not enrolled' }
+        );
+      } else {
+        // If no school year is set, use the old behavior (reset everything)
+        // This handles edge cases where school year might not be set
+        await Student.updateMany({}, { enrollmentStatus: false });
+        
+        // Delete enrollment forms for Grade 10 students who are promoted (they graduated)
+        const grade10PromotedStudents = await Student.find({ 
+          gradeLevel: 10, 
+          isPromoted: true 
+        }).select('_id');
+        const grade10PromotedStudentIds = grade10PromotedStudents.map(s => s._id);
+        
+        if (grade10PromotedStudentIds.length > 0) {
+          await Enrollment.deleteMany({ 
+            studentId: { $in: grade10PromotedStudentIds } 
+          });
+        }
+        
+        // Set all remaining enrollment documents to 'not enrolled' status
+        await Enrollment.updateMany({}, { status: 'not enrolled' });
       }
-      
-      // Set all remaining enrollment documents to 'not enrolled' status
-      // All students (old and new) need to re-enroll, so all enrollment forms are set to 'not enrolled'
-      await Enrollment.updateMany({}, { status: 'not enrolled' });
     }
 
     res.json({

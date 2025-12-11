@@ -2,6 +2,7 @@ import User from '../models/User.js';
 import Student from '../models/Student.js';
 import Teacher from '../models/Teacher.js';
 import Admin from '../models/Admin.js';
+import LoginLog from '../models/LoginLog.js';
 
 // @desc    Register user
 // @route   POST /api/v1/auth/register
@@ -145,6 +146,29 @@ export const login = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+
+    const loginDate = new Date();
+
+    // Update login tracking (use updateOne to avoid full document validation)
+    // This prevents validation errors for existing users with missing optional fields
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $inc: { totalLogins: 1 },
+        $set: { lastLogin: loginDate }
+      }
+    );
+
+    // Log the login event for daily tracking
+    await LoginLog.create({
+      userId: user._id,
+      role: user.role,
+      loginDate: loginDate,
+    });
+
+    // Refresh user object to get updated values
+    user.totalLogins = (user.totalLogins || 0) + 1;
+    user.lastLogin = loginDate;
 
     const token = user.generateJWT();
 

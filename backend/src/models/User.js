@@ -69,6 +69,13 @@ const userSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    totalLogins: {
+      type: Number,
+      default: 0,
+    },
+    lastLogin: {
+      type: Date,
+    },
   },
   {
     timestamps: true,

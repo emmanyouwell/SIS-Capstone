@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 import styles from './AdminAccountView.module.css';
 import { fetchAllTeachers } from '../../store/slices/teacherSlice';
 import { fetchAllAdmins } from '../../store/slices/adminSlice';
+import api from '../../utils/api';
 
 function AdminAccountView() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const chartRef = useRef(null);
 
   const { teachers, loading: teachersLoading, error: teachersError } = useSelector((state) => state.teachers);
   const { admins, loading: adminsLoading, error: adminsError } = useSelector((state) => state.admins);
@@ -15,6 +17,22 @@ function AdminAccountView() {
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [showViewModal, setShowViewModal] = useState(false);
   const [viewingAccount, setViewingAccount] = useState(null);
+  const [loginStats, setLoginStats] = useState(null);
+  const [loginStatsLoading, setLoginStatsLoading] = useState(false);
+  const [dailyLoginStats, setDailyLoginStats] = useState(null);
+  const [dailyLoginStatsLoading, setDailyLoginStatsLoading] = useState(false);
+  
+  // Date range state - default to last 7 days (including today)
+  const getDefaultDateRange = () => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 6); // 6 days ago + today = 7 days total
+    return {
+      startDate: start.toISOString().split('T')[0],
+      endDate: end.toISOString().split('T')[0],
+    };
+  };
+  const [dateRange, setDateRange] = useState(getDefaultDateRange());
 
   // Fetch teachers and admins
   useEffect(() => {
@@ -22,8 +40,56 @@ function AdminAccountView() {
     dispatch(fetchAllAdmins());
   }, [dispatch]);
 
-  const loading = teachersLoading || adminsLoading;
+  // Fetch login statistics for total counts
+  useEffect(() => {
+    const fetchLoginStats = async () => {
+      setLoginStatsLoading(true);
+      try {
+        const response = await api.get('/users/stats/logins');
+        setLoginStats(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch login stats:', error);
+      } finally {
+        setLoginStatsLoading(false);
+      }
+    };
+
+    fetchLoginStats();
+  }, []);
+
+  // Fetch daily login statistics
+  useEffect(() => {
+    const fetchDailyLoginStats = async () => {
+      setDailyLoginStatsLoading(true);
+      try {
+        const params = {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        };
+        const response = await api.get('/users/stats/logins/daily', { params });
+        setDailyLoginStats(response.data.data);
+      } catch (error) {
+        console.error('Failed to fetch daily login stats:', error);
+      } finally {
+        setDailyLoginStatsLoading(false);
+      }
+    };
+
+    fetchDailyLoginStats();
+  }, [dateRange]);
+
+  const loading = teachersLoading || adminsLoading || loginStatsLoading;
   const error = teachersError || adminsError;
+
+  // Create a map of userId to totalLogins from loginStats
+  const loginMap = useMemo(() => {
+    if (!loginStats?.allUsers) return {};
+    const map = {};
+    loginStats.allUsers.forEach(user => {
+      map[user.id] = user.totalLogins || 0;
+    });
+    return map;
+  }, [loginStats]);
 
   // Format accounts for display - combine teachers and admins
   const teacherAccounts = teachers
@@ -33,7 +99,7 @@ function AdminAccountView() {
       name: `${teacher.userId?.firstName || ''} ${teacher.userId?.lastName || ''}`.trim(),
       role: 'Teacher',
       email: teacher.userId?.email || '',
-      totalLogins: 0, // This field doesn't exist in the models - keeping for UI compatibility
+      totalLogins: loginMap[teacher.userId?._id] || 0,
       avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
       account: teacher,
       accountType: 'Teacher'
@@ -46,7 +112,7 @@ function AdminAccountView() {
       name: `${admin.userId?.firstName || ''} ${admin.userId?.lastName || ''}`.trim(),
       role: 'Admin',
       email: admin.userId?.email || '',
-      totalLogins: 0,
+      totalLogins: loginMap[admin.userId?._id] || 0,
       avatar: 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png',
       account: admin,
       accountType: 'Admin'
@@ -56,6 +122,135 @@ function AdminAccountView() {
   const accounts = [...teacherAccounts, ...adminAccounts].sort((a, b) => 
     a.name.localeCompare(b.name)
   );
+
+  // Calculate chart data for daily login statistics
+  const chartData = useMemo(() => {
+    if (!dailyLoginStats?.dailyStats || dailyLoginStats.dailyStats.length === 0) {
+      return {
+        labels: [],
+        datasets: []
+      };
+    }
+
+    const labels = dailyLoginStats.dailyStats.map(stat => {
+      const date = new Date(stat.date);
+      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    });
+
+    // For faculty (Teachers & Admins), combine both roles
+    const data = dailyLoginStats.dailyStats.map(stat => {
+      if (stat.byRole) {
+        const teacherCount = stat.byRole.Teacher || 0;
+        const adminCount = stat.byRole.Admin || 0;
+        return teacherCount + adminCount;
+      }
+      return stat.count || 0;
+    });
+
+    return {
+      labels,
+      datasets: [{
+        label: 'Daily Logins',
+        data: data,
+        borderColor: '#39916f',
+        backgroundColor: 'rgba(57, 145, 111, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#39916f',
+        pointBorderColor: '#fff',
+        pointBorderWidth: 2,
+      }]
+    };
+  }, [dailyLoginStats]);
+
+  // Initialize Chart.js for daily login statistics (line chart)
+  useEffect(() => {
+    if (chartRef.current && chartData.labels.length > 0) {
+      import('chart.js/auto').then(({ default: Chart }) => {
+        if (!chartRef.current) return;
+        
+        const ctx = chartRef.current.getContext('2d');
+        
+        // Destroy existing chart if it exists
+        if (window.facultyLoginChart) {
+          window.facultyLoginChart.destroy();
+        }
+
+        window.facultyLoginChart = new Chart(ctx, {
+          type: 'line',
+          data: chartData,
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  usePointStyle: true,
+                  padding: 15,
+                  font: {
+                    size: 12
+                  }
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                titleFont: {
+                  size: 14
+                },
+                bodyFont: {
+                  size: 13
+                },
+                callbacks: {
+                  label: function(context) {
+                    return `Logins: ${context.parsed.y}`;
+                  }
+                }
+              }
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  stepSize: 1,
+                  precision: 0
+                },
+                grid: {
+                  color: 'rgba(0, 0, 0, 0.05)'
+                },
+                title: {
+                  display: true,
+                  text: 'Number of Logins'
+                }
+              },
+              x: {
+                grid: {
+                  display: false
+                },
+                title: {
+                  display: true,
+                  text: 'Date'
+                }
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // Cleanup
+    return () => {
+      if (window.facultyLoginChart) {
+        window.facultyLoginChart.destroy();
+        window.facultyLoginChart = null;
+      }
+    };
+  }, [chartData]);
 
   const handleBack = () => {
     navigate('/admin/accounts');
@@ -121,10 +316,58 @@ function AdminAccountView() {
               <div className={styles.summaryCount}>{accounts.length}</div>
             </div>
             <div className={styles.chartBox}>
-              <div className={styles.chartTitle}>Total Logins</div>
-              <div className={styles.chartPlaceholder}>
-                Chart visualization would go here
+              <div className={styles.chartTitle}>Daily Logins</div>
+              <div style={{ marginBottom: '15px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.85rem', color: '#666' }}>From:</label>
+                  <input
+                    type="date"
+                    value={dateRange.startDate}
+                    onChange={(e) => setDateRange({ ...dateRange, startDate: e.target.value })}
+                    style={{
+                      padding: '5px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                  <label style={{ fontSize: '0.85rem', color: '#666' }}>To:</label>
+                  <input
+                    type="date"
+                    value={dateRange.endDate}
+                    onChange={(e) => setDateRange({ ...dateRange, endDate: e.target.value })}
+                    style={{
+                      padding: '5px 8px',
+                      border: '1px solid #ddd',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem'
+                    }}
+                  />
+                </div>
+                <button
+                  onClick={() => setDateRange(getDefaultDateRange())}
+                  style={{
+                    padding: '5px 12px',
+                    backgroundColor: '#39916f',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  Reset
+                </button>
               </div>
+              {dailyLoginStatsLoading ? (
+                <div className={styles.chartPlaceholder}>Loading chart...</div>
+              ) : chartData.labels.length > 0 ? (
+                <canvas ref={chartRef} style={{ maxHeight: '200px', width: '100%' }}></canvas>
+              ) : (
+                <div className={styles.chartPlaceholder}>No login data available for selected date range</div>
+              )}
             </div>
           </div>
 

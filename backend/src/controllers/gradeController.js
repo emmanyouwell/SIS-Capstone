@@ -233,15 +233,22 @@ export const createGrade = async (req, res) => {
     });
     await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
+    // Check if grade is complete and update status
+    const isComplete = isGradeComplete(grade.grades);
+    if (isComplete) {
+      grade.status = 'complete';
+      await grade.save();
+    }
+
     // Check if grade is complete and send message if needed
-    if (isGradeComplete(grade.grades) && !grade.gradeCompleteMessageSent) {
+    if (isComplete && !grade.gradeCompleteMessageSent) {
       await sendGradeCompleteMessage(grade);
       grade.gradeCompleteMessageSent = true;
       await grade.save();
     }
 
     // Update student promotion status based on grades
-    if (isGradeComplete(grade.grades) && grade.finalGrade !== null && grade.finalGrade !== undefined) {
+    if (isComplete && grade.finalGrade !== null && grade.finalGrade !== undefined) {
       const shouldPromote = shouldPromoteStudent(grade);
       await Student.findByIdAndUpdate(grade.studentId, { isPromoted: shouldPromote });
     }
@@ -312,8 +319,18 @@ export const updateGrade = async (req, res) => {
     });
     await grade.populate('grades.subjectId', 'subjectName gradeLevel');
 
-    // Check if grade is now complete and send message if needed
+    // Check if grade is now complete and update status
     const isNowComplete = isGradeComplete(grade.grades);
+    if (isNowComplete) {
+      grade.status = 'complete';
+      await grade.save();
+    } else {
+      // If grades are no longer complete, set status back to incomplete
+      grade.status = 'incomplete';
+      await grade.save();
+    }
+
+    // Check if grade is now complete and send message if needed
     if (isNowComplete && !wasComplete && !grade.gradeCompleteMessageSent) {
       await sendGradeCompleteMessage(grade);
       grade.gradeCompleteMessageSent = true;

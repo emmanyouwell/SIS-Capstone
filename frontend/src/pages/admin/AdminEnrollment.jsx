@@ -40,23 +40,50 @@ function AdminEnrollment() {
   const enrolledCount = enrollments.filter((e) => e.status === 'enrolled').length;
   const pendingCount = enrollments.filter((e) => e.status === 'pending').length;
   const notEnrolledCount = enrollments.filter((e) => {
+    // Only count enrollments with status 'not enrolled'
+    if (e.status !== 'not enrolled') {
+      return false;
+    }
+    
+    // Get the student object (could be populated or just an ID)
     const student = e.studentId;
-    return e.status === 'not enrolled' && student?.isPromoted === false;
+    
+    // Only count if isPromoted is explicitly false (not undefined, null, or true)
+    if (student && typeof student === 'object' && 'isPromoted' in student) {
+      return student.isPromoted === false;
+    }
+    
+    // If student is not populated or doesn't have isPromoted, don't count it
+    return false;
   }).length;
   
-  // Get students without enrollment or with pending enrollment
+  // Get students with no enrollment forms at all
   const studentsWithoutEnrollment = students.filter((student) => {
     const hasEnrollment = enrollments.some(
       (e) => e.studentId?._id === student._id || e.studentId === student._id
     );
-    return !hasEnrollment || !student.enrollmentStatus;
+    return !hasEnrollment;
   });
 
   // Get not enrolled enrollments (only students with isPromoted === false)
   const notEnrolledEnrollments = useMemo(() => {
     return enrollments.filter((e) => {
+      // Only show enrollments with status 'not enrolled'
+      if (e.status !== 'not enrolled') {
+        return false;
+      }
+      
+      // Get the student object (could be populated or just an ID)
       const student = e.studentId;
-      return e.status === 'not enrolled' && student?.isPromoted === false;
+      
+      // Only show if isPromoted is explicitly false (not undefined, null, or true)
+      // Check if student is populated and has isPromoted field
+      if (student && typeof student === 'object' && 'isPromoted' in student) {
+        return student.isPromoted === false;
+      }
+      
+      // If student is not populated or doesn't have isPromoted, exclude it
+      return false;
     });
   }, [enrollments]);
 
@@ -242,11 +269,11 @@ function AdminEnrollment() {
             </div>
           </div>
 
-          {/* Pending Enrollment Section */}
+          {/* New Students Section */}
           <div className={styles.pendingEnrollmentSection}>
             <div className={styles.pendingEnrollmentHeader}>
-              <h3>Pending Enrollment</h3>
-              <p>Students without enrollment form or with pending enrollment status</p>
+              <h3>New Students</h3>
+              <p>Students with no enrollment forms</p>
             </div>
             <div className={styles.pendingEnrollmentCard}>
               <div className={styles.pendingEnrollmentInfo}>

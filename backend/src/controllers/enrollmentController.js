@@ -197,6 +197,7 @@ export const getEnrollments = async (req, res) => {
     const enrollments = await Enrollment.find(filter)
       .populate({
         path: 'studentId',
+        select: 'lrn gradeLevel enrollmentStatus isPromoted guardianName guardianContact sectionId userId', // Explicitly include isPromoted
         populate: [
           {
             path: 'userId',
@@ -611,7 +612,19 @@ export const updateEnrollment = async (req, res) => {
       });
     }
 
-    const updatedEnrollment = await Enrollment.findByIdAndUpdate(req.params.id, req.body, {
+    // If editing an enrollment form with status 'not enrolled', change it to 'pending'
+    // This ensures that edited forms are ready for admin review
+    // Only change status if it's not explicitly set to a different value in the request body
+    const updateData = { ...req.body };
+    if (enrollment.status === 'not enrolled') {
+      // If status is not provided or is still 'not enrolled', change it to 'pending'
+      // Otherwise, respect the explicitly set status
+      if (req.body.status === undefined || req.body.status === 'not enrolled') {
+        updateData.status = 'pending';
+      }
+    }
+
+    const updatedEnrollment = await Enrollment.findByIdAndUpdate(req.params.id, updateData, {
       new: true,
       runValidators: true,
     })

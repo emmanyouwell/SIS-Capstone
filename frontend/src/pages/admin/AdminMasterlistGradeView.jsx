@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import styles from './AdminMasterlistGradeView.module.css';
 import { fetchMasterlists, clearError } from '../../store/slices/masterlistSlice';
 import { fetchAllStudents } from '../../store/slices/studentSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import { fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 import MessageModal from '../../components/MessageModal';
 
 function AdminMasterlistGradeView() {
@@ -20,14 +21,17 @@ function AdminMasterlistGradeView() {
   const { masterlists, loading, error } = useSelector((state) => state.masterlists);
   const { students, loading: studentsLoading } = useSelector((state) => state.students);
   const sections = useSelector((state) => state.section.data);
+  const { enrollments } = useSelector((state) => state.enrollments);
 
-  // Fetch masterlists, students, and sections for this grade on mount / grade change
+  // Fetch masterlists, students, sections, and enrollments for this grade on mount / grade change
   useEffect(() => {
     if (!Number.isNaN(gradeNumber)) {
       dispatch(fetchMasterlists({ grade: gradeNumber }));
       dispatch(fetchAllStudents({ gradeLevel: gradeNumber }));
       dispatch(getAllSections({ gradeLevel: gradeNumber }));
     }
+    // Fetch all enrollments to calculate total enrolled students across all grades
+    dispatch(fetchAllEnrollments());
   }, [gradeNumber, dispatch]);
 
   // Filter masterlists by current grade
@@ -90,9 +94,26 @@ function AdminMasterlistGradeView() {
     });
 
   const currentStudents = allStudentsForGrade;
-  const totalEnrolled = enrolledIds.size;
+  
+  // Calculate enrolled students in current section
+  const enrolledInSection = enrolledIds.size;
+  
+  // Calculate active sections for this grade
   const activeSections = sectionsList.length;
-  const classAverage = 85; // Still a placeholder until backend provides this
+  
+  // Calculate total enrolled students across all grades for the school year
+  const totalEnrolledStudents = useMemo(() => {
+    // Count unique students with status 'enrolled' across all grades
+    const enrolledEnrollments = enrollments.filter((e) => e.status === 'enrolled');
+    // Get unique student IDs to avoid double counting
+    const uniqueStudentIds = new Set(
+      enrolledEnrollments.map((e) => {
+        const studentId = e.studentId?._id?.toString() || e.studentId?.toString();
+        return studentId;
+      })
+    );
+    return uniqueStudentIds.size;
+  }, [enrollments]);
 
   const currentAdviser = currentMasterlist?.adviser?.userId
     ? `${currentMasterlist.adviser.userId.lastName}, ${currentMasterlist.adviser.userId.firstName}`
@@ -159,7 +180,7 @@ function AdminMasterlistGradeView() {
         <>
           <div className={styles.infoCards}>
             <div className={styles.card}>
-              <div className={styles.number}>{totalEnrolled}</div>
+              <div className={styles.number}>{enrolledInSection}</div>
               <div className={styles.subtext}>Enrolled</div>
             </div>
             <div className={styles.card}>
@@ -167,8 +188,8 @@ function AdminMasterlistGradeView() {
               <div className={styles.subtext}>Active Sections</div>
             </div>
             <div className={styles.card}>
-              <div className={styles.number}>{classAverage}</div>
-              <div className={styles.subtext}>Class Average</div>
+              <div className={styles.number}>{totalEnrolledStudents}</div>
+              <div className={styles.subtext}>Total Enrolled Students</div>
             </div>
           </div>
 

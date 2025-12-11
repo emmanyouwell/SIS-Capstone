@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherMasterlist.module.css';
 import MessageModal from '../../components/MessageModal';
 import { fetchMasterlists } from '../../store/slices/masterlistSlice';
+import { fetchAllEnrollments } from '../../store/slices/enrollmentSlice';
 
 const studentsIcon = (
   <img 
@@ -32,6 +33,7 @@ const averageIcon = (
 function TeacherMasterlist() {
   const dispatch = useDispatch();
   const { masterlists, loading, error } = useSelector((state) => state.masterlists);
+  const { enrollments } = useSelector((state) => state.enrollments);
   
   const [selectedMasterlistId, setSelectedMasterlistId] = useState(null);
   const [showGradeModal, setShowGradeModal] = useState(false);
@@ -43,9 +45,10 @@ function TeacherMasterlist() {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
 
-  // Fetch masterlists on component mount
+  // Fetch masterlists and enrollments on component mount
   useEffect(() => {
     dispatch(fetchMasterlists());
+    dispatch(fetchAllEnrollments());
   }, [dispatch]);
 
   // Set default selected masterlist when data loads
@@ -59,9 +62,25 @@ function TeacherMasterlist() {
   const currentMasterlist = masterlists.find(m => m._id === selectedMasterlistId);
   const currentStudents = currentMasterlist?.students || [];
 
-  // Calculate totals
-  const totalStudents = masterlists.reduce((sum, ml) => sum + (ml.students?.length || 0), 0);
+  // Calculate enrolled students in current section
+  const enrolledInSection = currentStudents.length;
+  
+  // Calculate active sections (total number of masterlists/sections)
   const totalSections = masterlists.length;
+  
+  // Calculate total enrolled students across all grades for the school year
+  const totalEnrolledStudents = useMemo(() => {
+    // Count unique students with status 'enrolled' across all grades
+    const enrolledEnrollments = enrollments.filter((e) => e.status === 'enrolled');
+    // Get unique student IDs to avoid double counting
+    const uniqueStudentIds = new Set(
+      enrolledEnrollments.map((e) => {
+        const studentId = e.studentId?._id?.toString() || e.studentId?.toString();
+        return studentId;
+      })
+    );
+    return uniqueStudentIds.size;
+  }, [enrollments]);
 
   // Format student name
   const formatStudentName = (student) => {
@@ -165,8 +184,8 @@ function TeacherMasterlist() {
         <div className={styles.infoCards}>
           <InfoCard 
             icon={studentsIcon} 
-            title="Total Students" 
-            number={totalStudents.toString()} 
+            title="Enrolled" 
+            number={enrolledInSection.toString()} 
             subtext="Enrolled" 
           />
           <InfoCard 
@@ -177,9 +196,9 @@ function TeacherMasterlist() {
           />
           <InfoCard 
             icon={averageIcon} 
-            title="Average" 
-            number="85" 
-            subtext="Class Average" 
+            title="Total Enrolled Students" 
+            number={totalEnrolledStudents.toString()} 
+            subtext="Total Enrolled Students" 
           />
         </div>
         

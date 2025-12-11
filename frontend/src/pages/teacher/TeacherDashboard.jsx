@@ -3,9 +3,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import InfoCard from '../../components/InfoCard';
 import styles from './TeacherDashboard.module.css';
 import ConfirmationModal from '../../components/ConfirmationModal';
+import MessageModal from '../../components/MessageModal';
 import { fetchAnnouncements, createAnnouncement, updateAnnouncement, deleteAnnouncement } from '../../store/slices/announcementSlice';
 import { fetchAllMessages } from '../../store/slices/messageSlice';
 import { getAllSections } from '../../store/slices/sectionSlice';
+import api from '../../utils/api';
 
 const announcementIcon = (
   <svg width="32" height="32" fill="none" stroke="#276749" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
@@ -40,7 +42,13 @@ function TeacherDashboard() {
     title: '',
     audience: 'All',
     content: '',
+    image: null,
+    imageUrl: null,
+    imagePublicId: null,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState({ type: 'info', message: '' });
   const [dropdownOpen, setDropdownOpen] = useState(null);
   const dropdownRefs = useRef({});
 
@@ -76,6 +84,82 @@ function TeacherDashboard() {
       unread: unreadCount,
     };
   }, [announcements, messages, user]);
+
+  // Image upload handler
+  const handleImageUpload = async (file) => {
+    if (!file) return null;
+    
+    setUploadingImage(true);
+    try {
+      const formDataObj = new FormData();
+      formDataObj.append('file', file);
+      
+      const response = await api.post('/uploads/image', formDataObj, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return {
+        url: response.data.url,
+        publicId: response.data.public_id,
+      };
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Failed to upload image');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Please select an image file',
+      });
+      setShowMessageModal(true);
+      return;
+    }
+
+    // Validate file size (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      setMessageModalContent({
+        type: 'error',
+        message: 'Image size must be less than 10MB',
+      });
+      setShowMessageModal(true);
+      return;
+    }
+
+    try {
+      const result = await handleImageUpload(file);
+      setFormData({
+        ...formData,
+        image: file,
+        imageUrl: result.url,
+        imagePublicId: result.publicId,
+      });
+    } catch (err) {
+      setMessageModalContent({
+        type: 'error',
+        message: err.message || 'Failed to upload image',
+      });
+      setShowMessageModal(true);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData({
+      ...formData,
+      image: null,
+      imageUrl: null,
+      imagePublicId: null,
+    });
+  };
 
   // Format date helper
   const formatDate = (dateString) => {
@@ -137,15 +221,20 @@ function TeacherDashboard() {
           title: formData.title,
           content: formData.content,
           audience: audienceValue,
+          image: formData.imageUrl,
+          imagePublicId: formData.imagePublicId,
         })
       ).unwrap();
-      setFormData({ title: '', audience: 'All', content: '' });
+      setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
       setShowAddModal(false);
       // Refresh announcements list
       dispatch(fetchAnnouncements());
     } catch (error) {
-      console.error('Failed to create announcement:', error);
-      // You could add error handling UI here if needed
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to create announcement',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -163,6 +252,9 @@ function TeacherDashboard() {
       title: announcement.title || '',
       audience: announcement.audience || 'All',
       content: announcement.content || '',
+      image: null,
+      imageUrl: announcement.image || null,
+      imagePublicId: announcement.imagePublicId || null,
     });
     setShowViewEditModal(true);
     setDropdownOpen(null);
@@ -210,16 +302,22 @@ function TeacherDashboard() {
             title: formData.title,
             content: formData.content,
             audience: audienceValue,
+            image: formData.imageUrl,
+            imagePublicId: formData.imagePublicId,
           },
         })
       ).unwrap();
       setEditingAnnouncement(null);
       setShowViewEditModal(false);
-      setFormData({ title: '', audience: 'All', content: '' });
+      setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
       // Refresh announcements list
       dispatch(fetchAnnouncements());
     } catch (error) {
-      console.error('Failed to update announcement:', error);
+      setMessageModalContent({
+        type: 'error',
+        message: error || 'Failed to update announcement',
+      });
+      setShowMessageModal(true);
     }
   };
 
@@ -305,6 +403,15 @@ function TeacherDashboard() {
                       ? announcement.content.substring(0, 100) + '...' 
                       : announcement.content}
                   </div>
+                  {announcement.image && (
+                    <div style={{ marginTop: '1rem' }}>
+                      <img
+                        src={announcement.image}
+                        alt={announcement.title}
+                        style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '4px', objectFit: 'cover' }}
+                      />
+                    </div>
+                  )}
                 </div>
               ))
             )}
@@ -355,9 +462,15 @@ function TeacherDashboard() {
 
       {/* Add Announcement Modal */}
       {showAddModal && (
-        <div className={styles.modal} onClick={() => setShowAddModal(false)}>
+        <div className={styles.modal} onClick={() => {
+          setShowAddModal(false);
+          setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+        }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
-            <button className={styles.modalClose} onClick={() => setShowAddModal(false)}>&times;</button>
+            <button className={styles.modalClose} onClick={() => {
+              setShowAddModal(false);
+              setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+            }}>&times;</button>
             <h3>Add Announcement</h3>
             <form onSubmit={handleAddAnnouncement}>
               <label htmlFor="title">Title</label>
@@ -404,11 +517,55 @@ function TeacherDashboard() {
                 onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                 required
               ></textarea>
+              <label htmlFor="image">Image (Optional)</label>
+              <input
+                type="file"
+                id="image"
+                accept="image/*"
+                onChange={handleImageChange}
+                disabled={uploadingImage}
+              />
+              {formData.imageUrl && (
+                <div style={{ marginTop: '1rem', position: 'relative' }}>
+                  <img
+                    src={formData.imageUrl}
+                    alt="Preview"
+                    style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '4px' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    style={{
+                      position: 'absolute',
+                      top: '0.5rem',
+                      right: '0.5rem',
+                      background: 'rgba(0,0,0,0.7)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '18px',
+                      lineHeight: '1',
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              {uploadingImage && <p style={{ color: '#666', fontSize: '0.9rem' }}>Uploading image...</p>}
               <div className={styles.modalButtons}>
-                <button type="button" className={styles.btnSecondary} onClick={() => setShowAddModal(false)}>
+                <button type="button" className={styles.btnSecondary} onClick={() => {
+                  setShowAddModal(false);
+                  setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
+                }}>
                   Cancel
                 </button>
-                <button type="submit" className={styles.btnPrimary}>Post</button>
+                <button type="submit" className={styles.btnPrimary} disabled={uploadingImage}>Post</button>
               </div>
             </form>
           </div>
@@ -421,12 +578,14 @@ function TeacherDashboard() {
           setShowViewEditModal(false);
           setViewingAnnouncement(null);
           setEditingAnnouncement(null);
+          setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
         }}>
           <div className={styles.modalContent} onClick={(e) => e.stopPropagation()}>
             <button className={styles.modalClose} onClick={() => {
               setShowViewEditModal(false);
               setViewingAnnouncement(null);
               setEditingAnnouncement(null);
+              setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
             }}>&times;</button>
             <h3>{editingAnnouncement ? 'Edit Announcement' : 'Announcement Details'}</h3>
             {editingAnnouncement ? (
@@ -482,12 +641,54 @@ function TeacherDashboard() {
                   onChange={(e) => setFormData({ ...formData, content: e.target.value })}
                   required
                 ></textarea>
+                <label htmlFor="edit-image">Image (Optional)</label>
+                <input
+                  type="file"
+                  id="edit-image"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  disabled={uploadingImage}
+                />
+                {formData.imageUrl && (
+                  <div style={{ marginTop: '1rem', position: 'relative' }}>
+                    <img
+                      src={formData.imageUrl}
+                      alt="Preview"
+                      style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '4px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveImage}
+                      style={{
+                        position: 'absolute',
+                        top: '0.5rem',
+                        right: '0.5rem',
+                        background: 'rgba(0,0,0,0.7)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '18px',
+                        lineHeight: '1',
+                      }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+                {uploadingImage && <p style={{ color: '#666', fontSize: '0.9rem' }}>Uploading image...</p>}
                 <div className={styles.modalButtons}>
                   <button type="button" className={styles.btnSecondary} onClick={() => {
                     setShowViewEditModal(false);
                     setEditingAnnouncement(null);
+                    setFormData({ title: '', audience: 'All', content: '', image: null, imageUrl: null, imagePublicId: null });
                   }}>Cancel</button>
-                  <button type="submit" className={styles.btnPrimary}>Save</button>
+                  <button type="submit" className={styles.btnPrimary} disabled={uploadingImage}>Save</button>
                 </div>
               </form>
             ) : viewingAnnouncement ? (
@@ -507,11 +708,29 @@ function TeacherDashboard() {
                 <div className={styles.viewRow}>
                   <span className={styles.viewLabel}>Content:</span> <span className={styles.viewMessage}>{viewingAnnouncement.content}</span>
                 </div>
+                {viewingAnnouncement.image && (
+                  <div className={styles.viewRow}>
+                    <span className={styles.viewLabel}>Image:</span>
+                    <div style={{ marginTop: '0.5rem' }}>
+                      <img
+                        src={viewingAnnouncement.image}
+                        alt={viewingAnnouncement.title}
+                        style={{ maxWidth: '100%', maxHeight: '400px', borderRadius: '4px' }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             ) : null}
           </div>
         </div>
       )}
+      <MessageModal
+        show={showMessageModal}
+        type={messageModalContent.type}
+        message={messageModalContent.message}
+        onClose={() => setShowMessageModal(false)}
+      />
       <ConfirmationModal
         show={showConfirmModal}
         title="Delete Announcement?"

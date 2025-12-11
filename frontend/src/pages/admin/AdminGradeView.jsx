@@ -84,7 +84,11 @@ function AdminGradeView() {
           ? Math.round(gradeRecord.finalGrade)
           : null;
 
-      const status = gradeRecord?.remarks || 'incomplete';
+      // Use status field for completion status, but also check remarks for 'failed' status
+      const completionStatus = gradeRecord?.status || 'incomplete';
+      const remarks = gradeRecord?.remarks || '';
+      // For tab filtering: use status for incomplete/complete, but use remarks for failed
+      const status = remarks === 'Failed' ? 'failed' : completionStatus;
       const gradeLevelValue = student?.gradeLevel || gradeNumber;
 
       return {
@@ -104,7 +108,17 @@ function AdminGradeView() {
     let list = students;
 
     if (activeTab !== 'students') {
-      list = list.filter((student) => student.status === activeTab);
+      // Filter by status: 'incomplete', 'complete', or 'failed'
+      list = list.filter((student) => {
+        if (activeTab === 'completed') {
+          return student.status === 'complete';
+        } else if (activeTab === 'incomplete') {
+          return student.status === 'incomplete';
+        } else if (activeTab === 'failed') {
+          return student.status === 'failed';
+        }
+        return student.status === activeTab;
+      });
     }
 
     if (searchTerm.trim()) {

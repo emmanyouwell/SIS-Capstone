@@ -9,14 +9,43 @@ export const getAnnouncements = async (req, res) => {
     const { audience } = req.query;
     const filter = {};
 
-    if (audience) filter.audience = audience;
-
-    // Students and Teachers only see their own or "All" announcements
-    if (req.user.role === 'Student' || req.user.role === 'Teacher') {
-      filter.$or = [
-        { audience: 'All' },
-        { audience: req.user.role + 's' },
-      ];
+    // Students only see their own or "All" announcements
+    if (req.user.role === 'Student') {
+      if (audience) {
+        filter.audience = audience;
+      } else {
+        filter.$or = [
+          { audience: 'All' },
+          { audience: 'Students' },
+        ];
+      }
+    }
+    // Teachers see their own posts regardless of audience, plus "All" and "Teachers" announcements
+    else if (req.user.role === 'Teacher') {
+      if (audience) {
+        // If audience filter is provided, still include teacher's own posts
+        filter.$or = [
+          { audience: audience },
+          { postedBy: req.user.id }, // Teachers can see their own posts regardless of audience
+        ];
+      } else {
+        filter.$or = [
+          { audience: 'All' },
+          { audience: 'Teachers' },
+          { postedBy: req.user.id }, // Teachers can see their own posts regardless of audience
+        ];
+      }
+    }
+    // Admins see all announcements, and can always see their own posts regardless of audience filter
+    else if (req.user.role === 'Admin') {
+      if (audience) {
+        // If audience filter is provided, still include admin's own posts
+        filter.$or = [
+          { audience: audience },
+          { postedBy: req.user.id }, // Admins can see their own posts regardless of audience
+        ];
+      }
+      // No additional filter - admins see all announcements when no audience filter is provided
     }
 
     const announcements = await Announcement.find(filter)
