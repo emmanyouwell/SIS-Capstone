@@ -1,4 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import styles from './Sidebar.module.css';
 
 const menuItems = {
@@ -97,28 +98,45 @@ const iconSVGs = {
 };
 
 function Sidebar({ userType = 'admin' }) {
+  const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const items = menuItems[userType] || menuItems.admin;
 
+  const toggleSidebar = () => setIsOpen((s) => !s);
+  const closeSidebar = () => setIsOpen(false);
+
   return (
-    <div className={styles.sidebar}>
-      <div className={styles.logoContainer}>
-        <img src="/images/logo.jpg" alt="School Logo" />
+    <>
+      <button
+        className={styles.toggleButton}
+        onClick={toggleSidebar}
+        aria-label={isOpen ? 'Close menu' : 'Open menu'}
+        aria-expanded={isOpen}
+      >
+        <span className={styles.toggleIcon}>{isOpen ? '✕' : '☰'}</span>
+      </button>
+
+      <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
+        <div className={styles.logoContainer}>
+          <img src="/images/logo.jpg" alt="School Logo" />
+        </div>
+        <ul>
+          {items.map((item) => {
+            const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
+            return (
+              <li key={item.path} className={isActive ? styles.active : ''}>
+                <Link to={item.path} onClick={closeSidebar} aria-label={item.label}>
+                  <span className={styles.icon}>{iconSVGs[item.icon] || iconSVGs.info}</span>
+                  <span className={styles.label}>{item.label}</span>
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
       </div>
-      <ul>
-        {items.map((item) => {
-          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/');
-          return (
-            <li key={item.path} className={isActive ? styles.active : ''}>
-              <Link to={item.path}>
-                <span className={styles.icon}>{iconSVGs[item.icon] || iconSVGs.info}</span>
-                {item.label}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+
+      {isOpen && <div className={styles.overlay} onClick={closeSidebar} aria-hidden="true" />}
+    </>
   );
 }
 

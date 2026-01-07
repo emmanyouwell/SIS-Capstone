@@ -1,0 +1,23 @@
+.content {
+  /* space for fixed header */
+  padding-top: var(--header-height);
+  /* start with sidebar width (will be collapsed by media query) */
+  margin-left: var(--sidebar-width);
+  padding: 1rem;
+  transition: margin-left 0.2s ease, padding 0.2s ease;
+  min-height: calc(100vh - var(--header-height));
+  box-sizing: border-box;
+}
+
+/* small screens: use collapsed sidebar width and slightly smaller padding */
+@media (max-width: 768px) {
+  .content {
+    margin-left: var(--sidebar-collapsed-width);
+    padding: 0.75rem;
+  }
+}
+
+/* ensure immediate children don't apply extra left margins (avoids double offsets) */
+.content > * {
+  margin-left: 0;
+}

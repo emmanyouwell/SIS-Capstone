@@ -10,6 +10,7 @@
   --bg-green: #e6f0ea;
   --hover-green: #5c8a77;
   --sidebar-width: 220px;
+  --sidebar-collapsed-width: 60px;
   --header-height: 60px;
 }
 
@@ -21,4 +22,12 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Collapse the effective sidebar width on narrow viewports so pages that use
+   var(--sidebar-width) adapt to mobile */
+@media (max-width: 768px) {
+  :root {
+    --sidebar-width: var(--sidebar-collapsed-width);
+  }
 }

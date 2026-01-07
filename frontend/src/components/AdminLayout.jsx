@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import styles from './Layout.module.css';
 
 function AdminLayout() {
   const { user } = useSelector((state) => state.auth);
@@ -12,7 +13,9 @@ function AdminLayout() {
     <>
       <Sidebar userType="admin" />
       <Header userName={userName} userRole={userRole} />
-      <Outlet />
+      <main className={styles.content}>
+        <Outlet />
+      </main>
     </>
   );
 }

@@ -9,7 +9,9 @@ function Header({ userName, userRole }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showActionMenu, setShowActionMenu] = useState(false);
   const dropdownRef = useRef(null);
+  const actionMenuRef = useRef(null);
   
   const { user } = useSelector((state) => state.auth);
   const { notifications, unreadCount } = useSelector((state) => state.notifications);
@@ -33,6 +35,9 @@ function Header({ userName, userRole }) {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+      }
+      if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
+        setShowActionMenu(false);
       }
     };
     
@@ -164,6 +169,31 @@ function Header({ userName, userRole }) {
             </div>
             <div className={styles.userAvatar}>
               <img src={user.profileImage ||"https://cdn-icons-png.flaticon.com/128/3135/3135715.png"} alt="User Avatar" />
+            </div>
+            {/* Compact action menu for mobile: profile/logout */}
+            <div className={styles.actionContainer} ref={actionMenuRef}>
+              <button
+                className={styles.actionButton}
+                aria-haspopup="menu"
+                aria-expanded={showActionMenu}
+                onClick={() => setShowActionMenu((s) => !s)}
+                aria-label={showActionMenu ? 'Close actions' : 'Open actions'}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
+                </svg>
+              </button>
+
+              {showActionMenu && (
+                <div className={styles.actionMenu} role="menu">
+                  <button role="menuitem" onClick={() => { setShowActionMenu(false); navigate(`/${user?.role?.toLowerCase()}/profile`); }}>
+                    Profile
+                  </button>
+                  <button role="menuitem" onClick={() => { setShowActionMenu(false); handleLogout(); }}>
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
             <button className={`${styles.logoutBtn} ${styles.btnSmartAnimate}`} onClick={handleLogout}>
               <span>Logout</span>

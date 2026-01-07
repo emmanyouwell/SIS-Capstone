@@ -1,37 +1,55 @@
+/* Mobile-first sidebar */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 220px !important;
-  min-width: 220px !important;
-  max-width: 220px !important;
+  width: 60px; /* collapsed width for mobile */
   box-sizing: border-box;
   height: 100vh;
   background-color: #ffffff;
-  padding: 1.25rem;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   overflow-y: auto;
   z-index: 1000;
+  transition: width 0.22s ease, box-shadow 0.22s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Expanded/open state */
+.sidebar.open {
+  width: 220px;
+  align-items: stretch;
+  box-shadow: 2px 0 16px rgba(0,0,0,0.12);
 }
 
 .logoContainer {
-  padding: 20px;
+  padding: 12px;
   text-align: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .logoContainer img {
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* Hide the embedded logo when sidebar is collapsed on small screens to avoid overlap with the toggle */
+@media (max-width: 768px) {
+  .sidebar:not(.open) .logoContainer {
+    display: none;
+  }
 }
 
 .sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
 .sidebar li {
@@ -41,25 +59,26 @@
 .sidebar li a {
   display: flex;
   align-items: center;
-  padding: 0.6rem 0.75rem;
+  gap: 0.75rem;
+  padding: 0.6rem;
   color: #636e72;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   border-radius: 6px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
+  justify-content: center; /* center in collapsed state */
 }
 
-.sidebar li:hover a,
-.sidebar li.active a {
-  color: var(--primary-green);
-  background-color: var(--bg-green);
-  transform: translateX(5px);
+/* Show label only when expanded */
+.sidebar .label {
+  display: none;
+  white-space: nowrap;
 }
 
 .sidebar .icon {
-  margin-right: 0.75rem;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
 }
 
 .sidebar .icon svg {
@@ -68,7 +87,14 @@
   stroke: currentColor;
   stroke-width: 1.5;
   fill: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
+}
+
+.sidebar li:hover a,
+.sidebar li.active a {
+  color: var(--primary-green);
+  background-color: var(--bg-green);
+  transform: translateX(4px);
 }
 
 .sidebar li:hover .icon svg,
@@ -76,7 +102,52 @@
   stroke: var(--primary-green);
 }
 
-/* Custom scrollbar for sidebar */
+/* When expanded, show labels and left-align content */
+.sidebar.open .label {
+  display: inline;
+}
+
+.sidebar.open li a {
+  justify-content: flex-start;
+  padding: 0.6rem 0.75rem;
+}
+
+/* Overlay for small screens when sidebar is open */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 900;
+}
+
+/* Toggle button (hamburger) */
+.toggleButton {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 1100;
+  background: var(--primary-green);
+  color: #fff;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.toggleButton:focus {
+  outline: 2px solid rgba(0,0,0,0.12);
+}
+
+.toggleIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Scrollbar styling */
 .sidebar::-webkit-scrollbar {
   width: 6px;
 }
@@ -94,25 +165,34 @@
   background: var(--primary-green);
 }
 
-@media (max-width: 768px) {
+/* Desktop / larger screens */
+@media (min-width: 769px) {
   .sidebar {
-    width: 60px !important;
-    min-width: 60px !important;
-    max-width: 60px !important;
+    width: 220px;
+    align-items: stretch;
+    padding: 1.25rem;
   }
 
   .logoContainer img {
-    width: 40px;
-    height: 40px;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+  }
+
+  .sidebar .label {
+    display: inline;
   }
 
   .sidebar li a {
-    justify-content: center;
-    padding: 0.6rem;
+    justify-content: flex-start;
+    padding: 0.6rem 0.75rem;
   }
 
-  .sidebar li a span:not(.icon) {
+  .toggleButton {
+    display: none;
+  }
+
+  .overlay {
     display: none;
   }
 }
-

@@ -1,7 +1,7 @@
 .logoutProgress {
   position: fixed;
   top: 0;
-  left: 0;
+  left: var(--sidebar-collapsed-width);
   width: 0%;
   height: 3px;
   background: linear-gradient(to right, #4c7a67, #10B981);
@@ -10,13 +10,14 @@
 }
 
 .logoutProgress.start {
-  width: 100%;
+  width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 .topHeader {
+  /* Mobile-first base (leave room for collapsed sidebar / toggle) */
   position: fixed;
   top: 0;
-  left: var(--sidebar-width);
+  left: var(--sidebar-collapsed-width);
   right: 0;
   height: var(--header-height);
   background: #ffffff;
@@ -24,14 +25,92 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   z-index: 100;
 }
 
 .schoolName {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--primary-green);
+  max-width: 60vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.notificationIcon {
+  position: relative;
+  cursor: pointer;
+  padding: 0.75rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notificationDropdown {
+  /* centered and responsive on small screens */
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100vw - 2rem);
+  max-width: 360px;
+  max-height: 60vh;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.dropdownContent {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg-green);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.notifications .badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #e53e3e;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid white;
+  transform: translate(25%, -25%);
 }
 
 .headerControls {
@@ -215,6 +294,8 @@
 
 .userInfo {
   text-align: right;
+  /* hidden on small screens to save space */
+  display: none;
 }
 
 .userName {
@@ -259,10 +340,71 @@
   position: relative;
 }
 
+/* hide the text label on small screens to save space */
+.logoutBtn {
+  display: none; /* hide whole logout btn on small screens; action menu will contain logout */
+}
+.logoutBtn span {
+  display: none;
+}
+
 .logoutBtn:hover {
   color: var(--hover-green);
   text-decoration: underline;
 }
+
+/* compact action menu button */
+.actionContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.actionButton {
+  background: none;
+  border: none;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #2d3748;
+}
+
+.actionButton:focus {
+  outline: 2px solid rgba(0,0,0,0.08);
+}
+
+.actionMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 160px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.actionMenu button {
+  background: none;
+  border: none;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  color: #2d3748;
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.actionMenu button:hover {
+  background: #f7fafc;
+}
+
 
 .btnSmartAnimate {
   position: relative;
@@ -340,23 +482,58 @@
   opacity: 1;
 }
 
-@media (max-width: 768px) {
+@media (min-width: 769px) {
+  /* Desktop / large screens */
   .topHeader {
-    left: 0;
-    padding: 0 1rem;
+    left: var(--sidebar-width);
+    padding: 0 1.5rem;
   }
 
   .schoolName {
-    font-size: 1rem;
+    font-size: 1.2rem;
+    max-width: none;
+  }
+
+  .headerControls {
+    gap: 1.5rem;
   }
 
   .userInfo {
-    display: none;
+    display: block;
   }
 
   .notificationDropdown {
-    width: 300px;
-    right: -10px;
+    /* move dropdown to the right as on desktop */
+    left: auto;
+    transform: none;
+    right: 0;
+    width: 360px;
+    max-height: 500px;
+    top: calc(100% + 10px);
+  }
+
+  .dropdownContent {
+    max-height: 400px;
+  }
+
+  .userAvatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  /* show logout button on larger screens */
+  .logoutBtn {
+    display: inline-block;
+  }
+
+  /* show logout text on larger screens */
+  .logoutBtn span {
+    display: inline;
+  }
+
+  /* hide action menu button on desktop */
+  .actionButton {
+    display: none;
   }
 }
 
