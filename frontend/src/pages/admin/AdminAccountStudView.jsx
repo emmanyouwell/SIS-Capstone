@@ -327,6 +327,7 @@ function AdminAccountStudView() {
       </div>
 
       <h2 className={styles.tableTitle}>Student Table</h2>
+      <div className={styles.tableWrapper}>
       <table className={styles.facultyTable}>
         <thead>
           <tr>
@@ -347,7 +348,7 @@ function AdminAccountStudView() {
             
             return (
               <tr key={student._id}>
-                <td className={styles.facultyNameCell}>
+                <td className={styles.facultyNameCell} data-label="Name">
                   <img className={styles.facultyAvatar} src={avatar} alt="Avatar" />
                   <a
                     href="#"
@@ -359,10 +360,10 @@ function AdminAccountStudView() {
                   {fullName}
                   </a>
                 </td>
-                <td>{statusLabel}</td>
-                <td>{grade}</td>
-                <td>{totalLogins}</td>
-                <td>
+                <td data-label="Status">{statusLabel}</td>
+                <td data-label="Grade">{grade}</td>
+                <td data-label="Total logins" className={styles.totalLoginsCell}>{totalLogins}</td>
+                <td data-label="Actions">
                   <div className={styles.actionCell} data-dropdown>
                     <button
                       className={styles.dotsBtn}
@@ -404,6 +405,7 @@ function AdminAccountStudView() {
 
         </tbody>
       </table>
+      </div>
 
       {/* View Student Modal */}
       {showViewModal && viewingStudent && (

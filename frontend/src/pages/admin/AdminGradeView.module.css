@@ -653,6 +653,83 @@
     width: 100%;
   }
 
+  /* Remove left content offset from sidebar margin */
+  .mainContent {
+    margin-left: 0;
+    padding: 1rem 0.9rem;
+    min-height: calc(100vh - var(--header-height, 60px));
+  }
+
+  /* Tighter spacing for the grade card on small screens */
+  .gradeCard {
+    margin: 1rem auto;
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 1rem;
+    border-radius: 12px;
+  }
+
+  /* Convert main table and modal tables to stacked, card-style rows */
+  .table,
+  .modalTable {
+    display: block;
+  }
+
+  .table thead,
+  .modalTable thead {
+    display: none;
+  }
+
+  .table tbody,
+  .modalTable tbody {
+    display: block;
+  }
+
+  .table tbody tr,
+  .modalTable tbody tr {
+    display: block;
+    border: 1px solid #eef2f6;
+    margin-bottom: 0.75rem;
+    border-radius: 8px;
+    overflow: hidden;
+    padding: 0.5rem;
+    background: #fff;
+  }
+
+  .table td,
+  .modalTable td {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.6rem 0.8rem;
+    border-bottom: none;
+    align-items: center;
+  }
+
+  .table td::before,
+  .modalTable td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    color: #555;
+    margin-right: 0.6rem;
+    flex: 0 0 45%;
+    text-align: left;
+  }
+
+  .table td:last-child,
+  .modalTable td:last-child {
+    justify-content: flex-end;
+  }
+
+  .table td[data-label="Grade"] {
+    text-align: center;
+  }
+
+  .table td[data-label="Status"] {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
   .table {
     font-size: 0.9rem;
   }
@@ -673,6 +750,16 @@
 
   .editForm {
     grid-template-columns: 1fr;
+  }
+
+  /* Slightly smaller view button on mobile */
+  .viewBtn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.95rem;
+  }
+
+  .modalEditBtn {
+    padding: 0.25rem 0.9rem;
   }
 }
 

@@ -105,6 +105,7 @@
 
 .facultyTable {
   width: 100%;
+  min-width: 350px; /* match .chartBox min-width */
   border-collapse: collapse;
   margin-top: 0;
   background: #fff;
@@ -336,6 +337,11 @@
 }
 
 /* Responsive Design */
+.tableWrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 @media (max-width: 1200px) {
   .summaryRow {
     flex-direction: column;
@@ -361,12 +367,93 @@
   }
 
   .facultyTable {
-    font-size: 0.9rem;
+    font-size: 0.95rem;
   }
 
   .facultyTable th,
   .facultyTable td {
     padding: 0.8rem 0.6rem;
+  }
+}
+
+/* Mobile: transform table into stacked cards */
+@media (max-width: 600px) {
+  .summaryRow {
+    gap: 1rem;
+  }
+
+  .chartBox,
+  .summaryCard {
+    width: 100%;
+  }
+
+  .facultyTable thead {
+    display: none;
+  }
+
+  .facultyTable tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid #f1f1f1;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
+  }
+
+  .facultyTable td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-bottom: none;
+  }
+
+  .facultyTable td::before {
+    content: attr(data-label) "";
+    font-weight: 600;
+    color: #666;
+    margin-right: 8px;
+    white-space: nowrap;
+    width: 40%;
+  }
+
+  .facultyNameCell {
+    gap: 0.5rem;
+  }
+
+  .facultyAvatar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .dotsBtn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .dropdownMenu {
+    position: absolute;
+    right: 10px;
+    top: auto;
+    bottom: 100%;
+  }
+
+  .modalContent {
+    width: 95vw;
+    padding: 1rem;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 420px) {
+  .facultyTable td::before {
+    width: 50%;
+    font-size: 0.9rem;
+  }
+
+  .facultyTable td {
+    padding: 6px 8px;
+    font-size: 0.9rem;
   }
 }
 

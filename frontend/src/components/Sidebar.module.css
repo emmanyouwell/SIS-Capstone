@@ -1,9 +1,9 @@
-/* Mobile-first sidebar */
+/* Mobile-first: sidebar off-canvas by default */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
-  width: 60px; /* collapsed width for mobile */
+  width: 220px;
   box-sizing: border-box;
   height: 100vh;
   background-color: #ffffff;
@@ -11,16 +11,16 @@
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
   overflow-y: auto;
   z-index: 1000;
-  transition: width 0.22s ease, box-shadow 0.22s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+  transform: translateX(-110%); /* hidden by default on mobile */
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
 }
 
-/* Expanded/open state */
+/* Open state: slide in */
 .sidebar.open {
-  width: 220px;
-  align-items: stretch;
+  transform: translateX(0);
   box-shadow: 2px 0 16px rgba(0,0,0,0.12);
 }
 
@@ -38,11 +38,9 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-/* Hide the embedded logo when sidebar is collapsed on small screens to avoid overlap with the toggle */
-@media (max-width: 768px) {
-  .sidebar:not(.open) .logoContainer {
-    display: none;
-  }
+/* Hide the embedded logo when sidebar is closed on small screens */
+.sidebar:not(.open) .logoContainer {
+  display: none;
 }
 
 .sidebar ul {
@@ -66,7 +64,7 @@
   transition: all 0.2s ease;
   border-radius: 6px;
   font-size: 0.95rem;
-  justify-content: center; /* center in collapsed state */
+  justify-content: center; /* center when collapsed */
 }
 
 /* Show label only when expanded */
@@ -120,31 +118,9 @@
   z-index: 900;
 }
 
-/* Toggle button (hamburger) */
+/* Hide any legacy toggle button styles (we moved the hamburger into the header) */
 .toggleButton {
-  position: fixed;
-  top: 12px;
-  left: 12px;
-  z-index: 1100;
-  background: var(--primary-green);
-  color: #fff;
-  border: none;
-  width: 40px;
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-}
-
-.toggleButton:focus {
-  outline: 2px solid rgba(0,0,0,0.12);
-}
-
-.toggleIcon {
-  font-size: 18px;
-  line-height: 1;
+  display: none !important;
 }
 
 /* Scrollbar styling */
@@ -164,13 +140,14 @@
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--primary-green);
 }
-
 /* Desktop / larger screens */
 @media (min-width: 769px) {
   .sidebar {
     width: 220px;
     align-items: stretch;
     padding: 1.25rem;
+    transform: none; /* ensure sidebar is visible on desktop */
+    left: 0;
   }
 
   .logoContainer img {

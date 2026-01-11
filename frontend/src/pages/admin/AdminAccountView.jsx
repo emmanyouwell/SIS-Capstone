@@ -374,6 +374,7 @@ function AdminAccountView() {
           <h2 className={styles.tableTitle}>
             Faculty Table (Teachers & Admins)
           </h2>
+          <div className={styles.tableWrapper}>
           <table className={styles.facultyTable}>
             <thead>
               <tr>
@@ -387,7 +388,7 @@ function AdminAccountView() {
             <tbody>
               {accounts.map((account) => (
                 <tr key={account.id}>
-                  <td className={styles.facultyNameCell}>
+                  <td className={styles.facultyNameCell} data-label="Name">
                     <img
                       className={styles.facultyAvatar}
                       src={account.avatar}
@@ -403,10 +404,10 @@ function AdminAccountView() {
                       {account.name}
                     </a>
                   </td>
-                  <td>{account.role}</td>
-                  <td>{account.email}</td>
-                  <td>{account.totalLogins}</td>
-                  <td>
+                  <td data-label="Role">{account.role}</td>
+                  <td data-label="Email">{account.email}</td>
+                  <td data-label="Total logins" className={styles.totalLoginsCell}>{account.totalLogins}</td>
+                  <td data-label="Actions">
                     <div className={styles.actionCell} data-dropdown>
                       <button
                         className={styles.dotsBtn}
@@ -446,6 +447,7 @@ function AdminAccountView() {
               ))}
             </tbody>
           </table>
+          </div>
         </>
       )}
 

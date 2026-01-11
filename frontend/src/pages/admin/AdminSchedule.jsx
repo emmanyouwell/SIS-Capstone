@@ -461,7 +461,7 @@ function AdminSchedule() {
     <div className={styles.mainContent}>
       <div className={styles.scheduleTitle}>Schedule - Grade {currentGrade}</div>
 
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '24px', alignItems: 'center' }}>
+      <div className={styles.controlsRow}>
         <select
           id="grade-select"
           className={styles.gradeSelect}
@@ -532,19 +532,21 @@ function AdminSchedule() {
                 </div>
               </div>
 
-              <table className={styles.schedTable}>
-                <thead>
-                  <tr>
-                    <th className={styles.timeCol}>TIME</th>
-                    <th>Monday</th>
-                    <th>Tuesday</th>
-                    <th>Wednesday</th>
-                    <th>Thursday</th>
-                    <th>Friday</th>
-                  </tr>
-                </thead>
-                <tbody>{renderTableRows()}</tbody>
-              </table>
+              <div className={styles.tableWrapper}>
+                <table className={styles.schedTable}>
+                  <thead>
+                    <tr>
+                      <th className={styles.timeCol}>TIME</th>
+                      <th>Monday</th>
+                      <th>Tuesday</th>
+                      <th>Wednesday</th>
+                      <th>Thursday</th>
+                      <th>Friday</th>
+                    </tr>
+                  </thead>
+                  <tbody>{renderTableRows()}</tbody>
+                </table>
+              </div>
 
               <div className={styles.schedActions}>
                 {editMode ? (

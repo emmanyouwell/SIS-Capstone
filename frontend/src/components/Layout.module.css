@@ -1,19 +1,33 @@
 .content {
-  /* space for fixed header */
+  /* mobile-first: full width, space for fixed header */
   padding-top: var(--header-height);
-  /* start with sidebar width (will be collapsed by media query) */
-  margin-left: var(--sidebar-width);
-  padding: 1rem;
-  transition: margin-left 0.2s ease, padding 0.2s ease;
-  min-height: calc(100vh - var(--header-height));
+  margin-left: 0; /* always full width, no sidebar offset */
+  padding: 0.75rem;
+  width: 100%;
+  min-width: 0; /* allow flex children to shrink */
   box-sizing: border-box;
+  transition: padding 0.2s ease;
+  min-height: calc(100vh - var(--header-height));
 }
 
-/* small screens: use collapsed sidebar width and slightly smaller padding */
-@media (max-width: 768px) {
+/* extra-small screens: slightly smaller padding to maximize usable space */
+@media (max-width: 479px) {
   .content {
-    margin-left: var(--sidebar-collapsed-width);
+    padding: 0.5rem;
+  }
+}
+
+/* small screens: tablet / small desktop */
+@media (min-width: 480px) and (max-width: 768px) {
+  .content {
     padding: 0.75rem;
+  }
+}
+
+/* larger screens: desktop */
+@media (min-width: 769px) {
+  .content {
+    padding: 1rem;
   }
 }
 

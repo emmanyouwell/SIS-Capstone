@@ -657,14 +657,14 @@ Administration`;
           <tbody>
             {filteredStudents.map((student) => (
               <tr key={student.id} data-status={student.status}>
-                <td style={{ textAlign: 'center' }}>{student.grade}</td>
-                <td>{student.name}</td>
-                <td className={getStatusClass(student.status)}>
+                <td data-label="Grade" style={{ textAlign: 'center' }}>{student.grade}</td>
+                <td data-label="Name">{student.name}</td>
+                <td data-label="Status" className={getStatusClass(student.status)}>
                   {student.status.toUpperCase()}
                 </td>
-                <td>{student.lrn}</td>
-                <td>{student.finalGrade !== null ? student.finalGrade : '-'}</td>
-                <td>
+                <td data-label="LRN">{student.lrn}</td>
+                <td data-label="Final Grade">{student.finalGrade !== null ? student.finalGrade : '-'}</td>
+                <td data-label="Edit Grades">
                   <button
                     className={styles.viewBtn}
                     onClick={() => handleViewStudent(student)}
@@ -739,13 +739,13 @@ Administration`;
                   const displayQ4 = s.q4 !== undefined && s.q4 !== null ? s.q4 : '-';
                   return (
                     <tr key={s.subject?._id || index}>
-                      <td>{subjectName}</td>
-                      <td>{displayQ1}</td>
-                      <td>{displayQ2}</td>
-                      <td>{displayQ3}</td>
-                      <td>{displayQ4}</td>
-                      <td>{final !== null ? final : '-'}</td>
-                      <td>
+                      <td data-label="Subject">{subjectName}</td>
+                      <td data-label="1st Quarter">{displayQ1}</td>
+                      <td data-label="2nd Quarter">{displayQ2}</td>
+                      <td data-label="3rd Quarter">{displayQ3}</td>
+                      <td data-label="4th Quarter">{displayQ4}</td>
+                      <td data-label="Final Grades">{final !== null ? final : '-'}</td>
+                      <td data-label="Edit">
                         <button
                           className={styles.modalEditBtn}
                           onClick={() => handleEditSubject(index)}
@@ -755,7 +755,7 @@ Administration`;
                       </td>
                     </tr>
                   );
-                })}
+                })} 
                 {subjects.length === 0 && (
                   <tr>
                     <td colSpan="7" className={styles.emptyMessage}>

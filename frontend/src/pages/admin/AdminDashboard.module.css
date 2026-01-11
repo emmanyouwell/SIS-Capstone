@@ -1,4 +1,5 @@
 .mainContent {
+  /* Desktop: keep original offset for persistent sidebar */
   margin-left: var(--sidebar-width);
   margin-top: var(--header-height);
   padding: 1.5rem;
@@ -6,10 +7,12 @@
   display: flex;
   gap: 32px;
   align-items: flex-start;
+  box-sizing: border-box;
 }
 
 .dashboardLeft {
   flex: 2;
+  min-width: 0; /* allow child elements to shrink in flex */
 }
 
 .dashboardTitle {
@@ -642,8 +645,23 @@
 
 @media (max-width: 900px) {
   .mainContent {
+    /* Center on small screens and stack columns */
+    margin: 0 auto;
+    max-width: 1000px;
+    width: 100%;
     flex-direction: column;
     padding: 1rem;
+    box-sizing: border-box;
+  }
+
+  .dashboardRight {
+    min-width: auto;
+    max-width: none;
+    width: 100%;
+  }
+
+  .dashboardLeft {
+    width: 100%;
   }
 
   .infoCards {

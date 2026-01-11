@@ -1,35 +1,45 @@
+/* Mobile-first responsive Admin Schedule styles */
+
 .mainContent {
-  margin-left: var(--sidebar-width, 240px);
-  padding-top: 24px;
+  margin-left: 0; /* mobile first: no sidebar offset */
+  padding: 16px 8px 8px; /* top 16px, sides and bottom 8px for compact mobile spacing */
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   position: relative;
-  max-width: 1200px;
-  padding-left: 24px;
-  padding-right: 24px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .scheduleTitle {
-  font-size: 1.7rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: #184d27;
-  margin-bottom: 18px;
+  margin-bottom: 12px;
   margin-top: 0;
   align-self: flex-start;
 }
 
+.controlsRow {
+  display: flex;
+  align-items: center; /* vertically center children */
+  gap: 16px;
+  margin-top: 8px; /* create space below the global header */
+  margin-bottom: 16px;
+}
+
 .gradeSelect {
-  margin-bottom: 24px;
-  font-size: 1.1rem;
-  padding: 8px 18px;
+  margin-bottom: 0; /* handled by controlsRow */
+  font-size: 1rem;
+  padding: 8px 12px;
   border-radius: 10px;
   border: 1px solid #bdbdbd;
   background: #eafbee;
   color: #184d27;
   font-weight: 600;
-  width: 220px;
+  width: 100%;
+  max-width: 240px;
   cursor: pointer;
 }
 
@@ -40,43 +50,55 @@
 
 .contentLayout {
   display: flex;
-  flex-direction: row;
-  gap: 32px;
-  align-items: flex-start;
+  flex-direction: column; /* stacked on mobile */
+  gap: 12px;
+  align-items: stretch;
   width: 100%;
 }
 
 .sectionListCard {
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
-  padding: 20px 0 12px 0;
-  min-width: 200px;
-  max-width: 220px;
-  margin-bottom: 0;
-  align-self: flex-start;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.06);
+  padding: 12px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .sectionListTitle {
-  font-size: 1.25rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: #184d27;
-  padding: 0 24px 12px 24px;
+  padding: 0 8px 8px 8px;
 }
 
 .sectionList {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 6px 4px;
+  display: flex; /* horizontal scroll list on mobile */
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.sectionList::-webkit-scrollbar {
+  height: 8px;
 }
 
 .sectionItem {
-  padding: 12px 24px;
-  font-size: 1.08rem;
+  padding: 10px 14px;
+  min-width: 110px;
+  flex: 0 0 auto;
+  font-size: 0.97rem;
   cursor: pointer;
   color: #222;
-  font-weight: 400;
-  transition: background-color 0.2s, color 0.2s;
+  font-weight: 500;
+  border-radius: 10px;
+  background: transparent;
+  text-align: center;
+  white-space: nowrap;
+  transition: background-color 0.2s, color 0.2s, transform 0.08s;
 }
 
 .sectionItem:hover {
@@ -97,24 +119,24 @@
 
 .schedContainer {
   margin-top: 0;
-  max-width: 900px;
+  width: 100%;
   background: #fff;
   border-radius: 10px;
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
-  padding: 24px;
+  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.06);
+  padding: 16px 8px; /* keep top spacing, reduce left/right padding on mobile */
+  box-sizing: border-box;
 }
 
 .schedHeader {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  flex-wrap: wrap;
-  gap: 12px;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+  align-items: flex-start;
 }
 
 .schedTitle {
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #184d27;
 }
@@ -123,10 +145,18 @@
   font-weight: 700;
 }
 
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto; /* allow horizontal scroll on small devices */
+  -webkit-overflow-scrolling: touch;
+  border-radius: 8px;
+}
+
 .schedTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 12px;
+  margin-top: 8px;
+  min-width: 720px; /* make table wider so it can scroll on small screens */
 }
 
 .schedTable th,
@@ -139,7 +169,7 @@
 .schedTable th {
   background: #a5d6a7;
   color: #184d27;
-  font-size: 1.1rem;
+  font-size: 0.98rem;
   font-weight: 600;
 }
 
@@ -147,13 +177,14 @@
   background: #eafbee;
   font-weight: 600;
   color: #184d27;
+  width: 140px;
 }
 
 .schedTable .breakRow td {
   background: #f7f7f7;
   font-weight: 700;
   color: #888;
-  font-size: 1.1rem;
+  font-size: 1rem;
 }
 
 .subjectName {
@@ -163,7 +194,7 @@
 }
 
 .teacherName {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   color: #666;
   font-weight: 400;
   font-style: italic;
@@ -173,10 +204,10 @@
 .subjectDropdown,
 .teacherDropdown {
   width: 100%;
-  padding: 4px 6px;
+  padding: 6px 8px;
   border-radius: 6px;
   border: 1px solid #bdbdbd;
-  font-size: 1rem;
+  font-size: 0.95rem;
   background: #fff;
   cursor: pointer;
 }
@@ -188,20 +219,21 @@
 }
 
 .schedActions {
-  margin-top: 18px;
+  margin-top: 12px;
   display: flex;
-  gap: 12px;
-  justify-content: flex-end;
+  gap: 8px;
+  justify-content: flex-start; /* align to start on mobile */
+  flex-wrap: wrap;
 }
 
 .schedBtn {
-  padding: 8px 20px;
-  border-radius: 16px;
+  padding: 8px 16px;
+  border-radius: 12px;
   border: none;
   font-weight: 600;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: background-color 0.2s, transform 0.08s;
 }
 
 .schedBtn:hover {
@@ -230,67 +262,84 @@
   background: #184d27;
 }
 
-/* Responsive Design */
-@media (max-width: 900px) {
+/* Larger screens: restore sidebar offset and two-column layout */
+@media (min-width: 900px) {
   .mainContent {
-    margin-left: 0;
-    padding: 12px;
-    max-width: 100%;
+    margin-left: var(--sidebar-width, 240px);
+    padding-top: 24px;
+    padding-left: 24px;
+    padding-right: 24px;
+    max-width: 1200px;
   }
 
   .contentLayout {
-    flex-direction: column;
-    gap: 20px;
-  }
-
-  .sectionListCard {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  .schedContainer {
-    padding: 16px;
-    width: 100%;
-  }
-
-  .schedHeader {
-    flex-direction: column;
+    flex-direction: row;
+    gap: 32px;
     align-items: flex-start;
   }
 
+  .sectionList {
+    display: block;
+    overflow: visible;
+    padding: 0;
+  }
+
+  .sectionListCard {
+    padding: 20px 0 12px 0;
+    min-width: 200px;
+    max-width: 220px;
+    align-self: flex-start;
+  }
+
+  .schedContainer {
+    padding: 24px;
+    max-width: 900px;
+  }
+
+  .schedHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .gradeSelect {
+    width: 220px;
+  }
+
+  .controlsRow {
+    margin-top: 12px; /* slightly larger gap on desktop */
+    margin-bottom: 24px;
+  }
+
+  .schedActions {
+    justify-content: flex-end;
+  }
+
+  /* allow table to fit container on larger screens */
   .schedTable {
-    font-size: 0.9rem;
+    min-width: unset;
+  }
+}
+
+@media (max-width: 480px) {
+  .scheduleTitle {
+    font-size: 1.15rem;
+  }
+
+  .sectionItem {
+    padding: 8px 10px;
+    min-width: 92px;
+    font-size: 0.92rem;
   }
 
   .schedTable th,
   .schedTable td {
     padding: 6px 4px;
   }
-}
-
-@media (max-width: 600px) {
-  .scheduleTitle {
-    font-size: 1.4rem;
-  }
-
-  .gradeSelect {
-    width: 100%;
-    max-width: 220px;
-  }
 
   .schedTable {
-    font-size: 0.8rem;
-  }
-
-  .schedTable th,
-  .schedTable td {
-    padding: 4px 2px;
-  }
-
-  .subjectDropdown,
-  .teacherDropdown {
-    font-size: 0.9rem;
-    padding: 2px 4px;
+    min-width: 640px;
   }
 }
+
 

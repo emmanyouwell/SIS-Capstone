@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { getMe, logout } from '../store/slices/authSlice';
 import { fetchAllNotifications, fetchUnreadCount, updateNotification } from '../store/slices/notificationSlice';
 
-function Header({ userName, userRole }) {
+function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -93,9 +93,19 @@ function Header({ userName, userRole }) {
     <>
       <div className={styles.logoutProgress}></div>
       <div className={styles.topHeader}>
+        <button
+          className={styles.headerHamburger}
+          onClick={() => onMenuToggle && onMenuToggle()}
+          aria-label={isMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={!!isMenuOpen}
+        >
+          <span className={styles.toggleIcon}>{isMenuOpen ? '✕' : '☰'}</span>
+        </button>
+
         <div className={styles.schoolName}>
           Sto. Niño National High School
         </div>
+
         <div className={styles.headerControls}>
           <div className={styles.notifications} ref={dropdownRef}>
             <div 

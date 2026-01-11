@@ -97,25 +97,25 @@ const iconSVGs = {
   ),
 };
 
-function Sidebar({ userType = 'admin' }) {
-  const [isOpen, setIsOpen] = useState(false);
+function Sidebar({ userType = 'admin', isOpen: controlledIsOpen, onToggle, onClose }) {
+  const [localOpen, setLocalOpen] = useState(false);
+  const controlled = typeof controlledIsOpen === 'boolean';
+  const isOpen = controlled ? controlledIsOpen : localOpen;
   const location = useLocation();
   const items = menuItems[userType] || menuItems.admin;
 
-  const toggleSidebar = () => setIsOpen((s) => !s);
-  const closeSidebar = () => setIsOpen(false);
+  const toggleSidebar = () => {
+    if (controlled) return onToggle && onToggle();
+    setLocalOpen((s) => !s);
+  };
+
+  const closeSidebar = () => {
+    if (controlled) return onClose && onClose();
+    setLocalOpen(false);
+  };
 
   return (
     <>
-      <button
-        className={styles.toggleButton}
-        onClick={toggleSidebar}
-        aria-label={isOpen ? 'Close menu' : 'Open menu'}
-        aria-expanded={isOpen}
-      >
-        <span className={styles.toggleIcon}>{isOpen ? '✕' : '☰'}</span>
-      </button>
-
       <div className={`${styles.sidebar} ${isOpen ? styles.open : ''}`}>
         <div className={styles.logoContainer}>
           <img src="/images/logo.jpg" alt="School Logo" />
@@ -141,4 +141,3 @@ function Sidebar({ userType = 'admin' }) {
 }
 
 export default Sidebar;
-

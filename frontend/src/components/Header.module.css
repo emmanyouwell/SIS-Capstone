@@ -1,7 +1,7 @@
 .logoutProgress {
   position: fixed;
   top: 0;
-  left: var(--sidebar-collapsed-width);
+  left: 0; /* full width on mobile */
   width: 0%;
   height: 3px;
   background: linear-gradient(to right, #4c7a67, #10B981);
@@ -10,14 +10,14 @@
 }
 
 .logoutProgress.start {
-  width: calc(100% - var(--sidebar-collapsed-width));
+  width: 100%; /* full width by default */
 }
 
 .topHeader {
-  /* Mobile-first base (leave room for collapsed sidebar / toggle) */
+  /* Mobile-first base */
   position: fixed;
   top: 0;
-  left: var(--sidebar-collapsed-width);
+  left: 0; /* take full width on mobile */
   right: 0;
   height: var(--header-height);
   background: #ffffff;
@@ -28,6 +28,32 @@
   padding: 0 1rem;
   z-index: 100;
 }
+
+/* Mobile hamburger in header */
+.headerHamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--primary-green);
+  color: #fff;
+  border: none;
+  margin-right: 0.5rem;
+  font-size: 18px;
+}
+
+.headerHamburger:focus {
+  outline: 2px solid rgba(0,0,0,0.08);
+}
+
+/* small icon helper */
+.toggleIcon {
+  font-size: 18px;
+  line-height: 1;
+}
+
 
 .schoolName {
   font-size: 1rem;
@@ -489,6 +515,14 @@
     padding: 0 1.5rem;
   }
 
+  .logoutProgress {
+    left: var(--sidebar-width);
+  }
+
+  .logoutProgress.start {
+    width: calc(100% - var(--sidebar-width));
+  }
+
   .schoolName {
     font-size: 1.2rem;
     max-width: none;
@@ -533,6 +567,11 @@
 
   /* hide action menu button on desktop */
   .actionButton {
+    display: none;
+  }
+
+  /* hide mobile hamburger on desktop */
+  .headerHamburger {
     display: none;
   }
 }
