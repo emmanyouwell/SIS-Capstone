@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import styles from './Header.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { getMe, logout } from '../store/slices/authSlice';
@@ -10,6 +10,7 @@ function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
   const dispatch = useDispatch();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState(false);
+  const [showAllNotifications, setShowAllNotifications] = useState(false);
   const dropdownRef = useRef(null);
   const actionMenuRef = useRef(null);
   
@@ -35,6 +36,7 @@ function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setShowDropdown(false);
+        setShowAllNotifications(false);
       }
       if (actionMenuRef.current && !actionMenuRef.current.contains(event.target)) {
         setShowActionMenu(false);
@@ -59,7 +61,24 @@ function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
     }
     
     setShowDropdown(false);
+    setShowAllNotifications(false);
   };
+
+  const sortedNotifications = useMemo(() => {
+    if (!notifications) return [];
+    return [...notifications].sort((a, b) => {
+      if (a.status === 'unread' && b.status !== 'unread') return -1;
+      if (a.status !== 'unread' && b.status === 'unread') return 1;
+      return new Date(b.dateCreated) - new Date(a.dateCreated);
+    });
+  }, [notifications]);
+
+  const displayNotifications = useMemo(() => {
+    if (showAllNotifications) return sortedNotifications;
+    return sortedNotifications.slice(0, 3);
+  }, [sortedNotifications, showAllNotifications]);
+
+  const hasMoreNotifications = sortedNotifications.length > 3;
   
   const handleLogout = () => {
     const btn = document.querySelector(`.${styles.logoutBtn}`);
@@ -108,12 +127,23 @@ function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
 
         <div className={styles.headerControls}>
           <div className={styles.notifications} ref={dropdownRef}>
-            <div 
-              className={styles.notificationIcon} 
+            <div
+              className={styles.notificationIcon}
               onClick={() => setShowDropdown(!showDropdown)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowDropdown(!showDropdown);
+                }
+              }}
+              aria-haspopup="true"
+              aria-expanded={showDropdown}
+              aria-label="Notifications"
             >
               <svg width="24" height="24" fill="none" stroke="#184d27" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
-                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
               {unreadCount > 0 && (
                 <span className={styles.badge}>{unreadCount > 99 ? '99+' : unreadCount}</span>
@@ -128,83 +158,84 @@ function Header({ userName, userRole, onMenuToggle, isMenuOpen }) {
                   )}
                 </div>
                 <div className={styles.dropdownContent}>
-                  {notifications && notifications.length > 0 ? (
-                    [...notifications]
-                      .sort((a, b) => {
-                        // Sort unread first, then by date
-                        if (a.status === 'unread' && b.status !== 'unread') return -1;
-                        if (a.status !== 'unread' && b.status === 'unread') return 1;
-                        return new Date(b.dateCreated) - new Date(a.dateCreated);
-                      })
-                      .slice(0, 10)
-                      .map((notification) => (
-                        <div
-                          key={notification._id}
-                          className={`${styles.notificationItem} ${
-                            notification.status === 'unread' ? styles.unread : ''
-                          }`}
-                          onClick={() => handleNotificationClick(notification)}
-                        >
-                          <div className={styles.notificationMessage}>
-                            {notification.message}
-                          </div>
-                          <div className={styles.notificationTime}>
-                            {new Date(notification.dateCreated).toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
+                  {displayNotifications && displayNotifications.length > 0 ? (
+                    displayNotifications.map((notification) => (
+                      <div
+                        key={notification._id}
+                        className={`${styles.notificationItem} ${
+                          notification.status === 'unread' ? styles.unread : ''
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <div className={styles.notificationMessage}>
+                          {notification.message}
                         </div>
-                      ))
+                        <div className={styles.notificationTime}>
+                          {new Date(notification.dateCreated).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </div>
+                    ))
                   ) : (
                     <div className={styles.noNotifications}>No notifications</div>
                   )}
                 </div>
-                {notifications && notifications.length > 0 && (
+                {hasMoreNotifications && (
                   <div className={styles.dropdownFooter}>
-                    <button onClick={() => navigate(`/${user?.role?.toLowerCase()}/notifications`)}>
-                      View All
+                    <button onClick={() => setShowAllNotifications((prev) => !prev)}>
+                      {showAllNotifications ? 'See less' : 'See more'}
                     </button>
                   </div>
                 )}
               </div>
             )}
           </div>
+
           <div className={styles.userControls}>
             <div className={styles.userInfo}>
               <div className={styles.userName}>{userName}</div>
               <div className={styles.userRole}>{userRole}</div>
             </div>
-            <div className={styles.userAvatar}>
-              <img src={user.profileImage ||"https://cdn-icons-png.flaticon.com/128/3135/3135715.png"} alt="User Avatar" />
-            </div>
-            {/* Compact action menu for mobile: profile/logout */}
+
             <div className={styles.actionContainer} ref={actionMenuRef}>
               <button
-                className={styles.actionButton}
+                className={`${styles.userAvatar} ${styles.avatarButton}`}
                 aria-haspopup="menu"
                 aria-expanded={showActionMenu}
                 onClick={() => setShowActionMenu((s) => !s)}
-                aria-label={showActionMenu ? 'Close actions' : 'Open actions'}
+                aria-label={showActionMenu ? 'Close user menu' : 'Open user menu'}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="5" r="1.5" /><circle cx="12" cy="12" r="1.5" /><circle cx="12" cy="19" r="1.5" />
-                </svg>
+                <img src={user.profileImage || 'https://cdn-icons-png.flaticon.com/128/3135/3135715.png'} alt="User Avatar" />
               </button>
 
               {showActionMenu && (
                 <div className={styles.actionMenu} role="menu">
-                  <button role="menuitem" onClick={() => { setShowActionMenu(false); navigate(`/${user?.role?.toLowerCase()}/profile`); }}>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionMenu(false);
+                      navigate(`/${user?.role?.toLowerCase()}/profile`);
+                    }}
+                  >
                     Profile
                   </button>
-                  <button role="menuitem" onClick={() => { setShowActionMenu(false); handleLogout(); }}>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionMenu(false);
+                      handleLogout();
+                    }}
+                  >
                     Logout
                   </button>
                 </div>
               )}
             </div>
+
             <button className={`${styles.logoutBtn} ${styles.btnSmartAnimate}`} onClick={handleLogout}>
               <span>Logout</span>
             </button>

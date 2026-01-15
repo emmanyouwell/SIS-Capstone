@@ -233,8 +233,8 @@ function AdminMasterlistGradeView() {
                             textDecoration: 'line-through'
                           } : {}}
                         >
-                          <td>{student.learnerReferenceNo || ''}</td>
-                          <td>
+                          <td data-label="LRN">{student.learnerReferenceNo || ''}</td>
+                          <td data-label="Name">
                             {formatStudentName(student)}
                             {isInactive && (
                               <span style={{
@@ -245,14 +245,15 @@ function AdminMasterlistGradeView() {
                                 fontWeight: '600',
                                 backgroundColor: '#e74c3c',
                                 color: '#fff',
-                                textDecoration: 'none'
+                                textDecoration: 'none',
+                                display: 'inline-block'
                               }}>
                                 INACTIVE
                               </span>
                             )}
                           </td>
-                          <td>{formatGender(student)}</td>
-                          <td>
+                          <td data-label="Gender">{formatGender(student)}</td>
+                          <td data-label="Enrollment">
                             {student.isEnrolled ? 'Enrolled' : 'Not Enrolled'}
                             {isInactive && (
                               <span style={{
@@ -262,7 +263,8 @@ function AdminMasterlistGradeView() {
                                 fontSize: '10px',
                                 fontWeight: '600',
                                 backgroundColor: '#95a5a6',
-                                color: '#fff'
+                                color: '#fff',
+                                display: 'inline-block'
                               }}>
                                 Account Inactive
                               </span>

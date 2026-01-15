@@ -434,6 +434,10 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+  }
+
   .messagesContainer {
     flex-direction: column;
     height: auto;

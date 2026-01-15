@@ -288,6 +288,10 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+  }
+
   .profileInfo {
     flex-direction: column;
     text-align: center;

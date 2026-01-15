@@ -426,59 +426,114 @@
 }
 
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 767px) {
+  .mainContent {
+    padding: 1rem;
+    margin-left: 0;
+  }
+
+  .enrollmentGrid {
+    gap: 1.5rem;
+  }
+
   .topSection {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 
   .leftContainer {
-    order: 2;
-  }
-
-  .rightContainer {
-    order: 1;
+    gap: 16px;
   }
 
   .gradeButtonsGrid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .tableCard {
-    width: 100%;
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 768px) {
-  .mainContent {
-    padding: 20px 16px;
-  }
-
-  .pageTitle {
-    font-size: 1.5rem;
-  }
-
-  .topSection {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .gradeButtonsGrid {
-    grid-template-columns: repeat(2, 1fr);
+  .statsCard {
+    padding: 20px;
   }
 
   .totalCard {
     flex-direction: column;
     text-align: center;
+    gap: 16px;
   }
 
   .statsCardIcon {
-    margin: 0 auto;
+    width: 48px;
+    height: 48px;
+  }
+
+  .statsCardValue {
+    font-size: 2rem;
+  }
+
+  .gradeBtn {
+    padding: 16px;
+  }
+
+  .gradeBtnLabel {
+    font-size: 1rem;
+  }
+
+  .gradeBtnCount {
+    font-size: 0.8rem;
+  }
+
+  .chartCard {
+    min-height: 300px;
+  }
+
+  .chartCanvas {
+    max-width: 150px;
+    max-height: 150px;
+  }
+
+  .enrollLegend {
+    font-size: 0.9rem;
   }
 
   .tableCard {
+    padding: 12px;
+    margin-top: 24px;
+  }
+
+  .tableFilters {
+    flex-direction: column;
+    gap: 12px;
+    justify-content: center;
+  }
+
+  .searchContainer {
     width: 100%;
-    max-width: 100%;
-    padding: 16px;
+  }
+
+  .filterContainer {
+    width: 100%;
+  }
+
+  .filterSelect {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .enrolledTable {
+    font-size: 0.85rem;
+  }
+
+  .enrolledTable th,
+  .enrolledTable td {
+    padding: 6px 10px;
+  }
+
+  .editModalContent {
+    padding: 1.5rem;
+    max-height: 95vh;
+  }
+
+  .formGrid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -580,14 +635,16 @@
 }
 
 .tableContainer {
-  overflow-x: auto;
+  overflow: auto;
+  max-height: 500px;
   margin-bottom: 16px;
 }
 
 .enrolledTable {
-  width: 100%;
   border-collapse: collapse;
   font-size: 0.95rem;
+  table-layout: fixed;
+  width: 100%;
 }
 
 .enrolledTable thead {
@@ -603,6 +660,7 @@
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  min-width: 120px;
 }
 
 .enrolledTable td {
@@ -619,8 +677,8 @@
   background: #f0f7f4;
 }
 
-.enrolledTable tbody tr:last-child td {
-  border-bottom: none;
+.enrolledTable th:first-child {
+  min-width: 200px;
 }
 
 .editBtn {
@@ -642,14 +700,31 @@
   box-shadow: 0 4px 8px rgba(57, 145, 111, 0.3);
 }
 
-.emptyState {
-  padding: 4rem 2rem;
-  text-align: center;
-  color: #999;
-  font-size: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 2px dashed #dee2e6;
+@media (max-width: 767px) {
+  .enrolledTable th {
+    min-width: 80px;
+  }
+  .enrolledTable th:first-child {
+    min-width: 120px;
+  }
+}
+
+@media (min-width: 768px) {
+  .enrolledTable {
+    width: 100%;
+  }
+  .enrolledTable th {
+    min-width: auto;
+  }
+}
+
+@media (max-width: 767px) {
+  .enrolledTable {
+    width: 100%;
+  }
+  .enrolledTable th {
+    min-width: auto;
+  }
 }
 
 .pagination {
@@ -847,63 +922,73 @@
   cursor: not-allowed;
 }
 
-@media (max-width: 700px) {
-  .mainContent {
-    margin-left: 0;
-    padding: 16px;
+/* Mobile: transform table into stacked cards */
+@media (max-width: 600px) {
+  .enrolledTable thead {
+    display: none;
   }
 
-  .enrollmentGrid {
-    gap: 16px;
+  .enrolledTable tr {
+    display: block;
+    margin-bottom: 12px;
+    border: 1px solid #f1f1f1;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fff;
   }
 
-  .statsCard {
-    padding: 20px;
-  }
-
-  .chartCard {
-    min-height: 350px;
-  }
-
-  .chartCanvas {
-    max-width: 180px;
-    max-height: 180px;
-  }
-
-  .tableCard {
-    padding: 16px;
-    margin-top: 24px;
-  }
-
-  .tableFilters {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .searchContainer {
-    min-width: 100%;
-  }
-
-  .filterSelect {
-    min-width: 100%;
-  }
-
-  .enrolledTable {
-    font-size: 0.85rem;
-  }
-
-  .enrolledTable th,
   .enrolledTable td {
-    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    border-bottom: none;
+  }
+
+  .enrolledTable td::before {
+    content: attr(data-label) "";
+    font-weight: 600;
+    color: #666;
+    margin-right: 8px;
+    white-space: nowrap;
+    width: 40%;
+  }
+
+  .editBtn {
+    width: 2rem;
+    height: 2rem;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+  }
+
+  .dropdownMenu {
+    position: absolute;
+    right: 10px;
+    top: auto;
+    bottom: 100%;
   }
 
   .editModalContent {
-    padding: 1.5rem;
-    max-height: 95vh;
-  }
-
-  .formGrid {
-    grid-template-columns: 1fr;
+    width: 95vw;
+    padding: 1rem;
   }
 }
+
+/* Extra small screens */
+@media (max-width: 420px) {
+  .enrolledTable td::before {
+    width: 50%;
+    font-size: 0.9rem;
+  }
+
+  .enrolledTable td {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+  }
+}
+
+
 

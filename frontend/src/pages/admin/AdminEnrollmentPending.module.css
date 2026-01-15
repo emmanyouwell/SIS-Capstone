@@ -6,6 +6,21 @@
   background: #f7f7f7;
 }
 
+/* Mobile First Responsive */
+@media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+    margin-top: var(--header-height, 60px);
+    padding: 16px 12px 32px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mainContent {
+    padding: 12px 8px 32px 8px;
+  }
+}
+
 .pendingCard {
   background: #fff;
   border-radius: 12px;
@@ -18,6 +33,22 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+}
+
+@media (max-width: 768px) {
+  .pendingCard {
+    min-width: auto;
+    max-width: 100%;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pendingCard {
+    padding: 12px 16px;
+    border-radius: 8px;
+  }
 }
 
 .pendingTable {
@@ -61,6 +92,38 @@
   border-bottom: none;
 }
 
+@media (max-width: 768px) {
+  .pendingTable {
+    font-size: 0.85rem;
+  }
+
+  .pendingTable th {
+    padding: 10px 8px;
+    font-size: 0.8rem;
+  }
+
+  .pendingTable td {
+    padding: 10px 8px;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .pendingTable {
+    font-size: 0.75rem;
+  }
+
+  .pendingTable th {
+    padding: 8px 4px;
+    font-size: 0.7rem;
+  }
+
+  .pendingTable td {
+    padding: 8px 4px;
+    font-size: 0.75rem;
+  }
+}
+
 .pendingViewBtn {
   background: #4caf7a;
   color: #fff;
@@ -75,6 +138,22 @@
 
 .pendingViewBtn:hover {
   background: #388e5c;
+}
+
+@media (max-width: 768px) {
+  .pendingViewBtn {
+    padding: 0.4rem 1.2rem;
+    font-size: 0.85rem;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pendingViewBtn {
+    padding: 0.3rem 0.8rem;
+    font-size: 0.75rem;
+    border-radius: 12px;
+  }
 }
 
 .pendingViewall {
@@ -109,6 +188,21 @@
   gap: 24px;
 }
 
+@media (max-width: 768px) {
+  .pendingGradeBtnRow {
+    flex-wrap: wrap;
+    gap: 12px;
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .pendingGradeBtnRow {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
 .pendingGradeBtn {
   border: none;
   border-radius: 10px;
@@ -136,6 +230,24 @@
 
 .pendingGradeBtn:hover {
   filter: brightness(0.95);
+}
+
+@media (max-width: 768px) {
+  .pendingGradeBtn {
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    flex: 1;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pendingGradeBtn {
+    padding: 10px 16px;
+    font-size: 0.85rem;
+    flex: none;
+    width: 100%;
+  }
 }
 
 .backFabBtn {
@@ -185,6 +297,26 @@
   max-height: 96vh;
   overflow-y: auto;
   position: relative;
+}
+
+@media (max-width: 768px) {
+  .enrollModalContent,
+  .gradeModalContent {
+    padding: 32px 24px;
+    width: 95vw;
+    max-height: 95vh;
+    border-radius: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .enrollModalContent,
+  .gradeModalContent {
+    padding: 24px 16px;
+    width: 90vw;
+    max-height: 90vh;
+    border-radius: 8px;
+  }
 }
 
 .modalClose {
@@ -240,6 +372,31 @@
   font-weight: 600;
 }
 
+@media (max-width: 768px) {
+  .formHeader {
+    flex-direction: column;
+    gap: 16px;
+    padding: 12px;
+    font-size: 0.9rem;
+  }
+
+  .formHeader > div {
+    flex: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .formHeader {
+    padding: 10px;
+    gap: 12px;
+    font-size: 0.85rem;
+  }
+
+  .formHeader > div > div {
+    margin-bottom: 6px;
+  }
+}
+
 .enrollForm {
   font-size: 1rem;
   padding: 8px 0;
@@ -263,12 +420,61 @@
   background: #f5f5f5;
 }
 
+@media (max-width: 768px) {
+  .enrollForm {
+    font-size: 0.95rem;
+  }
+
+  .enrollForm > label {
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+  }
+
+  .enrollForm > label input {
+    padding: 8px;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .enrollForm {
+    font-size: 0.9rem;
+  }
+
+  .enrollForm > label {
+    margin-bottom: 10px;
+    font-size: 0.85rem;
+  }
+
+  .enrollForm > label input {
+    padding: 6px;
+    font-size: 0.85rem;
+  }
+}
+
 .formSection {
   border: 1px solid #ddd;
   border-radius: 10px;
   padding: 20px;
   margin-bottom: 24px;
   background: #fafafa;
+}
+
+@media (max-width: 768px) {
+  .formSection {
+    padding: 16px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .formSection {
+    padding: 12px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+  }
 }
 
 .formRow {
@@ -318,6 +524,43 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 768px) {
+  .formRow {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .formRow label {
+    min-width: 80px;
+    font-size: 0.9rem;
+  }
+
+  .formRow input[type="text"],
+  .formRow input[type="date"] {
+    padding: 8px;
+    font-size: 0.9rem;
+    margin-top: 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .formRow {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .formRow label {
+    min-width: auto;
+    font-size: 0.85rem;
+  }
+
+  .formRow input[type="text"],
+  .formRow input[type="date"] {
+    padding: 6px;
+    font-size: 0.85rem;
+  }
+}
+
 .checkboxGroup {
   display: flex;
   align-items: center;
@@ -350,6 +593,33 @@
 .checkboxGroup label input[type="checkbox"] {
   margin: 0;
   margin-right: 0;
+}
+
+@media (max-width: 768px) {
+  .checkboxGroup {
+    flex-wrap: wrap;
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .checkboxGroup {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 8px;
+    font-size: 0.85rem;
+    gap: 8px;
+  }
+
+  .checkboxGroup span {
+    margin-right: 0;
+    margin-bottom: 4px;
+  }
+
+  .checkboxGroup label {
+    margin-bottom: 4px;
+  }
 }
 
 .radioGroup {
@@ -385,6 +655,22 @@
   letter-spacing: 0.5px;
 }
 
+@media (max-width: 768px) {
+  .sectionHeader {
+    padding: 10px 12px;
+    margin: 20px 0 12px 0;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sectionHeader {
+    padding: 8px 10px;
+    margin: 16px 0 10px 0;
+    font-size: 0.9rem;
+  }
+}
+
 .attachedFile {
   margin-bottom: 8px;
   font-size: 0.95rem;
@@ -409,6 +695,20 @@
   display: flex;
   gap: 18px;
   margin-top: 18px;
+}
+
+@media (max-width: 768px) {
+  .formActions {
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .formActions {
+    flex-direction: column;
+    gap: 10px;
+  }
 }
 
 .declineBtn {
@@ -441,6 +741,24 @@
   background: #2d6530;
 }
 
+@media (max-width: 768px) {
+  .declineBtn,
+  .acceptBtn {
+    padding: 8px 24px;
+    font-size: 1rem;
+    flex: 1;
+  }
+}
+
+@media (max-width: 480px) {
+  .declineBtn,
+  .acceptBtn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
 .notesSection {
   margin-top: 12px;
 }
@@ -459,6 +777,29 @@
   margin-top: 4px;
   font-style: italic;
   font-size: 0.95rem;
+}
+
+@media (max-width: 768px) {
+  .notesSection input {
+    width: 100%;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .notesSection {
+    margin-top: 8px;
+  }
+
+  .notesSection label {
+    font-size: 0.85rem;
+  }
+
+  .notesSection input {
+    width: 100%;
+    padding: 5px;
+    font-size: 0.85rem;
+  }
 }
 
 /* Grade Modal Styles */
@@ -504,6 +845,65 @@
   gap: 0.8rem;
 }
 
+@media (max-width: 768px) {
+  .modalTitle {
+    margin-bottom: 1.2rem;
+    font-size: 1.15rem;
+  }
+
+  .modalStats {
+    margin-bottom: 1.5rem;
+  }
+
+  .modalStatsLabel {
+    font-size: 1rem;
+  }
+
+  .modalStatsCount {
+    font-size: 2.5rem;
+  }
+
+  .modalSectionTitle {
+    font-size: 1rem;
+  }
+
+  .pendingStudentsList {
+    gap: 0.6rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalTitle {
+    margin-bottom: 1rem;
+    font-size: 1rem;
+  }
+
+  .modalStats {
+    margin-bottom: 1.2rem;
+  }
+
+  .modalStatsLabel {
+    font-size: 0.9rem;
+  }
+
+  .modalStatsCount {
+    font-size: 2rem;
+  }
+
+  .modalSection {
+    margin-bottom: 1rem;
+  }
+
+  .modalSectionTitle {
+    font-size: 0.95rem;
+    margin-bottom: 0.8rem;
+  }
+
+  .pendingStudentsList {
+    gap: 0.5rem;
+  }
+}
+
 .studentCard {
   background: #f8f9fa;
   border-radius: 8px;
@@ -528,6 +928,38 @@
 .studentDetails {
   font-size: 0.85rem;
   color: #666;
+}
+
+@media (max-width: 768px) {
+  .studentCard {
+    padding: 0.8rem;
+    border-radius: 6px;
+  }
+
+  .studentName {
+    font-size: 0.95rem;
+  }
+
+  .studentDetails {
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .studentCard {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 0.6rem;
+  }
+
+  .studentName {
+    font-size: 0.9rem;
+  }
+
+  .studentDetails {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
+  }
 }
 
 .emptyState {
@@ -557,6 +989,29 @@
   background-color: #276749;
 }
 
+@media (max-width: 768px) {
+  .modalActions {
+    margin-top: 1.2rem;
+  }
+
+  .btnPrimary {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalActions {
+    margin-top: 1rem;
+  }
+
+  .btnPrimary {
+    padding: 0.6rem 1rem;
+    font-size: 0.85rem;
+    width: 100%;
+  }
+}
+
 /* Confirmation Modal Styles */
 .confirmModal {
   position: fixed;
@@ -582,6 +1037,20 @@
   overflow: hidden;
 }
 
+@media (max-width: 768px) {
+  .confirmModalContent {
+    width: 92%;
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmModalContent {
+    width: 85%;
+    max-width: 100%;
+  }
+}
+
 .confirmModalHeader {
   background: var(--primary-green, #4c7a67);
   color: white;
@@ -596,6 +1065,26 @@
   color: white;
 }
 
+@media (max-width: 768px) {
+  .confirmModalHeader {
+    padding: 1.25rem 1.5rem;
+  }
+
+  .confirmModalTitle {
+    font-size: 1.1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmModalHeader {
+    padding: 1rem 1.25rem;
+  }
+
+  .confirmModalTitle {
+    font-size: 1rem;
+  }
+}
+
 .confirmModalBody {
   padding: 2rem;
 }
@@ -607,11 +1096,47 @@
   line-height: 1.6;
 }
 
+@media (max-width: 768px) {
+  .confirmModalBody {
+    padding: 1.5rem;
+  }
+
+  .confirmModalMessage {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmModalBody {
+    padding: 1rem;
+  }
+
+  .confirmModalMessage {
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+}
+
 .confirmModalActions {
   display: flex;
   gap: 0.75rem;
   justify-content: flex-end;
   padding: 0 2rem 2rem 2rem;
+}
+
+@media (max-width: 768px) {
+  .confirmModalActions {
+    gap: 0.5rem;
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .confirmModalActions {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0 1rem 1rem 1rem;
+  }
 }
 
 .confirmModalCancelBtn {
@@ -635,6 +1160,14 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 480px) {
+  .confirmModalCancelBtn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
 .confirmModalAcceptBtn {
   background: #357a38;
   color: #fff;
@@ -656,6 +1189,14 @@
   cursor: not-allowed;
 }
 
+@media (max-width: 480px) {
+  .confirmModalAcceptBtn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
+}
+
 .confirmModalDeclineBtn {
   background: #a94442;
   color: #fff;
@@ -675,6 +1216,14 @@
 .confirmModalDeclineBtn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .confirmModalDeclineBtn {
+    padding: 0.65rem 1.25rem;
+    font-size: 0.9rem;
+    width: 100%;
+  }
 }
 
 /* Table Filters */
@@ -708,6 +1257,34 @@
   border-color: #39916f;
 }
 
+@media (max-width: 768px) {
+  .tableFilters {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .searchContainer {
+    min-width: 100%;
+  }
+
+  .searchInput {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableFilters {
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .searchInput {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+  }
+}
+
 .tableInfo {
   font-size: 0.95rem;
   color: #666;
@@ -719,6 +1296,20 @@
 .pageInfo {
   color: #999;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .tableInfo {
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableInfo {
+    font-size: 0.8rem;
+    margin-bottom: 10px;
+  }
 }
 
 .tableContainer {
@@ -771,6 +1362,45 @@
   padding: 0 8px;
 }
 
+@media (max-width: 768px) {
+  .pagination {
+    gap: 12px;
+    margin-top: 20px;
+    padding-top: 16px;
+  }
+
+  .paginationBtn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+  }
+
+  .paginationInfo {
+    font-size: 0.85rem;
+    padding: 0 4px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .paginationBtn {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  .paginationInfo {
+    font-size: 0.75rem;
+    width: 100%;
+    text-align: center;
+    order: -1;
+  }
+}
+
 /* Empty State */
 .emptyState {
   padding: 4rem 2rem;
@@ -782,71 +1412,18 @@
   border: 2px dashed #dee2e6;
 }
 
-/* Responsive Design */
-@media (max-width: 900px) {
-  .mainContent {
-    margin-left: 0;
-    padding: 16px 4px 4px 4px;
-  }
-
-  .pendingCard {
-    min-width: 0;
-    max-width: 99vw;
-    padding: 16px 8px;
-  }
-
-  .tableFilters {
-    flex-direction: column;
-  }
-
-  .searchContainer {
-    width: 100%;
-  }
-
-  .pendingTable {
-    font-size: 0.85rem;
-  }
-
-  .pendingTable th,
-  .pendingTable td {
-    padding: 8px 12px;
-  }
-
-  .formRow {
-    flex-direction: column;
-  }
-
-  .enrollModalContent,
-  .gradeModalContent {
-    padding: 24px 16px;
-  }
-
-  .confirmModalContent {
-    width: 95%;
-    max-width: 100%;
-  }
-
-  .confirmModalHeader {
-    padding: 1.25rem 1.5rem;
-  }
-
-  .confirmModalTitle {
-    font-size: 1.1rem;
-  }
-
-  .confirmModalBody {
-    padding: 1.5rem;
-  }
-
-  .confirmModalActions {
-    padding: 0 1.5rem 1.5rem 1.5rem;
-    flex-direction: column;
-  }
-
-  .confirmModalCancelBtn,
-  .confirmModalAcceptBtn,
-  .confirmModalDeclineBtn {
-    width: 100%;
+@media (max-width: 768px) {
+  .emptyState {
+    padding: 3rem 1.5rem;
+    font-size: 0.95rem;
   }
 }
+
+@media (max-width: 480px) {
+  .emptyState {
+    padding: 2rem 1rem;
+    font-size: 0.85rem;
+  }
+}
+
 

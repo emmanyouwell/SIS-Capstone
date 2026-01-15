@@ -1,6 +1,6 @@
 /* Main Content */
 .mainContent {
-  margin-left: var(--sidebar-width, 220px);
+  margin-left: 0;
   padding-top: 24px;
   min-height: 100vh;
   display: flex;

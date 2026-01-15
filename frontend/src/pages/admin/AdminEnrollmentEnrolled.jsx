@@ -477,24 +477,24 @@ function AdminEnrollmentEnrolled() {
                   <thead>
                     <tr>
                       <th>Name</th>
-                      <th>LRN</th>
+                      <th className={styles.mobileHide}>LRN</th>
                       <th>Grade</th>
                       <th>Section</th>
-                      <th>Sex</th>
-                      <th>School Year</th>
+                      <th className={styles.mobileHide}>Sex</th>
+                      <th className={styles.mobileHide}>School Year</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {paginatedEnrollments.map((enrollment) => (
                       <tr key={enrollment._id}>
-                        <td>{formatStudentName(enrollment)}</td>
-                        <td>{enrollment.lrn || enrollment.studentId?.lrn || 'N/A'}</td>
-                        <td>Grade {enrollment.gradeToEnroll || enrollment.gradeLevelToEnroll}</td>
-                        <td>{enrollment.studentId?.sectionId?.sectionName || 'Unassigned'}</td>
-                        <td>{enrollment.sex || enrollment.studentId?.userId?.sex || 'N/A'}</td>
-                        <td>{enrollment.schoolYear || 'N/A'}</td>
-                        <td>
+                        <td data-label="Name">{formatStudentName(enrollment)}</td>
+                        <td data-label="LRN" className={styles.mobileHide}>{enrollment.lrn || enrollment.studentId?.lrn || 'N/A'}</td>
+                        <td data-label="Grade">Grade {enrollment.gradeToEnroll || enrollment.gradeLevelToEnroll}</td>
+                        <td data-label="Section">{enrollment.studentId?.sectionId?.sectionName || 'Unassigned'}</td>
+                        <td data-label="Sex" className={styles.mobileHide}>{enrollment.sex || enrollment.studentId?.userId?.sex || 'N/A'}</td>
+                        <td data-label="School Year" className={styles.mobileHide}>{enrollment.schoolYear || 'N/A'}</td>
+                        <td data-label="Actions">
                           <button
                             className={styles.editBtn}
                             onClick={() => handleEdit(enrollment)}

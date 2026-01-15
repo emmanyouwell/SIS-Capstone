@@ -230,7 +230,59 @@ function TeacherSubject() {
         )}
 
         <div className={styles.subjectMain}>
-          <div className={styles.subjectLeft}>
+          {/* On mobile, upload form first, then list. On desktop, keep original order. */}
+          <div className={styles.subjectRight + ' ' + styles.mobileOrderTop}>
+            <div className={styles.uploadCard}>
+              <h2>Add Title</h2>
+              <form onSubmit={handleUpload}>
+                <input
+                  type="text"
+                  placeholder="Add Title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  required
+                />
+                <textarea
+                  placeholder="Add description"
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                />
+                <label>Attach:</label>
+                <div className={styles.attachBtns}>
+                  <button type="button" onClick={handleFileSelect}>
+                    File
+                  </button>
+                  <button type="button" onClick={handleLinkSelect}>
+                    Link
+                  </button>
+                </div>
+                {uploadFile && (
+                  <div className={styles.selectedFile}>
+                    Selected: {uploadFile.name}
+                  </div>
+                )}
+                {uploadLink && (
+                  <div className={styles.selectedLink}>
+                    Link: {uploadLink.substring(0, 40)}...
+                  </div>
+                )}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  style={{ display: 'none' }}
+                  onChange={handleFileChange}
+                />
+                <button 
+                  type="submit" 
+                  className={styles.uploadBtn}
+                  disabled={uploading || !selectedSubject || !formData.title.trim() || (!uploadFile && !uploadLink)}
+                >
+                  {uploading ? 'Uploading...' : 'Upload'}
+                </button>
+              </form>
+            </div>
+          </div>
+          <div className={styles.subjectLeft + ' ' + styles.mobileOrderBottom}>
             <h1>
               {selectedSubject 
                 ? `Subject - ${selectedSubject.subjectName || selectedSubject.name}` 
@@ -266,7 +318,7 @@ function TeacherSubject() {
                 {selectedSubject ? 'No materials uploaded yet' : 'Please select a subject'}
               </div>
             ) : (
-              <div className={styles.resourcesGrid}>
+              <div className={styles.resourcesGrid + ' ' + styles.centeredGrid}>
                 {subjectMaterials
                   .sort((a, b) => new Date(b.dateUploaded || b.createdAt) - new Date(a.dateUploaded || a.createdAt))
                   .map((material) => {
@@ -331,57 +383,6 @@ function TeacherSubject() {
                   })}
               </div>
             )}
-          </div>
-          <div className={styles.subjectRight}>
-            <div className={styles.uploadCard}>
-              <h2>Add Title</h2>
-              <form onSubmit={handleUpload}>
-                <input
-                  type="text"
-                  placeholder="Add Title"
-                  value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                  required
-                />
-                <textarea
-                  placeholder="Add description"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                />
-                <label>Attach:</label>
-                <div className={styles.attachBtns}>
-                  <button type="button" onClick={handleFileSelect}>
-                    File
-                  </button>
-                  <button type="button" onClick={handleLinkSelect}>
-                    Link
-                  </button>
-                </div>
-                {uploadFile && (
-                  <div className={styles.selectedFile}>
-                    Selected: {uploadFile.name}
-                  </div>
-                )}
-                {uploadLink && (
-                  <div className={styles.selectedLink}>
-                    Link: {uploadLink.substring(0, 40)}...
-                  </div>
-                )}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  style={{ display: 'none' }}
-                  onChange={handleFileChange}
-                />
-                <button 
-                  type="submit" 
-                  className={styles.uploadBtn}
-                  disabled={uploading || !selectedSubject || !formData.title.trim() || (!uploadFile && !uploadLink)}
-                >
-                  {uploading ? 'Uploading...' : 'Upload'}
-                </button>
-              </form>
-            </div>
           </div>
         </div>
       </div>

@@ -8,7 +8,7 @@ const classesIcon = (
   <img 
     src="https://cdn-icons-png.flaticon.com/128/3388/3388614.png" 
     alt="Classes Icon"
-    style={{ width: '32px', height: '32px' }}
+    style={{ width: '28px', height: '28px' }}
   />
 );
 
@@ -16,7 +16,7 @@ const studentsIcon = (
   <img 
     src="https://cdn-icons-png.flaticon.com/128/3426/3426653.png" 
     alt="Students Icon"
-    style={{ width: '32px', height: '32px' }}
+    style={{ width: '28px', height: '28px' }}
   />
 );
 
@@ -24,7 +24,7 @@ const hoursIcon = (
   <img 
     src="https://cdn-icons-png.flaticon.com/128/2838/2838779.png" 
     alt="Hours Icon"
-    style={{ width: '32px', height: '32px' }}
+    style={{ width: '28px', height: '28px' }}
   />
 );
 
@@ -240,17 +240,17 @@ function TeacherClasses() {
                       <>
                         <td>
                           {row.monday && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className={getClassPillClassName(row.monday.type)}>
                                 {row.monday.class}
                               </span>
                               {row.monday.subject && (
                                 <span
                                   style={{
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                                     color: '#333',
                                     fontWeight: '500',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.monday.subject}
@@ -259,10 +259,10 @@ function TeacherClasses() {
                               {row.monday.teacher && (
                                 <span
                                   style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                                     color: '#666',
                                     fontStyle: 'italic',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.monday.teacher}
@@ -273,17 +273,17 @@ function TeacherClasses() {
                         </td>
                         <td>
                           {row.tuesday && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className={getClassPillClassName(row.tuesday.type)}>
                                 {row.tuesday.class}
                               </span>
                               {row.tuesday.subject && (
                                 <span
                                   style={{
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                                     color: '#333',
                                     fontWeight: '500',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.tuesday.subject}
@@ -292,10 +292,10 @@ function TeacherClasses() {
                               {row.tuesday.teacher && (
                                 <span
                                   style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                                     color: '#666',
                                     fontStyle: 'italic',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.tuesday.teacher}
@@ -306,17 +306,17 @@ function TeacherClasses() {
                         </td>
                         <td>
                           {row.wednesday && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className={getClassPillClassName(row.wednesday.type)}>
                                 {row.wednesday.class}
                               </span>
                               {row.wednesday.subject && (
                                 <span
                                   style={{
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                                     color: '#333',
                                     fontWeight: '500',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.wednesday.subject}
@@ -325,10 +325,10 @@ function TeacherClasses() {
                               {row.wednesday.teacher && (
                                 <span
                                   style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                                     color: '#666',
                                     fontStyle: 'italic',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.wednesday.teacher}
@@ -339,17 +339,17 @@ function TeacherClasses() {
                         </td>
                         <td>
                           {row.thursday && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className={getClassPillClassName(row.thursday.type)}>
                                 {row.thursday.class}
                               </span>
                               {row.thursday.subject && (
                                 <span
                                   style={{
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                                     color: '#333',
                                     fontWeight: '500',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.thursday.subject}
@@ -358,10 +358,10 @@ function TeacherClasses() {
                               {row.thursday.teacher && (
                                 <span
                                   style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                                     color: '#666',
                                     fontStyle: 'italic',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.thursday.teacher}
@@ -372,17 +372,17 @@ function TeacherClasses() {
                         </td>
                         <td>
                           {row.friday && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                               <span className={getClassPillClassName(row.friday.type)}>
                                 {row.friday.class}
                               </span>
                               {row.friday.subject && (
                                 <span
                                   style={{
-                                    fontSize: '0.85rem',
+                                    fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
                                     color: '#333',
                                     fontWeight: '500',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.friday.subject}
@@ -391,10 +391,10 @@ function TeacherClasses() {
                               {row.friday.teacher && (
                                 <span
                                   style={{
-                                    fontSize: '0.75rem',
+                                    fontSize: 'clamp(0.65rem, 1.5vw, 0.75rem)',
                                     color: '#666',
                                     fontStyle: 'italic',
-                                    marginTop: '2px',
+                                    marginTop: '1px',
                                   }}
                                 >
                                   {row.friday.teacher}

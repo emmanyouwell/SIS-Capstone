@@ -103,7 +103,7 @@
 }
 
 .dropdownContent {
-  max-height: 300px;
+  max-height: 320px;
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -186,11 +186,13 @@
 }
 
 .notificationDropdown {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  width: 360px;
-  max-height: 500px;
+  position: fixed;
+  top: calc(var(--header-height) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100vw - 2rem);
+  max-width: 360px;
+  max-height: calc(100vh - var(--header-height) - 20px);
   background: white;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -198,6 +200,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dropdownHeader {
@@ -345,6 +348,13 @@
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
+}
+
+.avatarButton {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
 }
 
 .userAvatar img {
@@ -537,13 +547,13 @@
   }
 
   .notificationDropdown {
-    /* move dropdown to the right as on desktop */
+    position: absolute;
+    top: calc(100% + 10px);
     left: auto;
     transform: none;
     right: 0;
     width: 360px;
     max-height: 500px;
-    top: calc(100% + 10px);
   }
 
   .dropdownContent {

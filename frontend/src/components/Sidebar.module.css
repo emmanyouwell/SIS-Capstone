@@ -38,11 +38,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.06);
 }
 
-/* Hide the embedded logo when sidebar is closed on small screens */
-.sidebar:not(.open) .logoContainer {
-  display: none;
-}
-
 .sidebar ul {
   list-style: none;
   padding: 0;
@@ -140,6 +135,15 @@
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--primary-green);
 }
+
+/* Mobile screens */
+@media (max-width: 768px) {
+  /* Hide the embedded logo when sidebar is closed on small screens */
+  .sidebar:not(.open) .logoContainer {
+    display: none;
+  }
+}
+
 /* Desktop / larger screens */
 @media (min-width: 769px) {
   .sidebar {

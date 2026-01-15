@@ -584,17 +584,17 @@ function TeacherGrades() {
             <table className={styles.gradesTable}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: 'center' }}>Grade</th>
-                  <th>Subject</th>
-                  <th>Name</th>
-                  <th style={{ textAlign: 'center' }}>
+                  <th className={`${styles.gradeCol}`}>Grade</th>
+                  <th className={`${styles.subjectCol}`}>Subject</th>
+                  <th className={`${styles.nameCol}`}>Name</th>
+                  <th className={`${styles.qCol}`}>
                     {currentTab === 'q1' ? 'Q1 Grade' : 
                      currentTab === 'q2' ? 'Q2 Grade' : 
                      currentTab === 'q3' ? 'Q3 Grade' : 'Q4 Grade'}
                   </th>
-                  <th>LRN</th>
-                  <th>Final Grade</th>
-                  <th>Edit Grades</th>
+                  <th className={`${styles.lrnCol}`}>LRN</th>
+                  <th className={`${styles.finalCol}`}>Final Grade</th>
+                  <th className={`${styles.editCol}`}>Edit Grades</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,15 +617,15 @@ function TeacherGrades() {
                       <tr
                         key={student.studentId || index}
                       >
-                        <td style={{ textAlign: 'center' }}>{section?.gradeLevel || 'N/A'}</td>
-                        <td style={{ textAlign: 'center' }}>{selectedSubject?.subjectName || 'N/A'}</td>
-                        <td>{formatStudentName(student)}</td>
-                        <td style={{ textAlign: 'center', fontWeight: studentGrade !== null && studentGrade !== undefined ? 600 : 400 }}>
+                        <td className={styles.gradeCol} style={{ textAlign: 'center' }}>{section?.gradeLevel || 'N/A'}</td>
+                        <td className={styles.subjectCol} style={{ textAlign: 'center' }}>{selectedSubject?.subjectName || 'N/A'}</td>
+                        <td className={styles.nameCol}>{formatStudentName(student)}</td>
+                        <td className={styles.qCol} style={{ textAlign: 'center', fontWeight: studentGrade !== null && studentGrade !== undefined ? 600 : 400 }}>
                           {studentGrade !== null && studentGrade !== undefined ? Math.round(studentGrade) : '-'}
                         </td>
-                        <td>{student.learnerReferenceNo || 'N/A'}</td>
-                        <td>{finalGrade !== null && finalGrade !== undefined ? Math.round(finalGrade) : '-'}</td>
-                        <td>
+                        <td className={styles.lrnCol}>{student.learnerReferenceNo || 'N/A'}</td>
+                        <td className={styles.finalCol}>{finalGrade !== null && finalGrade !== undefined ? Math.round(finalGrade) : '-'}</td>
+                        <td className={styles.editCol}>
                           <button
                             onClick={() => handleViewGrade(student)}
                             className={styles.viewButton}

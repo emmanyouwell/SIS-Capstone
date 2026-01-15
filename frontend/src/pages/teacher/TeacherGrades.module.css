@@ -1,3 +1,50 @@
+.gradesTable th.gradeCol,
+.gradesTable td.gradeCol {
+  width: 60px;
+  min-width: 50px;
+  max-width: 70px;
+  text-align: center;
+}
+.gradesTable th.subjectCol,
+.gradesTable td.subjectCol {
+  width: 120px;
+  min-width: 90px;
+  max-width: 150px;
+  text-align: center;
+}
+.gradesTable th.nameCol,
+.gradesTable td.nameCol {
+  width: 180px;
+  min-width: 120px;
+  max-width: 220px;
+}
+.gradesTable th.qCol,
+.gradesTable td.qCol {
+  width: 90px;
+  min-width: 70px;
+  max-width: 110px;
+  text-align: center;
+}
+.gradesTable th.lrnCol,
+.gradesTable td.lrnCol {
+  width: 110px;
+  min-width: 80px;
+  max-width: 130px;
+}
+.gradesTable th.finalCol,
+.gradesTable td.finalCol {
+  width: 90px;
+  min-width: 70px;
+  max-width: 110px;
+  text-align: center;
+}
+.gradesTable th.editCol,
+.gradesTable td.editCol {
+  width: 100px;
+  min-width: 80px;
+  max-width: 120px;
+  text-align: center;
+}
 .mainContent {
   margin-left: 220px;
   margin-top: 60px;
@@ -405,23 +452,111 @@
   100% { opacity: 0; }
 }
 
+
 @media (max-width: 900px) {
   .mainContent {
     margin-left: 0;
-    padding: 1rem;
+    padding: 1rem 0.5rem;
+    min-height: unset;
   }
   .gradesCard {
     border-radius: 10px;
+    padding: 0.5rem;
   }
   .gradesTabs {
+    border-radius: 10px 10px 0 0;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+  .gradesTab {
+    font-size: 1rem;
+    padding: 0.7rem 0;
     border-radius: 10px 10px 0 0;
   }
   .searchContainer {
     flex: 1;
-    padding: 0 1rem;
+    padding: 0.5rem 0;
+    text-align: left;
   }
   .gradesSearch {
     width: 100%;
+    font-size: 1rem;
+  }
+  .gradesTable th, .gradesTable td {
+    padding: 0.6rem 0.3rem;
+    font-size: 0.98rem;
+  }
+  .gradesTitle {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+  .sectionSelect {
+    max-width: 100%;
+    margin-bottom: 0.75rem;
+  }
+  .sectionSelectInput {
+    font-size: 1rem;
+    padding: 0.5rem 0.7rem;
+  }
+  .viewButton, .gradesTable button {
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+  }
+  .gradeInputModalContent, .confirmationModalContent {
+    padding: 1rem;
+    max-width: 98vw;
+  }
+  .modalLogo {
+    width: 40px;
+    margin-bottom: 0.5rem;
+  }
+  .modalTitle {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+  }
+  .modalInput, .modalTextarea {
+    font-size: 1rem;
+    padding: 0.5rem;
+    margin-bottom: 0.7rem;
+  }
+  .modalButtons, .confirmationModalButtons {
+    gap: 0.5rem;
+  }
+  .successToast {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+    bottom: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .gradesTabs {
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .gradesTab {
+    font-size: 0.95rem;
+    padding: 0.5rem 0;
+  }
+  .gradesTable th, .gradesTable td {
+    padding: 0.4rem 0.15rem;
+    font-size: 0.92rem;
+  }
+  .gradesTitle {
+    font-size: 1.1rem;
+  }
+  .gradeInputModalContent, .confirmationModalContent {
+    padding: 0.5rem;
+    max-width: 100vw;
+  }
+  .modalLogo {
+    width: 30px;
+  }
+  .successToast {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.7rem;
+    bottom: 0.5rem;
   }
 }
 

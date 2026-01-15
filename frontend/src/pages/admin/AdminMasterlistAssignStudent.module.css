@@ -1,29 +1,31 @@
+/* Mobile-first responsive design */
+
 .mainContent {
-  margin-left: var(--sidebar-width, 220px);
-  margin-top: var(--header-height, 60px);
-  padding: 2.5rem;
+  margin-left: 0;
+  margin-top: 60px;
+  padding: 1rem;
   background: #f7f7f7;
-  min-height: calc(100vh - var(--header-height, 60px));
+  min-height: calc(100vh - 60px);
 }
 
 .headerBar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .headerLeft {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .headerBar h1 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #184d27;
   margin: 0;
@@ -34,29 +36,32 @@
   color: #184d27;
   padding: 0.5rem 1rem;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
+  width: fit-content;
 }
 
 .actionButtons {
   display: flex;
-  align-items: center;
-  gap: 1rem;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.75rem;
 }
 
 /* Section Dropdown - Separate from Add Button */
 .sectionDropdownContainer {
   position: relative;
+  width: 100%;
 }
 
 .sectionDropdownBtn {
   background: #fff;
   color: #184d27;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 500;
   border: 1px solid #a1c8b8;
   border-radius: 8px;
-  padding: 10px 16px;
+  padding: 12px 14px;
   box-shadow: 0 2px 6px rgba(44, 62, 80, 0.1);
   cursor: pointer;
   transition: all 0.2s;
@@ -64,7 +69,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 160px;
+  width: 100%;
   justify-content: space-between;
 }
 
@@ -87,15 +92,16 @@
 .actionButton {
   background: #4c7a67;
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 600;
   border: none;
   border-radius: 8px;
-  padding: 10px 20px;
+  padding: 12px 16px;
   box-shadow: 0 2px 6px rgba(44, 62, 80, 0.1);
   cursor: pointer;
   transition: background 0.2s, box-shadow 0.2s;
   outline: none;
+  width: 100%;
 }
 
 .actionButton:hover:not(:disabled) {
@@ -134,9 +140,9 @@
 }
 
 .dropdownItem {
-  padding: 12px 18px;
+  padding: 12px 16px;
   color: #184d27;
-  font-size: 1rem;
+  font-size: 0.95rem;
   cursor: pointer;
   background: #fff;
   border-bottom: 1px solid #f0f0f0;
@@ -157,119 +163,120 @@
 }
 
 .gradeTabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   background: #4c7a67;
-  border-radius: 10px 10px 0 0;
+  border-radius: 8px;
   overflow: hidden;
-  margin-bottom: 0;
+  margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
+  gap: 0;
 }
 
 .gradeTab {
-  flex: 1 1 0;
   background: none;
-  border: none;
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #fff;
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   font-weight: 500;
-  padding: 14px 0;
+  padding: 12px;
   cursor: pointer;
   outline: none;
-  border-bottom: 3px solid transparent;
   transition: all 0.2s;
   margin: 0;
+  text-align: center;
 }
 
 .gradeTab.active {
   font-weight: 700;
-  border-bottom: 3px solid #fff;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
 }
 
 .gradeTab:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .tabs {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   background: #4c7a67;
   border-radius: 0;
-  padding: 0 1.5rem;
-  height: 54px;
+  padding: 0.5rem;
+  min-height: auto;
   position: relative;
-  margin-bottom: 0;
+  margin-bottom: 0.75rem;
   box-shadow: 0 2px 8px rgba(44, 62, 80, 0.08);
-  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
 .tab {
-  background: none;
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: #fff;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  padding: 0 1.5rem;
-  height: 54px;
+  padding: 8px 12px;
+  height: auto;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
+  border-radius: 4px;
   transition: all 0.2s;
 }
 
 .tab.active {
   color: #fff;
   font-weight: 600;
-  border-bottom: 3px solid #fff;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.3);
 }
 
 .tab:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .searchContainer {
-  margin-left: auto;
   display: flex;
-  align-items: center;
-  height: 100%;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 
 .searchInput {
   border: none;
-  border-radius: 8px;
-  padding: 8px 16px;
-  font-size: 1rem;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
   background: #fff;
   color: #184d27;
-  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.07);
+  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.07);
   outline: none;
-  width: 200px;
-  margin-left: 1rem;
+  width: 100%;
   transition: box-shadow 0.2s;
 }
 
 .searchInput:focus {
-  box-shadow: 0 2px 12px rgba(44, 62, 80, 0.12);
+  box-shadow: 0 2px 10px rgba(44, 62, 80, 0.12);
 }
 
 .genderFilter {
   display: flex;
   gap: 0.5rem;
-  margin-left: 1rem;
-  align-items: center;
+  flex-wrap: wrap;
 }
 
 .genderFilterBtn {
-  padding: 8px 16px;
+  padding: 8px 12px;
   border: none;
-  border-radius: 8px;
-  font-size: 0.95rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   background: rgba(255, 255, 255, 0.2);
   color: #fff;
   transition: all 0.2s;
+  flex: 1;
+  min-width: 60px;
 }
 
 .genderFilterBtn:hover {
@@ -284,24 +291,26 @@
 
 .tableCard {
   background: #fff;
-  border-radius: 0 0 12px 12px;
+  border-radius: 8px;
   box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
   padding: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   overflow: hidden;
 }
 
 .tableHeader {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.5rem;
+  align-items: flex-start;
+  padding: 1rem;
   background: #f9f9f9;
   border-bottom: 1px solid #e0e0e0;
+  gap: 0.75rem;
 }
 
 .tableInfo {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: #666;
   font-weight: 500;
 }
@@ -316,11 +325,12 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 6px 16px;
-  font-size: 0.9rem;
+  padding: 8px 14px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  width: 100%;
 }
 
 .selectAllBtn:hover {
@@ -329,19 +339,20 @@
 
 .tableContainer {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin: 0;
 }
 
 .table th,
 .table td {
   text-align: left;
-  padding: 14px 1rem;
+  padding: 10px;
   border-bottom: 1px solid #e0e0e0;
   background: none;
 }
@@ -349,9 +360,10 @@
 .table th {
   background: #c6eecf;
   color: #222;
-  font-size: 1rem;
+  font-size: 0.85rem;
   font-weight: 600;
   border-bottom: 2px solid #a5d6a7;
+  white-space: nowrap;
 }
 
 .table tbody tr {
@@ -375,6 +387,7 @@
   height: 18px;
   accent-color: #4c7a67;
   cursor: pointer;
+  margin-right: 4px;
 }
 
 .studentName {
@@ -420,12 +433,13 @@
 
 .statusBadge {
   display: inline-block;
-  padding: 4px 12px;
+  padding: 4px 10px;
   border-radius: 12px;
-  font-size: 0.85rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;
 }
 
 .statusEnrolled {
@@ -450,20 +464,22 @@
 
 .emptyState {
   text-align: center;
-  padding: 3rem 1rem;
+  padding: 2rem 1rem;
   color: #888;
   font-style: italic;
+  font-size: 0.95rem;
 }
 
 .bottomBar {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
   background: #fff;
-  border-radius: 0 0 16px 16px;
+  border-radius: 8px;
   box-shadow: 0 2px 12px rgba(44, 62, 80, 0.1);
-  padding: 18px 32px;
-  margin-top: 0;
+  padding: 1rem;
+  margin-top: 1rem;
   position: sticky;
   bottom: 0;
   z-index: 10;
@@ -473,17 +489,19 @@
 .downloadBtn {
   background: #fff;
   border: 1px solid #a1c8b8;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(44, 62, 80, 0.1);
-  font-size: 1.08rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(44, 62, 80, 0.08);
+  font-size: 0.9rem;
   font-weight: 600;
   color: #4c7a67;
-  padding: 10px 24px;
+  padding: 10px 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 6px;
   cursor: pointer;
   transition: background 0.18s, color 0.18s;
+  width: 100%;
 }
 
 .shareBtn:hover,
@@ -493,19 +511,20 @@
 }
 
 .adviserInfo {
-  margin-left: auto;
-  font-size: 1.08rem;
+  font-size: 0.95rem;
   color: #184d27;
   font-weight: 500;
+  width: 100%;
+  text-align: center;
 }
-
 /* Pagination Styles */
 .pagination {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
   gap: 0.5rem;
-  padding: 1.5rem;
+  padding: 1rem;
   background: #f9f9f9;
   border-top: 1px solid #e0e0e0;
 }
@@ -515,11 +534,12 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  padding: 8px 16px;
-  font-size: 0.95rem;
+  padding: 8px 12px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: background 0.2s;
+  flex: 0 1 auto;
 }
 
 .paginationBtn:hover:not(:disabled) {
@@ -536,6 +556,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
+  flex-wrap: wrap;
 }
 
 .paginationNumber {
@@ -543,12 +564,13 @@
   color: #4c7a67;
   border: 1px solid #e0e0e0;
   border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 0.95rem;
+  padding: 6px 10px;
+  font-size: 0.85rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 36px;
+  min-width: 32px;
+  text-align: center;
 }
 
 .paginationNumber:hover {
@@ -567,92 +589,208 @@
   color: #999;
 }
 
-
-@media (max-width: 900px) {
+/* Tablet and above */
+@media (min-width: 768px) {
   .mainContent {
-    margin-left: 0;
-    padding: 1rem;
+    margin-left: var(--sidebar-width, 220px);
+    padding: 2rem;
   }
 
   .headerBar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
   }
 
   .headerLeft {
-    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+    width: auto;
+  }
+
+  .headerBar h1 {
+    font-size: 1.4rem;
+  }
+
+  .sectionBadge {
+    font-size: 0.95rem;
   }
 
   .actionButtons {
-    width: 100%;
-    flex-direction: column;
-    gap: 0.75rem;
+    flex-direction: row;
+    width: auto;
+    gap: 1rem;
   }
 
   .sectionDropdownContainer {
-    width: 100%;
+    width: auto;
   }
 
   .sectionDropdownBtn {
-    width: 100%;
+    width: auto;
+    min-width: 160px;
+    font-size: 1rem;
+    padding: 10px 16px;
   }
 
   .actionButton {
-    width: 100%;
+    width: auto;
+    font-size: 1rem;
+    padding: 10px 20px;
+  }
+
+  .gradeTabs {
+    grid-template-columns: repeat(4, 1fr);
+    border-radius: 10px 10px 0 0;
+    margin-bottom: 0;
+  }
+
+  .gradeTab {
+    font-size: 1.1rem;
+    padding: 14px 0;
+    border: none;
   }
 
   .tabs {
-    height: auto;
-    padding: 0.75rem 1rem;
+    height: 54px;
+    align-items: center;
+    padding: 0 1.5rem;
+    gap: 0.5rem;
+    margin-bottom: 0;
   }
 
   .tab {
-    height: auto;
-    padding: 0.5rem 1rem;
+    height: 54px;
+    padding: 0 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    font-size: 1rem;
+  }
+
+  .tab.active {
+    border-bottom: 3px solid #fff;
+    background: rgba(255, 255, 255, 0.1);
   }
 
   .searchContainer {
-    width: 100%;
-    margin-left: 0;
-    margin-top: 0.5rem;
+    flex-direction: row;
+    width: auto;
+    margin-left: auto;
+    gap: 0;
   }
 
   .searchInput {
-    width: 100%;
-    margin-left: 0;
+    width: 200px;
+    margin-left: 1rem;
+    padding: 8px 16px;
+    font-size: 1rem;
   }
 
-  .tableContainer {
-    overflow-x: auto;
+  .genderFilter {
+    margin-left: 1rem;
+    gap: 0.5rem;
+  }
+
+  .genderFilterBtn {
+    flex: auto;
+    min-width: auto;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+  }
+
+  .tableCard {
+    border-radius: 0 0 12px 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  .tableHeader {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    gap: 18px;
+  }
+
+  .tableInfo {
+    font-size: 0.95rem;
+  }
+
+  .selectAllBtn {
+    width: auto;
+    padding: 6px 16px;
+    font-size: 0.9rem;
   }
 
   .table {
-    font-size: 0.9rem;
+    font-size: 1rem;
   }
 
   .table th,
   .table td {
-    padding: 10px 8px;
+    padding: 14px 1rem;
+  }
+
+  .table th {
+    font-size: 1rem;
+  }
+
+  .statusBadge {
+    font-size: 0.85rem;
+    padding: 4px 12px;
+  }
+
+  .emptyState {
+    padding: 3rem 1rem;
   }
 
   .bottomBar {
-    flex-direction: column;
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
+    padding: 18px 32px;
+    border-radius: 0 0 16px 16px;
+    margin-top: 0;
+  }
+
+  .shareBtn,
+  .downloadBtn {
+    width: auto;
+    font-size: 1.08rem;
+    padding: 10px 24px;
+    border-radius: 12px;
     gap: 8px;
-    padding: 12px 1rem;
   }
 
   .adviserInfo {
-    margin-left: 0;
+    margin-left: auto;
+    font-size: 1.08rem;
+    width: auto;
+    text-align: left;
   }
 
-  .pagination {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+  .paginationBtn {
+    padding: 8px 16px;
+    font-size: 0.95rem;
   }
 
-  .paginationNumbers {
-    flex-wrap: wrap;
+  .paginationNumber {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    min-width: 36px;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1024px) {
+  .mainContent {
+    padding: 2.5rem;
+  }
+
+  .headerBar h1 {
+    font-size: 1.5rem;
   }
 }
 

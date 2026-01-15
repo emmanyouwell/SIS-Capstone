@@ -1,7 +1,9 @@
+/* Mobile-first responsive design */
+
 .mainContent {
-  margin-left: 220px;
+  margin-left: 0;
   margin-top: 60px;
-  padding: 32px 24px 24px 24px;
+  padding: 1rem;
   background: #e6f0ea;
   min-height: calc(100vh - 60px);
 }
@@ -10,39 +12,38 @@
   color: #4c7a67;
   font-weight: 600;
   font-size: 1rem;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .header h1 {
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   color: #4c7a67;
   margin: 0;
 }
 
 .infoCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1.25rem;
-  margin-bottom: 1.5rem;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .card {
   background-color: #ffffff;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.25rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   text-align: center;
   border: none;
   transition: all 0.3s ease;
 }
 
 .card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(76, 122, 103, 0.15);
+  box-shadow: 0 3px 10px rgba(76, 122, 103, 0.12);
 }
 
 .card .number {
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #4c7a67;
   margin: 0;
@@ -51,35 +52,33 @@
 
 .card .subtext {
   color: #636e72;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 500;
 }
 
 .masterlistContainer {
-  background: #e6f0ea;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: transparent;
+  border-radius: 8px;
   overflow: hidden;
-  margin-top: 1.5rem;
+  margin-top: 1rem;
 }
 
 .masterlistCard {
-  padding: 1.5rem;
-  background: #e6f0ea;
-  border-radius: 12px;
+  padding: 1rem;
+  background: transparent;
+  border-radius: 8px;
 }
 
 .sectionSelect {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .sectionSelect select {
   width: 100%;
-  max-width: 300px;
-  padding: 0.75rem 1rem;
+  padding: 0.75rem;
   border: 1px solid #a1c8b8;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
   color: #4c7a67;
   background-color: white;
   cursor: pointer;
@@ -89,64 +88,210 @@
 .masterlistTable {
   width: 100%;
   border-collapse: collapse;
-  font-size: 1rem;
+  font-size: 0.85rem;
   background: white;
   border-radius: 8px;
   overflow: hidden;
+  display: block;
 }
 
 .masterlistTable thead {
-  background-color: #e6f0ea;
+  display: none;
+}
+
+.masterlistTable tbody {
+  display: block;
+}
+
+.masterlistTable tbody tr {
+  display: block;
+  background-color: white;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 0;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.masterlistTable tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.masterlistTable tbody tr:hover {
+  background-color: #f5f5f5;
 }
 
 .masterlistTable th,
 .masterlistTable td {
-  padding: 1rem;
+  padding: 0.75rem;
   text-align: left;
-  border-bottom: 1px solid #e0e0e0;
+  border: none;
 }
 
 .masterlistTable th {
-  background-color: #e6f0ea;
-  color: #4c7a67;
+  display: none;
+}
+
+.masterlistTable td {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  position: relative;
+}
+
+.masterlistTable td:before {
+  content: attr(data-label);
   font-weight: 600;
-  font-size: 1rem;
+  color: #4c7a67;
+  display: inline-block;
+  width: 80px;
+  margin-right: 0.5rem;
 }
 
-.masterlistTable tbody tr {
-  background-color: white;
+/* Remove labels from empty state cells */
+.masterlistTable td[colSpan]:before {
+  content: none;
+  display: none;
 }
 
-.masterlistTable tbody tr:nth-child(even) {
-  background-color: #e6f0ea;
+/* Fallback styling without data attributes - mobile only */
+.masterlistTable tbody tr td:first-child:before {
+  content: "LRN:";
 }
 
-.masterlistTable tbody tr:hover {
-  background-color: #d4e8dd;
+.masterlistTable tbody tr td:nth-child(2):before {
+  content: "Name:";
 }
 
+.masterlistTable tbody tr td:nth-child(3):before {
+  content: "Gender:";
+}
 
-@media (max-width: 900px) {
+.masterlistTable tbody tr td:nth-child(4):before {
+  content: "Enrollment:";
+}
+
+/* Tablet and above */
+@media (min-width: 768px) {
   .mainContent {
-    margin-left: 0;
-    padding: 1rem;
+    margin-left: 220px;
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+  }
+
+  .header h1 {
+    font-size: 1.4rem;
   }
 
   .infoCards {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card {
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(76, 122, 103, 0.15);
+  }
+
+  .card .number {
+    font-size: 2rem;
+  }
+
+  .card .subtext {
+    font-size: 0.9rem;
   }
 
   .masterlistContainer {
-    margin-top: 1rem;
+    background: #e6f0ea;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    margin-top: 1.5rem;
   }
 
   .masterlistCard {
-    padding: 1rem;
+    padding: 1.5rem;
+    background: #e6f0ea;
+  }
+
+  .sectionSelect {
+    margin-bottom: 1.5rem;
   }
 
   .sectionSelect select {
-    font-size: 0.95rem;
-    padding: 0.4rem 0.8rem;
+    max-width: 300px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  .masterlistTable {
+    display: table;
+    font-size: 1rem;
+  }
+
+  .masterlistTable thead {
+    display: table-header-group;
+    background-color: #e6f0ea;
+  }
+
+  .masterlistTable tbody {
+    display: table-row-group;
+  }
+
+  .masterlistTable tbody tr {
+    display: table-row;
+    background-color: white;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 0;
+    padding: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .masterlistTable tbody tr:nth-child(even) {
+    background-color: #e6f0ea;
+  }
+
+  .masterlistTable tbody tr:hover {
+    background-color: #d4e8dd;
+  }
+
+  .masterlistTable th,
+  .masterlistTable td {
+    display: table-cell;
+    padding: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .masterlistTable th {
+    display: table-cell;
+    background-color: #e6f0ea;
+    color: #4c7a67;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .masterlistTable td:before {
+    content: none;
+    display: none;
+  }
+
+  .masterlistTable tbody tr td:first-child:before,
+  .masterlistTable tbody tr td:nth-child(2):before,
+  .masterlistTable tbody tr td:nth-child(3):before,
+  .masterlistTable tbody tr td:nth-child(4):before {
+    content: none;
+    display: none;
+  }
+}
+
+/* Large screens */
+@media (min-width: 1024px) {
+  .mainContent {
+    padding: 2.5rem 2rem 1.5rem 2rem;
   }
 }
 
