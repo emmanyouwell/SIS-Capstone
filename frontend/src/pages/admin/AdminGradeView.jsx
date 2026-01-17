@@ -725,7 +725,7 @@ Administration`;
                   <th>3rd Quarter</th>
                   <th>4th Quarter</th>
                   <th>Final Grades</th>
-                  <th>Edit</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -745,7 +745,7 @@ Administration`;
                       <td data-label="3rd Quarter">{displayQ3}</td>
                       <td data-label="4th Quarter">{displayQ4}</td>
                       <td data-label="Final Grades">{final !== null ? final : '-'}</td>
-                      <td data-label="Edit">
+                      <td data-label="Action">
                         <button
                           className={styles.modalEditBtn}
                           onClick={() => handleEditSubject(index)}

@@ -27,19 +27,20 @@ function AdminSubjects() {
                 Grade 7
               </button>
               <button
-                className={`${styles.gradeButton} ${styles.grade9}`}
-                onClick={() => handleGradeClick('grade9', 'view')}
-              >
-                Grade 9
-              </button>
-            </div>
-            <div className={styles.buttonRow}>
-              <button
                 className={`${styles.gradeButton} ${styles.grade8}`}
                 onClick={() => handleGradeClick('grade8', 'view')}
               >
                 Grade 8
               </button>
+            </div>
+            <div className={styles.buttonRow}>
+              <button
+                className={`${styles.gradeButton} ${styles.grade9}`}
+                onClick={() => handleGradeClick('grade9', 'view')}
+              >
+                Grade 9
+              </button>
+
               <button
                 className={`${styles.gradeButton} ${styles.grade10}`}
                 onClick={() => handleGradeClick('grade10', 'view')}
@@ -64,19 +65,20 @@ function AdminSubjects() {
                 Grade 7
               </button>
               <button
-                className={`${styles.gradeButton} ${styles.grade9}`}
-                onClick={() => handleGradeClick('grade9', 'materials')}
-              >
-                Grade 9
-              </button>
-            </div>
-            <div className={styles.buttonRow}>
-              <button
                 className={`${styles.gradeButton} ${styles.grade8}`}
                 onClick={() => handleGradeClick('grade8', 'materials')}
               >
                 Grade 8
               </button>
+            </div>
+            <div className={styles.buttonRow}>
+              <button
+                className={`${styles.gradeButton} ${styles.grade9}`}
+                onClick={() => handleGradeClick('grade9', 'materials')}
+              >
+                Grade 9
+              </button>
+
               <button
                 className={`${styles.gradeButton} ${styles.grade10}`}
                 onClick={() => handleGradeClick('grade10', 'materials')}

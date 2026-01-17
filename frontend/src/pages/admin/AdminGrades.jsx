@@ -11,7 +11,7 @@ function AdminGrades() {
   return (
     <div className={styles.mainContent}>
       <h2 className={styles.pageTitle}>Grades</h2>
-      
+
       <div className={styles.gradesContainer}>
         <div className={styles.containerHeader}>View & Edit Lists</div>
         <div className={styles.containerBody}>
@@ -23,19 +23,20 @@ function AdminGrades() {
               Grade 7
             </button>
             <button
-              className={`${styles.gradeButton} ${styles.grade9}`}
-              onClick={() => handleGradeClick('grade9')}
-            >
-              Grade 9
-            </button>
-          </div>
-          <div className={styles.buttonRow}>
-            <button
               className={`${styles.gradeButton} ${styles.grade8}`}
               onClick={() => handleGradeClick('grade8')}
             >
               Grade 8
             </button>
+          </div>
+          <div className={styles.buttonRow}>
+            <button
+              className={`${styles.gradeButton} ${styles.grade9}`}
+              onClick={() => handleGradeClick('grade9')}
+            >
+              Grade 9
+            </button>
+
             <button
               className={`${styles.gradeButton} ${styles.grade10}`}
               onClick={() => handleGradeClick('grade10')}
