@@ -7,6 +7,13 @@
   background-color: var(--bg-green, #e6f0ea);
 }
 
+/* Desktop layout with sidebar */
+@media (min-width: 769px) {
+  .mainContent {
+    margin-left: 220px;
+  }
+}
+
 /* Header styles */
 .header {
   display: flex;
@@ -321,6 +328,28 @@
   .modalContent {
     padding: 1.2rem;
     margin: 1rem;
+  }
+}
+
+/* Desktop specific optimizations */
+@media (min-width: 1200px) {
+  .mainContent {
+    max-width: 1400px;
+  }
+  
+  .profileCard {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .profileInfo {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+  }
+  
+  .messageStats {
+    flex: 1;
   }
 }
 

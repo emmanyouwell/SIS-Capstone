@@ -2,8 +2,9 @@
 
 .mainContent {
   margin-left: 0; /* mobile first: no sidebar offset */
+  margin-top: var(--header-height, 60px);
   padding: 16px 8px 8px; /* top 16px, sides and bottom 8px for compact mobile spacing */
-  min-height: 100vh;
+  min-height: calc(100vh - var(--header-height, 60px));
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -263,9 +264,9 @@
 }
 
 /* Larger screens: restore sidebar offset and two-column layout */
-@media (min-width: 900px) {
+@media (min-width: 769px) {
   .mainContent {
-    margin-left: var(--sidebar-width, 240px);
+    margin-left: 220px;
     padding-top: 24px;
     padding-left: 24px;
     padding-right: 24px;
