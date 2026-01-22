@@ -382,14 +382,12 @@ function AdminMasterlistAssignStudent() {
 
   // Filter students based on active tab, search term, and gender filter
   // All filters work together (combined filtering)
-  // "Students" tab shows only non-enrolled students (available to assign)
+  // "Students" tab shows ALL students (enrolled or not)
   // "Enrolled" tab shows only enrolled students
-  // "Not Enrolled" tab shows only non-enrolled students (same as Students tab)
+  // "Not Enrolled" tab shows only non-enrolled students
   const filteredStudents = useMemo(() => {
     return sortedStudents.filter((student) => {
       // Apply enrollment status filter (tab)
-      // Students tab: only show non-enrolled (available to assign)
-      if (activeTab === 'Students' && student.enrollmentStatus) return false;
       // Enrolled tab: only show enrolled students
       if (activeTab === 'Enrolled' && !student.enrollmentStatus) return false;
       // Not Enrolled tab: only show non-enrolled students
