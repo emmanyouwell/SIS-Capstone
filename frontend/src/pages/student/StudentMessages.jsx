@@ -123,6 +123,13 @@ function StudentMessages() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate that at least one recipient is selected
+    if (!formData.receiverId && !formData.receiverRole) {
+      alert('Please select either a specific recipient or a recipient role.');
+      return;
+    }
+    
     try {
       const messageData = {
         receiverId: formData.receiverId || undefined,
@@ -257,15 +264,14 @@ function StudentMessages() {
           <div className={styles.modalContent}>
             <h3>New Message</h3>
             <form id="message-form" onSubmit={handleSubmit}>
-              <label htmlFor="receiverRole">To (Role):</label>
+              <label htmlFor="receiverRole">To (Role - Optional):</label>
               <select
                 id="receiverRole"
                 name="receiverRole"
                 value={formData.receiverRole}
                 onChange={handleInputChange}
-                required
               >
-                <option value="">Select recipient type...</option>
+                <option value="">Select recipient type (optional)...</option>
                 <option value="All">All Users</option>
                 <option value="Teacher">All Teachers</option>
                 <option value="Admin">All Admins</option>
