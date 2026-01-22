@@ -63,7 +63,7 @@ function TeacherLogin() {
           <div className={`col-lg-4 ${styles.rightContent}`}>
             <div className={styles.loginWrapper}>
               <div className="text-center">
-                <h2 className={styles.welcomeText}>Welcome back, Teacher!</h2>
+                <h2 className={styles.welcomeText}>Welcome, Teacher!</h2>
                 <p className={styles.textGray}>Access your teacher portal</p>
               </div>
               {error || authError && (

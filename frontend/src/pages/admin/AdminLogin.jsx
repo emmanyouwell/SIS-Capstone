@@ -61,7 +61,7 @@ function AdminLogin() {
           <div className={`col-lg-4 ${styles.rightContent}`}>
             <div className={styles.loginWrapper}>
               <div className="text-center">
-                <h2 className={styles.welcomeText}>Welcome back, Admin!</h2>
+                <h2 className={styles.welcomeText}>Welcome, Admin!</h2>
                 <p className={styles.textGray}>Access your admin portal</p>
               </div>
               {(error || authError) && (
