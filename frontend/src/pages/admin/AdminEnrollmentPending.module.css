@@ -272,10 +272,22 @@
 }
 
 /* Modal Styles */
-.enrollModal,
 .gradeModal {
   position: fixed;
   z-index: 100000;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enrollModal {
+  position: fixed;
+  z-index: 100001;
   left: 0;
   top: 0;
   width: 100vw;
@@ -1015,7 +1027,7 @@
 /* Confirmation Modal Styles */
 .confirmModal {
   position: fixed;
-  z-index: 100001;
+  z-index: 100002;
   left: 0;
   top: 0;
   width: 100vw;
