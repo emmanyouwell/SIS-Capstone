@@ -250,20 +250,38 @@ function StudentGrades() {
                     </tr>
                   ) : (
                     <>
-                      {gradesData.map((grade, index) => (
-                        <tr key={index}>
-                          <td>{grade.subject}</td>
-                          <td>{grade.q1 !== '' ? Math.round(grade.q1) : ''}</td>
-                          <td>{grade.q2 !== '' ? Math.round(grade.q2) : ''}</td>
-                          <td>{grade.q3 !== '' ? Math.round(grade.q3) : ''}</td>
-                          <td>{grade.q4 !== '' ? Math.round(grade.q4) : ''}</td>
-                          <td className={styles.remarks}>
-                            {grade.remarks || (studentGradeRecord?.finalGrade !== null && studentGradeRecord?.finalGrade !== undefined
-                              ? (studentGradeRecord.finalGrade >= 75 ? 'PASSED' : 'FAILED')
-                              : '')}
-                          </td>
-                        </tr>
-                      ))}
+                      {gradesData.map((grade, index) => {
+                        // Calculate if this subject has any grades
+                        const hasGrades = [grade.q1, grade.q2, grade.q3, grade.q4].some(
+                          q => q !== '' && q !== null && q !== undefined
+                        );
+                        
+                        // Calculate subject average if there are grades
+                        let subjectAverage = '';
+                        if (hasGrades) {
+                          const validGrades = [grade.q1, grade.q2, grade.q3, grade.q4]
+                            .filter(q => q !== '' && q !== null && q !== undefined);
+                          if (validGrades.length > 0) {
+                            subjectAverage = validGrades.reduce((sum, q) => sum + parseFloat(q), 0) / validGrades.length;
+                          }
+                        }
+                        
+                        // Determine remarks: only show if there are grades
+                        const remarks = hasGrades && subjectAverage !== '' 
+                          ? (subjectAverage >= 75 ? 'PASSED' : 'FAILED')
+                          : '';
+                        
+                        return (
+                          <tr key={index}>
+                            <td>{grade.subject}</td>
+                            <td>{grade.q1 !== '' ? Math.round(grade.q1) : ''}</td>
+                            <td>{grade.q2 !== '' ? Math.round(grade.q2) : ''}</td>
+                            <td>{grade.q3 !== '' ? Math.round(grade.q3) : ''}</td>
+                            <td>{grade.q4 !== '' ? Math.round(grade.q4) : ''}</td>
+                            <td className={styles.remarks}>{remarks}</td>
+                          </tr>
+                        );
+                      })}
                       <tr>
                         <td style={{ fontWeight: 'bold' }}>Average Grade</td>
                         <td>{calculateAverage('q1') || ''}</td>
