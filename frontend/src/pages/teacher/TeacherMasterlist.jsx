@@ -33,6 +33,7 @@ const averageIcon = (
 function TeacherMasterlist() {
   const dispatch = useDispatch();
   const { masterlists, loading, error } = useSelector((state) => state.masterlists);
+  const { user } = useSelector((state) => state.auth);
   const { enrollments } = useSelector((state) => state.enrollments);
   
   const [selectedMasterlistId, setSelectedMasterlistId] = useState(null);
@@ -51,22 +52,45 @@ function TeacherMasterlist() {
     dispatch(fetchAllEnrollments());
   }, [dispatch]);
 
-  // Set default selected masterlist when data loads
+  // Filter masterlists to only those assigned to the current teacher
+  const assignedMasterlists = useMemo(() => {
+    if (!user?.id) return [];
+    const teacherUserId = (user.id || user._id)?.toString();
+    return (masterlists || []).filter((ml) => {
+      const adviserUserId = ml.adviser?.userId?._id?.toString();
+      const isAdviser = adviserUserId && adviserUserId === teacherUserId;
+      const isSubjectTeacher = Array.isArray(ml.subjectTeachers) && ml.subjectTeachers.some((st) => {
+        const stUserId = st.teacher?.userId?._id?.toString();
+        return stUserId && stUserId === teacherUserId;
+      });
+      return isAdviser || isSubjectTeacher;
+    });
+  }, [masterlists, user]);
+
+  // Set default selected masterlist when assigned data loads
   useEffect(() => {
-    if (masterlists.length > 0 && !selectedMasterlistId) {
-      setSelectedMasterlistId(masterlists[0]._id);
+    if (assignedMasterlists.length > 0 && !selectedMasterlistId) {
+      setSelectedMasterlistId(assignedMasterlists[0]._id);
     }
-  }, [masterlists, selectedMasterlistId]);
+    // Reset selection if current selection is no longer in filtered list
+    if (
+      selectedMasterlistId &&
+      assignedMasterlists.length > 0 &&
+      !assignedMasterlists.find((m) => m._id === selectedMasterlistId)
+    ) {
+      setSelectedMasterlistId(assignedMasterlists[0]._id);
+    }
+  }, [assignedMasterlists, selectedMasterlistId]);
 
   // Get current masterlist and students
-  const currentMasterlist = masterlists.find(m => m._id === selectedMasterlistId);
+  const currentMasterlist = assignedMasterlists.find(m => m._id === selectedMasterlistId);
   const currentStudents = currentMasterlist?.students || [];
 
   // Calculate enrolled students in current section
   const enrolledInSection = currentStudents.length;
   
-  // Calculate active sections (total number of masterlists/sections)
-  const totalSections = masterlists.length;
+  // Calculate active sections (total number of assigned masterlists/sections)
+  const totalSections = assignedMasterlists.length;
   
   // Calculate total enrolled students across all grades for the school year
   const totalEnrolledStudents = useMemo(() => {
@@ -161,14 +185,14 @@ function TeacherMasterlist() {
     );
   }
 
-  if (masterlists.length === 0) {
+  if (assignedMasterlists.length === 0) {
     return (
       <div className={styles.mainContent}>
         <div className={styles.header}>
           <h1>Masterlist</h1>
         </div>
         <div style={{ textAlign: 'center', padding: '2rem' }}>
-          <p>No masterlists available yet.</p>
+          <p>No assigned sections found for your account.</p>
         </div>
       </div>
     );
@@ -210,7 +234,7 @@ function TeacherMasterlist() {
                 value={selectedMasterlistId || ''}
                 onChange={handleSectionChange}
               >
-                {masterlists.map((masterlist) => (
+                {assignedMasterlists.map((masterlist) => (
                   <option key={masterlist._id} value={masterlist._id}>
                     {getSectionDisplayName(masterlist)}
                   </option>

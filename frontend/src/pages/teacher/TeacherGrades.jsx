@@ -10,6 +10,7 @@ import { fetchCurrentEnrollmentPeriod } from '../../store/slices/enrollmentPerio
 
 function TeacherGrades() {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
   const { subjects, loading: subjectsLoading } = useSelector((state) => state.subjects);
   const { masterlists, loading: masterlistsLoading } = useSelector((state) => state.masterlists);
   const { grades, loading: gradesLoading } = useSelector((state) => state.grades);
@@ -75,27 +76,42 @@ function TeacherGrades() {
     return Array.from(gradeLevels).sort((a, b) => a - b);
   }, [subjects]);
 
-  // Get all sections from database (show all sections for all grades 7-10)
-  // This allows teachers to see all sections, even if they don't have subjects for that grade yet
+  // Get sections that the teacher handles using masterlists (match by teacher's userId)
   const sections = useMemo(() => {
-    if (!allSections || allSections.length === 0) return [];
-    
-    return allSections
-      .filter((section) => {
-        // Only show sections for grades 7-10
-        const sectionGrade = Number(section.gradeLevel);
-        return !isNaN(sectionGrade) && sectionGrade >= 7 && sectionGrade <= 10;
-      })
-      .map((section) => ({
-        _id: section._id,
-        sectionName: section.sectionName,
-        gradeLevel: Number(section.gradeLevel),
-      }))
-      .sort((a, b) => {
-        if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
-        return a.sectionName.localeCompare(b.sectionName);
+    if (!masterlists || masterlists.length === 0 || !user?.id) return [];
+
+    const teacherUserId = (user.id || user._id)?.toString();
+    if (!teacherUserId) return [];
+
+    const sectionMap = new Map();
+
+    masterlists.forEach((ml) => {
+      const adviserUserId = ml.adviser?.userId?._id?.toString();
+
+      const isAdviser = adviserUserId && adviserUserId === teacherUserId;
+
+      const isSubjectTeacher = Array.isArray(ml.subjectTeachers) && ml.subjectTeachers.some((st) => {
+        const stUserId = st.teacher?.userId?._id?.toString();
+        return stUserId && stUserId === teacherUserId;
       });
-  }, [allSections]);
+
+      if (isAdviser || isSubjectTeacher) {
+        const sectionId = ml.section?._id?.toString();
+        if (sectionId && !sectionMap.has(sectionId)) {
+          sectionMap.set(sectionId, {
+            _id: ml.section?._id,
+            sectionName: ml.section?.sectionName,
+            gradeLevel: Number(ml.grade),
+          });
+        }
+      }
+    });
+
+    return Array.from(sectionMap.values()).sort((a, b) => {
+      if (a.gradeLevel !== b.gradeLevel) return a.gradeLevel - b.gradeLevel;
+      return a.sectionName.localeCompare(b.sectionName);
+    });
+  }, [masterlists, user]);
 
   // Get subjects for selected section (filter by grade level of the section)
   const sectionSubjects = useMemo(() => {

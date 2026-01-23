@@ -34,7 +34,7 @@ export const renderTemplate = (templateString, user, extraData = {}) => {
   // Replace {{name}} with user's full name
   if (user) {
     const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
-    rendered = rendered.replace(/\{\{name\}\}/g, fullName || 'there');
+    rendered = rendered.replace(/\{\{name\}\}/g, fullName);
   }
 
   // Replace other placeholders from extraData
