@@ -1,5 +1,6 @@
 /* Main Content */
 .mainContent {
+  margin-left: var(--sidebar-width);
   margin-top: var(--header-height);
   padding: 1.5rem;
   min-height: calc(100vh - var(--header-height));
