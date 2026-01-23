@@ -33,6 +33,7 @@ const menuItems = {
     { path: '/teacher/grades', label: 'Grades', icon: 'bar-chart' },
     { path: '/teacher/subject', label: 'Subjects', icon: 'book' },
     { path: '/teacher/masterlist', label: 'Masterlist', icon: 'list' },
+    { path: '/teacher/notifications', label: 'Notifications', icon: 'bell' },
     { path: '/teacher/message', label: 'Messages', icon: 'mail' },
     { path: '/teacher/profile', label: 'Profile', icon: 'home' },
     { path: '/teacher/help', label: 'Help', icon: 'info' },

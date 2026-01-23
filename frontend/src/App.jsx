@@ -47,6 +47,7 @@ import TeacherClasses from './pages/teacher/TeacherClasses';
 import TeacherGrades from './pages/teacher/TeacherGrades';
 import TeacherSubject from './pages/teacher/TeacherSubject';
 import TeacherMasterlist from './pages/teacher/TeacherMasterlist';
+import TeacherNotifications from './pages/teacher/TeacherNotifications';
 import TeacherMessage from './pages/teacher/TeacherMessage';
 import TeacherMessageView from './pages/teacher/TeacherMessageView';
 import TeacherProfile from './pages/teacher/TeacherProfile';
@@ -134,6 +135,7 @@ function App() {
           <Route path="grades" element={<TeacherGrades />} />
           <Route path="subject" element={<TeacherSubject />} />
           <Route path="masterlist" element={<TeacherMasterlist />} />
+          <Route path="notifications" element={<TeacherNotifications />} />
           <Route path="message" element={<TeacherMessage />} />
           <Route path="message/:id" element={<TeacherMessageView />} />
           <Route path="profile" element={<TeacherProfile />} />
