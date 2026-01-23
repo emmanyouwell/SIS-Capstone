@@ -298,6 +298,10 @@
 
 /* Responsive Design */
 @media (max-width: 768px) {
+  .mainContent {
+    margin-left: 0;
+  }
+
   .profileInfo {
     flex-direction: column;
     text-align: center;
@@ -328,28 +332,6 @@
   .modalContent {
     padding: 1.2rem;
     margin: 1rem;
-  }
-}
-
-/* Desktop specific optimizations */
-@media (min-width: 1200px) {
-  .mainContent {
-    max-width: 1400px;
-  }
-  
-  .profileCard {
-    display: flex;
-    align-items: center;
-    gap: 2rem;
-  }
-  
-  .profileInfo {
-    flex: 0 0 auto;
-    margin-bottom: 0;
-  }
-  
-  .messageStats {
-    flex: 1;
   }
 }
 
